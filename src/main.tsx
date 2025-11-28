@@ -4,7 +4,7 @@ import App from "./App";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastContainer } from "react-toastify";
 import "./index.css";
-
+import "./i18n"; 
 // Optional: Include React Scan only in development
 if (import.meta.env.VITE_MODE === "development") {
   const script = document.createElement("script");

@@ -41,7 +41,7 @@ export const useLogin = () => {
       if (data.token) {
         Cookies.set("token", data.token);
       }
-      toast.success("Login Successful");
+      
     },
   });
 };

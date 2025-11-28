@@ -1,0 +1,19 @@
+{
+  "welcome": "மீண்டும் வருக",
+  "signin_subtitle": "தயவுசெய்து உள்நுழைக!",
+  "username_label": "பயனாளர் பெயர் / மின்னஞ்சல்",
+  "username_placeholder": "உங்கள் பயனாளர் பெயர் அல்லது மின்னஞ்சலை உள்ளிடவும்",
+  "password_label": "கடவுச்சொல்",
+  "password_placeholder": "உங்கள் கடவுச்சொல்லை உள்ளிடவும்",
+  "signin_button": "உள்நுழைக",
+  "login_success": "உள்நுழைவு வெற்றிகரமாக முடிந்தது",
+  "enter_verification_code": "தயவுசெய்து சரிபார்ப்பு குறியீட்டை உள்ளிடவும்",
+
+  "verify_title": "இரு-அடுக்கு சரிபார்ப்பு",
+  "verify_desc": "6 இலக்க சரிபார்ப்புக் குறியீட்டை உள்ளிடவும்",
+  "verification_code_label": "சரிபார்ப்பு குறியீடு",
+  "verification_code_placeholder": "6 இலக்க குறியீட்டை உள்ளிடவும்",
+  "verify_button": "குறியீட்டை சரிபார்க்கவும்",
+  "cancel": "ரத்து செய்",
+  "verifying": "சரிபார்க்கிறது..."
+}

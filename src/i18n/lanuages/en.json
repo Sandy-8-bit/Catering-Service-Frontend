@@ -1,0 +1,19 @@
+{
+  "welcome": "Welcome Back",
+  "signin_subtitle": "Please sign in!",
+  "username_label": "Username / Email",
+  "username_placeholder": "Enter your username or email",
+  "password_label": "Password",
+  "password_placeholder": "Enter your password",
+  "signin_button": "Sign In",
+  "login_success": "Login Successful",
+  "enter_verification_code": "Please enter the verification code",
+
+  "verify_title": "Two-Step Verification",
+  "verify_desc": "Enter the 6-digit verification code",
+  "verification_code_label": "Verification Code",
+  "verification_code_placeholder": "Enter 6-digit code",
+  "verify_button": "Verify Code",
+  "cancel": "Cancel",
+  "verifying": "Verifying..."
+}

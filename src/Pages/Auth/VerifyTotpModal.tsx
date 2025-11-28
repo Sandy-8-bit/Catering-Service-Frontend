@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useVerifyTotp } from "../../Queries/AuthQueries";
 import Input from "../../Components/common/Input";
 import ButtonSm from "../../Components/common/Buttons";
+import { useTranslation } from "react-i18next";
 
 const VerifyTotpModal = ({
   identifier,
@@ -12,6 +13,7 @@ const VerifyTotpModal = ({
   onClose: () => void;
   onSuccess: () => void;
 }) => {
+  const { t } = useTranslation();
   const { mutate: verify, isPending } = useVerifyTotp();
   const [code, setCode] = useState("");
 
@@ -28,21 +30,20 @@ const VerifyTotpModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-100 p-4">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 animate-fadeIn">
         
-        {/* Header */}
         <h2 className="text-2xl font-semibold text-gray-900 text-center mb-1">
-          Two-Step Verification
+          {t("verify_title")}
         </h2>
+
         <p className="text-gray-500 text-center mb-6 text-sm">
-          Enter the 6-digit verification code sent to your registered email / phone.
+          {t("verify_desc")}
         </p>
 
-        {/* Input */}
         <Input
-          title="Verification Code"
-          placeholder="Enter 6-digit code"
+          title={t("verification_code_label")}
+          placeholder={t("verification_code_placeholder")}
           inputValue={code}
           onChange={setCode}
           type="str"
@@ -50,23 +51,23 @@ const VerifyTotpModal = ({
           required
         />
 
-        {/* Verify Button */}
-        <ButtonSm
-          state="default"
-          text={isPending ? "Verifying..." : "Verify Code"}
-          disabled={isPending || code.length < 6}
-          isPending={isPending}
-          onClick={handleVerify}
-          className="w-full mt-4 py-3 rounded-2xl text-white bg-blue-500 hover:bg-blue-700"
-        />
+        <div className="flex  gap-3 mt-4">
+          <ButtonSm
+            state="default"
+            text={isPending ? t("verifying") : t("verify_button")}
+            disabled={isPending || code.length < 6}
+            isPending={isPending}
+            onClick={handleVerify}
+            className="w-full py-3 rounded-2xl text-white bg-blue-500 hover:bg-blue-700"
+          />
 
-        {/* Cancel Button */}
-        <ButtonSm
-          state="outline"
-          text="Cancel"
-          onClick={onClose}
-          className="w-full mt-3 py-3 rounded-2xl"
-        />
+          <ButtonSm
+            state="outline"
+            text={t("cancel")}
+            onClick={onClose}
+            className="w-full py-3 rounded-2xl"
+          />
+        </div>
       </div>
     </div>
   );
