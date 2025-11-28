@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import React from 'react'
 import { Search } from 'lucide-react'
-import { useDebounce } from '@/utils/useDebounce'
+import { useDebounce } from '../../Utils/useDebounce'
 
 interface SearchSm {
   inputValue: string
@@ -48,7 +48,7 @@ const SearchSm: React.FC<SearchSm> = ({
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
-      className={`relative min-w-[160px] select-none ${containerClassName}`}
+      className={`relative min-w-40 select-none ${containerClassName}`}
     >
       <motion.div
         animate={{ scale: isFocused ? 1.02 : 1 }}

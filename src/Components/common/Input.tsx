@@ -207,7 +207,7 @@ export const CheckBox: React.FC<CheckBoxProps> = ({
         />
         <label
           htmlFor={uniqueId}
-          className={`relative flex max-h-3 max-w-3 ${disabled ? 'cursor-default' : 'cursor-pointer'} rounded-[6px] border-2 p-[8px] transition-all outline-none focus:outline-none ${
+          className={`relative flex max-h-3 max-w-3 ${disabled ? 'cursor-default' : 'cursor-pointer'} rounded-md border-2 p-4 transition-all outline-none focus:outline-none ${
             checked
               ? 'border-blue-500 bg-blue-500'
               : 'border-slate-300 bg-slate-100 shadow-sm'
@@ -281,7 +281,7 @@ export const InputCheckbox: React.FC<InputCheckboxProps> = ({
           />
           <label
             htmlFor={uniqueId}
-            className={`relative block h-5 w-5 ${disabled ? 'cursor-default' : 'cursor-pointer'} rounded-[8px] border-2 p-[12px] transition-all outline-none focus:outline-none ${
+            className={`relative block h-5 w-5 ${disabled ? 'cursor-default' : 'cursor-pointer'} rounded-md border-2 p-3 transition-all outline-none focus:outline-none ${
               checked
                 ? 'border-blue-500 bg-blue-500'
                 : 'border-slate-300 bg-slate-100 shadow-sm'

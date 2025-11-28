@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useVerifyTotp } from "../../Queries/AuthQueries";
+import Input from "../../Components/common/Input";
+import ButtonSm from "../../Components/common/Buttons";
 
 const VerifyTotpModal = ({
   identifier,
@@ -38,40 +40,33 @@ const VerifyTotpModal = ({
         </p>
 
         {/* Input */}
-        <div className="mb-4">
-          <h3 className="mb-1 text-xs font-semibold text-slate-700">Verification Code</h3>
-          <div className="flex items-center rounded-xl border-2 border-slate-300 bg-white px-3 py-2.5 focus-within:border-slate-500 transition-all">
-            <input
-              type="text"
-              maxLength={6}
-              placeholder="Enter 6-digit code"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full bg-transparent text-sm font-medium text-slate-700 placeholder:text-slate-400 focus:outline-none"
-            />
-          </div>
-        </div>
+        <Input
+          title="Verification Code"
+          placeholder="Enter 6-digit code"
+          inputValue={code}
+          onChange={setCode}
+          type="str"
+          maxLength={6}
+          required
+        />
 
         {/* Verify Button */}
-        <button
-          onClick={handleVerify}
+        <ButtonSm
+          state="default"
+          text={isPending ? "Verifying..." : "Verify Code"}
           disabled={isPending || code.length < 6}
-          className={`w-full py-3 rounded-2xl text-white font-medium transition 
-            ${isPending || code.length < 6
-              ? "bg-blue-400 cursor-not-allowed"
-              : "bg-blue-500 hover:bg-blue-700"
-            }`}
-        >
-          {isPending ? "Verifying..." : "Verify Code"}
-        </button>
+          isPending={isPending}
+          onClick={handleVerify}
+          className="w-full mt-4 py-3 rounded-2xl text-white bg-blue-500 hover:bg-blue-700"
+        />
 
-        {/* Cancel */}
-        <button
+        {/* Cancel Button */}
+        <ButtonSm
+          state="outline"
+          text="Cancel"
           onClick={onClose}
-          className="w-full mt-3 py-2.5 rounded-xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 transition"
-        >
-          Cancel
-        </button>
+          className="w-full mt-3 py-3 rounded-2xl"
+        />
       </div>
     </div>
   );

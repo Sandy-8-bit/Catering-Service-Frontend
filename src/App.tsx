@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import {  Routes, Route } from "react-router-dom";
 import SignInPage from "./Pages/Auth/Auth";
 import DashboardPage from "./Pages/Dashboard";
 import ProtectedRoute from "./Components/Layout/ProtectedRoutes";

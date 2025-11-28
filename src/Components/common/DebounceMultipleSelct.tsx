@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Check, Search, Square, SquareCheck, X } from 'lucide-react'
+import { Check, Search } from 'lucide-react'
 
 export interface DropdownSearchOption {
   label: string
@@ -435,7 +435,7 @@ const DebounceMultipleSearch: React.FC<DebounceMultipleSearchProps> = ({
                     {isOptionSelected(option) ? (
                       <Check size={16} color="#2563EB" />
                     ) : (
-                      <div className="square h-[16px] w-[16px] rounded-sm border-2 border-slate-300 bg-white text-black"></div>
+                      <div className="square h-4 w-4 rounded-sm border-2 border-slate-300 bg-white text-black"></div>
                     )}
                   </div>
                 }

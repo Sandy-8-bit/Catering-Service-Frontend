@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Moon, Sun, LogOut } from 'lucide-react'
-import { appRoutes } from '@/routes/appRoutes'
-import useClickOutside from '@/hooks/useClickOutside'
+import { appRoutes } from '../../Routes/appRoutes'
+import useClickOutside from '../../Hooks/useClickOutside'
 
 export default function ProfileMenu() {
   // const [open, setOpen] = useState(false)
@@ -41,7 +41,7 @@ export default function ProfileMenu() {
 
   const handleLogout = () => {
     localStorage.removeItem('token')
-    window.location.href = appRoutes.signIn
+    window.location.href = appRoutes.signInPage
   }
 
   return (

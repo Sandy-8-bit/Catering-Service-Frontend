@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import ButtonSm from "@/components/common/Buttons";
+import ButtonSm from "../common/Buttons";
 
 interface ReadFileData {
   fileName: string;
