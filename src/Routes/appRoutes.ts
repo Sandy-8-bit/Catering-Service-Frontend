@@ -1,0 +1,15 @@
+
+export const appRoutes = {
+  // -------- Public Pages --------
+  homePage: "/Home",
+  signInPage: "/signin",
+  signUpPage: "/signup",
+  errorPage: "/error",
+
+  // -------- New Dashboard Parent Routes --------
+  dashboard: {
+    path: "/",
+    children: {}
+  },
+ 
+};
