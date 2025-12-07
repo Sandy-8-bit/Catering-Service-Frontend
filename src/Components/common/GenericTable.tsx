@@ -14,7 +14,7 @@ import {
   Inbox,
 } from 'lucide-react'
 
-import SearchSm from '../common/SearchSm'
+import SearchSm from './SearchSm'
 import ButtonSm from './Buttons'
 import DropdownSelect from './DropDown'
 import PaginationControls from './Pagination'

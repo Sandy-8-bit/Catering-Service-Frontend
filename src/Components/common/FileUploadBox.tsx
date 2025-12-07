@@ -1,76 +1,76 @@
-import React, { useRef, useState } from "react";
-import ButtonSm from "../common/Buttons";
+import React, { useRef, useState } from 'react'
+import ButtonSm from './Buttons'
 
 interface ReadFileData {
-  fileName: string;
-  data?: string;
-  loadResult?: "success" | "danger";
-  error?: string;
+  fileName: string
+  data?: string
+  loadResult?: 'success' | 'danger'
+  error?: string
 }
 
 interface MultiFileUploadProps {
-  allowedTypes?: string[];
-  simulateFailure?: boolean;
+  allowedTypes?: string[]
+  simulateFailure?: boolean
 }
 
 const MultiFileUpload: React.FC<MultiFileUploadProps> = ({
   allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "application/pdf",
-    "application/msword",
+    'image/jpeg',
+    'image/png',
+    'application/pdf',
+    'application/msword',
   ],
   simulateFailure = false,
 }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [files, setFiles] = useState<File[]>([]);
-  const [fileResults, setFileResults] = useState<ReadFileData[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [files, setFiles] = useState<File[]>([])
+  const [fileResults, setFileResults] = useState<ReadFileData[]>([])
 
   const handleFileSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files ?? []);
+    const selectedFiles = Array.from(e.target.files ?? [])
     const filtered = selectedFiles.filter((file) =>
-      allowedTypes.includes(file.type),
-    );
+      allowedTypes.includes(file.type)
+    )
 
     const newFiles = filtered.filter(
-      (file) => !files.some((f) => f.name === file.name),
-    );
-    setFiles((prev) => [...prev, ...newFiles]);
+      (file) => !files.some((f) => f.name === file.name)
+    )
+    setFiles((prev) => [...prev, ...newFiles])
 
-    newFiles.forEach((file) => readFile(file));
-    e.target.value = ""; // Reset input
-  };
+    newFiles.forEach((file) => readFile(file))
+    e.target.value = '' // Reset input
+  }
 
   const readFile = (file: File) => {
-    const reader = new FileReader();
+    const reader = new FileReader()
     reader.onload = () => {
       setFileResults((prev) => [
         ...prev,
         {
           fileName: file.name,
           data: reader.result as string,
-          loadResult: simulateFailure ? "danger" : "success",
-          error: simulateFailure ? "Upload failed (simulated)." : undefined,
+          loadResult: simulateFailure ? 'danger' : 'success',
+          error: simulateFailure ? 'Upload failed (simulated).' : undefined,
         },
-      ]);
-    };
+      ])
+    }
     reader.onerror = () => {
       setFileResults((prev) => [
         ...prev,
         {
           fileName: file.name,
-          loadResult: "danger",
-          error: reader.error?.message ?? "Unknown error",
+          loadResult: 'danger',
+          error: reader.error?.message ?? 'Unknown error',
         },
-      ]);
-    };
-    reader.readAsDataURL(file);
-  };
+      ])
+    }
+    reader.readAsDataURL(file)
+  }
 
   const removeFile = (fileName: string) => {
-    setFiles((prev) => prev.filter((f) => f.name !== fileName));
-    setFileResults((prev) => prev.filter((f) => f.fileName !== fileName));
-  };
+    setFiles((prev) => prev.filter((f) => f.name !== fileName))
+    setFileResults((prev) => prev.filter((f) => f.fileName !== fileName))
+  }
 
   return (
     <div className="grid w-full grid-cols-2 gap-6">
@@ -78,16 +78,16 @@ const MultiFileUpload: React.FC<MultiFileUploadProps> = ({
       <div
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
-          e.preventDefault();
-          const droppedFiles = Array.from(e.dataTransfer.files);
+          e.preventDefault()
+          const droppedFiles = Array.from(e.dataTransfer.files)
           const filtered = droppedFiles.filter((file) =>
-            allowedTypes.includes(file.type),
-          );
+            allowedTypes.includes(file.type)
+          )
           const newFiles = filtered.filter(
-            (f) => !files.some((ff) => ff.name === f.name),
-          );
-          setFiles((prev) => [...prev, ...newFiles]);
-          newFiles.forEach((file) => readFile(file));
+            (f) => !files.some((ff) => ff.name === f.name)
+          )
+          setFiles((prev) => [...prev, ...newFiles])
+          newFiles.forEach((file) => readFile(file))
         }}
         className="flex h-full w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 text-slate-500"
       >
@@ -104,7 +104,7 @@ const MultiFileUpload: React.FC<MultiFileUploadProps> = ({
           ref={fileInputRef}
           type="file"
           multiple
-          accept={allowedTypes.join(",")}
+          accept={allowedTypes.join(',')}
           className="hidden"
           onChange={handleFileSelection}
         />
@@ -120,7 +120,7 @@ const MultiFileUpload: React.FC<MultiFileUploadProps> = ({
         ) : (
           <ul className="flex flex-col gap-4">
             {files.map((file) => {
-              const result = fileResults.find((r) => r.fileName === file.name);
+              const result = fileResults.find((r) => r.fileName === file.name)
               return (
                 <li
                   key={file.name}
@@ -132,14 +132,14 @@ const MultiFileUpload: React.FC<MultiFileUploadProps> = ({
                     </p>
                     <p
                       className={`text-xs ${
-                        result?.loadResult === "danger"
-                          ? "text-red-500"
-                          : "text-green-600"
+                        result?.loadResult === 'danger'
+                          ? 'text-red-500'
+                          : 'text-green-600'
                       }`}
                     >
-                      {result?.loadResult === "success"
-                        ? "Uploaded successfully"
-                        : result?.error || "Uploading..."}
+                      {result?.loadResult === 'success'
+                        ? 'Uploaded successfully'
+                        : result?.error || 'Uploading...'}
                     </p>
                   </div>
                   <ButtonSm
@@ -149,13 +149,13 @@ const MultiFileUpload: React.FC<MultiFileUploadProps> = ({
                     onClick={() => removeFile(file.name)}
                   />
                 </li>
-              );
+              )
             })}
           </ul>
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default MultiFileUpload;
+export default MultiFileUpload

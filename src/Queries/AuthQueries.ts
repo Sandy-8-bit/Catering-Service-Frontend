@@ -1,10 +1,16 @@
-import axiosInstance from "../Utils/axios";
-import axios from "axios";
-import { useMutation } from "@tanstack/react-query";
-import Cookies from "js-cookie";
-import { toast } from "react-toastify";
-import { apiRoutes } from "../Routes/apiRoutes";
-import type { LoginRequest, RegisterRequest, Verify, AuthResponse, VerifyResponse } from "../Types/AuthTypes";
+import axiosInstance from '../utils/axios'
+import axios from 'axios'
+import { useMutation } from '@tanstack/react-query'
+import Cookies from 'js-cookie'
+import { toast } from 'react-toastify'
+import { apiRoutes } from '../routes/apiRoutes'
+import type {
+  LoginRequest,
+  RegisterRequest,
+  Verify,
+  AuthResponse,
+  VerifyResponse,
+} from '../types/authTypes'
 
 /**
  * -------------------------------------------
@@ -18,64 +24,65 @@ import type { LoginRequest, RegisterRequest, Verify, AuthResponse, VerifyRespons
 export const useLogin = () => {
   const loginUser = async (payload: LoginRequest): Promise<AuthResponse> => {
     try {
-      const res = await axiosInstance.post(apiRoutes.login, payload);
+      const res = await axiosInstance.post(apiRoutes.login, payload)
 
       if (res.status !== 200) {
-        throw new Error(res.data?.message || "Login failed");
+        throw new Error(res.data?.message || 'Login failed')
       }
 
-      return res.data as AuthResponse;
+      return res.data as AuthResponse
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || "Login failed");
+        toast.error(error.response?.data?.message || 'Login failed')
       } else {
-        toast.error("Something went wrong while logging in");
+        toast.error('Something went wrong while logging in')
       }
-      throw error;
+      throw error
     }
-  };
+  }
 
   return useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
       if (data.token) {
-        Cookies.set("token", data.token);
+        Cookies.set('token', data.token)
       }
-      
     },
-  });
-};
+  })
+}
 
 /**
  * 🆕 REGISTER USER
  */
 export const useRegister = () => {
-  const registerUser = async (payload: RegisterRequest): Promise<AuthResponse> => {
+  const registerUser = async (
+    payload: RegisterRequest
+  ): Promise<AuthResponse> => {
     try {
-      const res = await axiosInstance.post(apiRoutes.register, payload);
+      const res = await axiosInstance.post(apiRoutes.register, payload)
 
       if (res.status !== 201 && res.status !== 200) {
-        throw new Error(res.data?.message || "Registration failed");
+        throw new Error(res.data?.message || 'Registration failed')
       }
 
-      return res.data as AuthResponse;
+      return res.data as AuthResponse
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || "Registration failed");
+        toast.error(error.response?.data?.message || 'Registration failed')
       } else {
-        toast.error("Something went wrong while registering");
+        toast.error('Something went wrong while registering')
       }
-      throw error;
+      throw error
     }
-  };
+  }
 
   return useMutation({
     mutationFn: registerUser,
     onSuccess: () => {
-      toast.success("Registration Successful");
+      toast.success('Registration Successful')
     },
-  });
-};
+  })
+}
 
 /**
  * 🔑 VERIFY TOTP CODE
@@ -83,29 +90,29 @@ export const useRegister = () => {
 export const useVerifyTotp = () => {
   const verifyTotp = async (payload: Verify): Promise<VerifyResponse> => {
     try {
-      const res = await axiosInstance.post(apiRoutes.verify, payload);
+      const res = await axiosInstance.post(apiRoutes.verify, payload)
 
       if (res.status !== 200) {
-        throw new Error(res.data?.message || "Verification failed");
+        throw new Error(res.data?.message || 'Verification failed')
       }
 
-      return res.data as VerifyResponse;
+      return res.data as VerifyResponse
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || "Verification failed");
+        toast.error(error.response?.data?.message || 'Verification failed')
       } else {
-        toast.error("Something went wrong while verifying");
+        toast.error('Something went wrong while verifying')
       }
-      throw error;
+      throw error
     }
-  };
+  }
 
   return useMutation({
     mutationFn: verifyTotp,
     onSuccess: (data) => {
-      Cookies.set("token", data.token);
-      localStorage.setItem("token", data.token);
-      toast.success("Verification Successful");
+      Cookies.set('token', data.token)
+      localStorage.setItem('token', data.token)
+      toast.success('Verification Successful')
     },
-  });
-};
+  })
+}

@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import React from 'react'
 import { Search } from 'lucide-react'
-import { useDebounce } from '../../Utils/useDebounce'
+import { useDebounce } from '../../utils/useDebounce'
 
 interface SearchSm {
   inputValue: string

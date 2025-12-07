@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import React, { useState, useEffect } from 'react'
 import ReactDOM from 'react-dom'
-import useClickOutside from '../../Hooks/useClickOutside'
+import useClickOutside from '../../hooks/useClickOutside'
 
 const popUpVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -31,7 +31,7 @@ const DialogBox: React.FC<DialogBoxProps> = ({
   const [domReady, setDomReady] = useState(false)
 
   //handle tap outisde
-  const [ isVisible] = useClickOutside(true)
+  const [isVisible] = useClickOutside(true)
 
   useEffect(() => {
     if (!isVisible) {
