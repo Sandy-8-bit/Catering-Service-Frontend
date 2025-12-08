@@ -142,7 +142,7 @@ export const AddRawMaterialsDialog = ({
           className="items-center justify-center bg-green-600 text-white hover:bg-green-700"
           state="default"
           type="submit"
-          text={isPending ? 'Adding…' : 'Add Material'}
+          text={isPending ? 'Adding' : 'Add Material'}
           disabled={!hasRequiredFields || isPending}
           isPending={isPending}
         />

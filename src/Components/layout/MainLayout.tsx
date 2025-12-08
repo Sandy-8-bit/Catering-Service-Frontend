@@ -11,7 +11,7 @@ const MainLayout: React.FC = () => {
   const formattedDate = 'Saturday, 11th November 2022'
 
   return (
-    <div className="Main-entry-point flex h-screen w-screen flex-row overflow-hidden bg-zinc-50">
+    <div className="Main-entry-point flex h-screen w-screen flex-row overflow-hidden bg-[#FAFAFA]">
       <SideNav />
       <section className="flex h-full w-full flex-col overflow-hidden">
         {/* Top Navbar */}
@@ -19,7 +19,7 @@ const MainLayout: React.FC = () => {
         {/* Content */}
         <main
           id="layout"
-          className="main-content flex-1 overflow-y-auto p-3 pb-24 select-none! md:pb-0 lg:p-4"
+          className="main-content flex-1 overflow-y-auto py-3 pr-3 pb-24 select-none! md:pb-0 lg:py-4 lg:pr-4"
         >
           {/*This is where the nested routes will be rendered which will be given my router dom from app.tsx  */}
           <Outlet />

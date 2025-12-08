@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
@@ -618,9 +619,7 @@ export default function GenericTable({
           role={cell.sortable === false ? undefined : 'button'}
         >
           <div className="flex cursor-pointer items-center gap-1 select-none">
-            <div
-              className={`text-sm font-semibold text-[#133032] ${isSorted ? 'font-bold' : ''}`}
-            >
+            <div className="text-sm font-medium text-[#1F1F21]">
               {cell.headerRender ? cell.headerRender() : cell.headingTitle}
             </div>
             {cell.sortable !== false && (
@@ -706,7 +705,7 @@ export default function GenericTable({
 
   return (
     <div
-      className={`flex min-h-full flex-col justify-between rounded-[12px] bg-white py-3 shadow-sm ${className}`}
+      className={`flex min-h-full flex-col justify-between rounded-[12px] border-2 border-[#F1F1F1] bg-white py-3 ${className}`}
     >
       {/* Frozen column styles */}
       {hasFrozenColumns && (
@@ -750,7 +749,7 @@ export default function GenericTable({
       <div className="body-container flex flex-col gap-0">
         {/* Header Controls */}
         {isHeaderVisible && (
-          <header className="mb-3 flex w-full flex-row items-center justify-between px-4">
+          <header className="mb-3 flex w-full flex-row items-center justify-between px-3">
             <section className="flex w-max flex-row items-center gap-2">
               <SearchSm
                 containerClassName={`${isMasterTable ? '' : 'min-w-[200px]! '} `}
@@ -843,15 +842,12 @@ export default function GenericTable({
         >
           {/* Header Row */}
           <header
-            className={`header flex min-w-max flex-row items-center justify-between gap-2 bg-slate-100 px-3 shadow-sm ${hasFrozenColumns ? 'has-frozen relative' : 'sticky left-0'}`}
+            className={`header flex min-w-max flex-row items-center justify-between gap-2 border-y-2 border-y-[#F1F1F1] bg-[#f3f3f3] px-3 shadow-sm ${hasFrozenColumns ? 'has-frozen relative' : 'sticky left-0'}`}
           >
             {/* S.No column */}
             <div
-              className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column my-4 shrink-0 flex-row items-center justify-between gap-2 bg-slate-100 px-1.5`}
+              className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column my-4 shrink-0 flex-row items-center justify-between gap-2 bg-[#f3f3f3] px-1.5`}
             >
-              <p className="text-left text-sm font-semibold text-zinc-900">
-                S.No
-              </p>
               {isSelectable && (
                 <CheckBox
                   className="h-6! w-6! origin-top-left scale-[0.70]"
@@ -860,13 +856,16 @@ export default function GenericTable({
                   onChange={toggleAllCurrentPageSelection}
                 />
               )}
+              <p className="text-left text-sm font-medium text-[#1F1F21]">
+                S.No
+              </p>
             </div>
 
             {/* Frozen columns */}
             {frozenColumns.map((cell, idx) => (
               <div
                 key={(cell.headingTitle || '') + idx}
-                className={`${getColumnClassName(cell)} frozen-data-column bg-slate-100 py-4 ${
+                className={`${getColumnClassName(cell)} frozen-data-column bg-[#F8F9FB] py-4 ${
                   idx === frozenColumns.length - 1
                     ? `frozen-column-shadow ${showFrozenShadow ? 'show-shadow' : ''}`
                     : ''
@@ -878,14 +877,7 @@ export default function GenericTable({
                 role={cell.sortable === false ? undefined : 'button'}
               >
                 <div className="flex cursor-pointer items-center gap-1 px-1 select-none">
-                  <div
-                    className={`text-sm font-semibold text-[#133032] ${
-                      sortConfig.key ===
-                      (cell.accessVar ?? cell.headingTitle ?? `column_${idx}`)
-                        ? 'font-bold'
-                        : ''
-                    }`}
-                  >
+                  <div className="text-sm font-medium text-[#1F1F21]">
                     {cell.headerRender
                       ? cell.headerRender()
                       : (cell.headingTitle ?? 'Column')}
@@ -909,7 +901,7 @@ export default function GenericTable({
                       : `${estimatedActionWidth}px`,
                 }}
               >
-                <p className="px-3 text-sm font-semibold text-[#133032]">
+                <p className="px-3 text-sm font-medium text-[#1F1F21]">
                   Action
                 </p>
               </div>
@@ -922,7 +914,7 @@ export default function GenericTable({
               {Array.from({ length: skeletonCount }).map((_, rIdx) => (
                 <div
                   key={rIdx}
-                  className="flex w-full flex-row items-center justify-between border-b border-slate-200 px-3 py-2"
+                  className="flex w-full flex-row items-center justify-between border-b border-[#F1F1F1] px-3 py-2"
                 >
                   <div
                     className={`flex w-8 min-w-8 items-center justify-start gap-2 py-4 pl-1.5 ${hasFrozenColumns ? 'frozen-serial-column' : ''}`}
@@ -981,7 +973,7 @@ export default function GenericTable({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="my-auto flex max-h-[400px] max-w-[600px] flex-col items-center justify-center self-center rounded-2xl border-2 border-dashed border-slate-400/50 bg-slate-100 p-10 text-slate-600 shadow-sm"
+              className="my-auto flex max-h-[400px] max-w-[600px] flex-col items-center justify-center self-center rounded-2xl border-2 border-dashed border-[#F1F1F1] bg-[#F8F9FB] p-10 text-slate-600 shadow-sm"
             >
               <div className="mb-4 rounded-full bg-slate-200 p-4 shadow-sm">
                 <Inbox size={36} className="text-slate-500" />
@@ -1001,33 +993,47 @@ export default function GenericTable({
             paginated.map((row, idx) => {
               const globalIndex = (currentPage - 1) * itemsPerPage + idx
               const isExpanded = isRowExpanded(globalIndex)
+              const isRowChecked = isRowSelected(globalIndex)
 
               return (
                 <React.Fragment key={defaultRowKey(row, idx)}>
                   {/* Main Row */}
                   <div
-                    style={{ cursor: isMasterTable ? 'pointer' : 'auto' }}
+                    style={{
+                      cursor: isMasterTable ? 'pointer' : 'auto',
+                      boxShadow: isRowChecked
+                        ? 'inset 3px 0 0 #f97316'
+                        : undefined,
+                    }}
                     onClick={(e) => {
                       if (isMasterTable && onView) {
                         e.stopPropagation()
                         onView(row)
                       }
                     }}
-                    className={`group flex min-w-max flex-row items-center justify-between gap-2 border-b border-slate-100 bg-white px-3 text-sm text-[#475569] hover:bg-slate-50/50 ${hasFrozenColumns ? 'has-frozen' : ''}`}
+                    className={`group flex min-w-max flex-row items-center justify-between gap-2 border-b border-[#F1F1F1] px-3 text-sm text-[#1F1F21] ${
+                      isRowChecked
+                        ? 'bg-orange-100'
+                        : 'bg-white hover:bg-slate-50/50'
+                    } ${hasFrozenColumns ? 'has-frozen' : ''}`}
                   >
                     {/* S.No column */}
                     <div
-                      className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column frozen-column-hover-bg min-h-full! shrink-0 flex-row items-center justify-between gap-2 px-1.5 py-4`}
+                      className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column frozen-column-hover-bg min-h-full! shrink-0 flex-row items-center justify-between gap-2 px-1.5 py-4 ${
+                        isRowChecked ? 'bg-transparent' : 'bg-white'
+                      }`}
                     >
-                      <p className="w-10 text-left">{globalIndex + 1}</p>
                       {isSelectable && (
                         <CheckBox
-                          className="h-6! w-6! origin-top-left scale-[0.70]"
+                          className="mr-1 h-6! w-6! origin-top-left scale-[0.70]"
                           label=""
                           checked={isRowSelected(globalIndex)}
                           onChange={() => toggleRowSelection(globalIndex)}
                         />
                       )}
+                      <p className="w-10 text-left font-medium">
+                        {globalIndex + 1}
+                      </p>
                     </div>
 
                     {/* Frozen columns */}
@@ -1040,7 +1046,7 @@ export default function GenericTable({
                             cIdx === frozenColumns.length - 1
                               ? `frozen-column-shadow ${showFrozenShadow ? 'show-shadow' : ''}`
                               : ''
-                          }`}
+                          } ${isRowChecked ? 'bg-orange-100' : 'bg-white'}`}
                           style={{
                             left: `${(isSelectable ? 70 : 56) + cIdx * 104}px`,
                           }}
@@ -1128,7 +1134,10 @@ export default function GenericTable({
                             state="outline"
                           >
                             {isExpanded ? (
-                              <ChevronUp size={16} className="text-blue-500" />
+                              <ChevronUp
+                                size={16}
+                                className="text-orange-500"
+                              />
                             ) : (
                               <ChevronDown size={16} />
                             )}
@@ -1145,7 +1154,7 @@ export default function GenericTable({
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="overflow-hidden border-b border-slate-200 bg-slate-50 px-3"
+                      className="overflow-hidden border-b border-[#F1F1F1] bg-slate-50 px-3"
                     >
                       <div className="py-4">
                         {dropdownColumn.render
@@ -1197,7 +1206,7 @@ export default function GenericTable({
 
       {/* Footer Pagination */}
       <footer className="container mt-3 flex min-w-full flex-row items-center gap-2 self-end px-4 py-2">
-        <div className="h-[10px] w-[10px] rounded-full bg-blue-500" />
+        <div className="h-[10px] w-[10px] rounded-full bg-orange-500" />
         <div className="text-sm text-zinc-600">
           Showing {(currentPage - 1) * itemsPerPage + 1} -{' '}
           {Math.min(currentPage * itemsPerPage, sorted.length)} of{' '}

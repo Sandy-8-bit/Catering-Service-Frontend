@@ -155,10 +155,10 @@ export const TableInput = <T extends string | number>({
           placeholder={placeholder}
           onChange={handleChange}
           value={inputValue}
-          className={`custom-disabled-cursor min-h-max w-full px-2 py-2 text-start text-sm font-medium outline-none ${
+          className={`custom-disabled-cursor min-h-max w-full py-2 text-start text-sm font-medium outline-none ${
             isEditMode
-              ? 'cursor-text text-slate-700'
-              : 'cursor-default bg-transparent'
+              ? 'cursor-text px-2 text-[#1F1F21]'
+              : 'cursor-default bg-transparent text-[#1F1F21]'
           } ${className}`}
           maxLength={type === 'str' ? maxLength : undefined}
           min={type === 'num' ? min : undefined}

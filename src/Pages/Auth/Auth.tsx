@@ -68,6 +68,7 @@ export const SignInPage = () => {
             inputValue={identifier}
             onChange={setIdentifier}
             type="str"
+            name="email"
             required
           />
 
@@ -78,6 +79,7 @@ export const SignInPage = () => {
             inputValue={password}
             onChange={setPassword}
             type="str"
+            name="password"
             required
           />
 

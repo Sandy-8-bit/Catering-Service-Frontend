@@ -74,7 +74,6 @@ export const DeleteRawMaterialsDialog = ({
 
       <section className="mt-1 grid w-full grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
         <ButtonSm
-          className="justify-center font-semibold"
           state="outline"
           text="Cancel"
           type="button"
@@ -82,7 +81,7 @@ export const DeleteRawMaterialsDialog = ({
           disabled={isPending}
         />
         <ButtonSm
-          className="items-center justify-center bg-red-500 text-white hover:bg-red-600"
+          className="items-center justify-center bg-red-500! text-white hover:bg-red-600!"
           state="default"
           type="submit"
           text={isPending ? 'Deleting...' : 'Delete'}

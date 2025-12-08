@@ -39,10 +39,12 @@ const ButtonSm: React.FC<ButtonSmProps> = ({
       transition={{ duration: 0.3, delay: 0.2 }}
       type={type}
       disabled={disabled}
-      className={`btn-sm flex cursor-pointer flex-row items-center justify-center gap-2 rounded-[9px] px-3 py-2 ${disabled && 'opacity-70'} text-sm select-none ${
+      className={`btn-sm flex cursor-pointer flex-row items-center justify-center rounded-[9px] px-3 text-sm shadow-sm/1 transition-colors duration-200 ease-in-out select-none ${
+        disabled ? 'cursor-not-allowed opacity-70' : ''
+      } ${
         state === 'default'
-          ? 'btn-primary bg-orange-500 text-white transition-all duration-150 ease-in-out hover:bg-orange-600 active:bg-orange-700'
-          : `btn-outline bg-white font-medium text-gray-800 shadow-sm outline-2 outline-slate-300 transition-all duration-150 ease-in-out hover:bg-gray-100 active:bg-gray-200`
+          ? 'gap-0! bg-[#1A191E]! py-3! font-medium! text-white! outline-0! hover:bg-zinc-800! focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1'
+          : 'gap-2 border-2 border-[#F1F1F1] bg-white py-3 font-semibold text-black outline-0 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 active:bg-gray-200'
       } ${className}`}
       onClick={onClick}
       value={value}
@@ -58,7 +60,12 @@ const ButtonSm: React.FC<ButtonSmProps> = ({
       {imgUrl && iconPosition === 'right' && (
         <img src={imgUrl} alt="" className="min-h-4 min-w-4" />
       )}
-      {isPending && <Spinner size="sm" className="text-white" />}
+      {isPending && (
+        <Spinner
+          size="sm"
+          className={state === 'default' ? 'text-white' : 'text-gray-700'}
+        />
+      )}
       {children}
     </motion.button>
   )

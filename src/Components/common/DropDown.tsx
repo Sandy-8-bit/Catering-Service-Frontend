@@ -318,18 +318,18 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
           isInvalid
             ? 'border-red-500'
             : isOpen
-              ? 'border-slate-500'
-              : 'border-slate-300'
+              ? 'border-slate-200'
+              : 'border-[#F1F1F1]'
         } ${disabled ? 'pointer-events-none' : ''} ${MainclassName}`}
       >
         <span
           className={`text-sm font-medium ${
-            selected.id === 0 ? 'text-slate-400' : 'text-slate-600'
+            selected.id === 0 ? 'text-slate-400' : 'text-[#1F1F21]'
           }`}
         >
           {selected.id === 0 ? _placeholder : selected.label}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pl-2">
           {isLoading && (
             <div className="text-blue-600">
               <Spinner size="sm" />
@@ -348,7 +348,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         createPortal(
           <div
             ref={portalRef}
-            className={`scrollbar-visible custom-scrollbar z-[99999999999] mt-1 max-h-[250px] overflow-y-scroll rounded-xl border border-slate-200 bg-white text-sm shadow-lg ${dropDownClassName}`}
+            className={`scrollbar-visible custom-scrollbar z-[99999999999] mt-1 max-h-[250px] overflow-y-scroll rounded-xl border border-[#F1F1F1] bg-white text-sm shadow-lg ${dropDownClassName}`}
             style={{
               position: 'absolute',
               top: portalStyle.top,
@@ -397,7 +397,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
                       highlightIndex === idx
                         ? 'bg-slate-100'
                         : selected.label === option.label
-                          ? 'font-semibold text-blue-600'
+                          ? 'font-semibold text-orange-500'
                           : 'text-slate-700'
                     }`}
                   >

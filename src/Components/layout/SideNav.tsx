@@ -22,31 +22,6 @@ const SideNav: React.FC = () => {
     window.dispatchEvent(new PopStateEvent('popstate'))
   }, [])
 
-  // useEffect(() => {
-  //   const handleKeyDown = (e: KeyboardEvent) => {
-  //     const target = e.target as HTMLElement
-
-  //     if (
-  //       target.tagName === 'INPUT' ||
-  //       target.tagName === 'TEXTAREA' ||
-  //       target.isContentEditable
-  //     ) {
-  //       return
-  //     }
-
-  //     if (/^[1-9]$/.test(e.key)) {
-  //       e.preventDefault()
-  //       const index = parseInt(e.key, 10) - 1
-  //       if (navItems[index]) {
-  //         navigateToRoute(navItems[index])
-  //       }
-  //     }
-  //   }
-
-  //   window.addEventListener('keydown', handleKeyDown)
-  //   return () => window.removeEventListener('keydown', handleKeyDown)
-  // }, [navItems, navigateToRoute])
-
   const isRouteActive = (route: string): boolean => {
     return activeRoute === route
   }
@@ -54,19 +29,20 @@ const SideNav: React.FC = () => {
   return (
     <div
       style={{ zoom: 0.85 }}
-      className={`floating-container relative flex min-h-screen bg-zinc-50 shadow-sm transition-all duration-300`}
+      className={`floating-container relative flex min-h-screen bg-[#FAFAFA] transition-all duration-300`}
     >
       <motion.section
-        className={`flex h-screen flex-col items-center justify-center gap-3 overflow-clip bg-zinc-50 transition-all duration-300 select-none`}
+        className={`flex h-screen flex-col items-center justify-start gap-3 overflow-clip bg-[#FAFAFA] transition-all duration-300 select-none`}
         animate={{ x: 0, opacity: 1 }}
       >
         <motion.div
-          className="main-navigation-items flex h-full flex-col items-center justify-center bg-zinc-50 px-1.5"
+          className="main-navigation-items flex h-full flex-col items-center justify-start bg-[#FAFAFA] px-1.5 pt-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
-          <div className="flex flex-col gap-3 overflow-y-auto bg-zinc-50">
+          <div className="mt-1 flex flex-col items-center gap-3 overflow-y-auto bg-[#FAFAFA]">
+            <img src="/icons/logo-icon.svg" className="mb-6 h-16 w-16" />
             <NavigationButton
               labelName="Dashboard"
               isActive={isRouteActive(appRoutes.dashboard.path)}
@@ -81,66 +57,6 @@ const SideNav: React.FC = () => {
               activeIconSrc="/icons/sideNavIcons/rawMaterials-icon-active.svg"
               onClick={() => navigateToRoute(appRoutes.rawMaterials.path)}
             />
-            {/* <NavigationButton
-              labelName="Employees"
-              isActive={isRouteActive(appRoutes.employeesRoute.employees)}
-              iconSrc="/icons/sideNavIcons/employees-icon.svg"
-              activeIconSrc="/icons/sideNavIcons/employees-icon-active.svg"
-              onClick={() =>
-                navigateToRoute(appRoutes.employeesRoute.employees)
-              }
-            />
-            <NavigationButton
-              labelName="Attendance"
-              isActive={isRouteActive(appRoutes.attendanceRoutes.attendance)}
-              iconSrc="/icons/sideNavIcons/attendance-icon.svg"
-              activeIconSrc="/icons/sideNavIcons/attendance-icon-active.svg"
-              onClick={() =>
-                navigateToRoute(appRoutes.attendanceRoutes.attendance)
-              }
-            />
-            <NavigationButton
-              labelName="Payroll"
-              isActive={isRouteActive(appRoutes.PayrollRoutes.payroll)}
-              iconSrc="/icons/sideNavIcons/payroll-icon.svg"
-              activeIconSrc="/icons/sideNavIcons/payroll-icon-active.svg"
-              onClick={() => navigateToRoute(appRoutes.PayrollRoutes.payroll)}
-            />
-            <NavigationButton
-              labelName="Loan"
-              isActive={isRouteActive(appRoutes.loanRoutes.loan)}
-              iconSrc="/icons/sideNavIcons/loan-icon.svg"
-              activeIconSrc="/icons/sideNavIcons/loan-icon-active.svg"
-              onClick={() => navigateToRoute(appRoutes.loanRoutes.loan)}
-            />
-            <NavigationButton
-              labelName="Approval"
-              isActive={isRouteActive(appRoutes.approval)}
-              iconSrc="/icons/sideNavIcons/approval-icon.svg"
-              activeIconSrc="/icons/sideNavIcons/approval-icon-active.svg"
-              onClick={() => navigateToRoute(appRoutes.approval)}
-            />
-            <NavigationButton
-              labelName="Users"
-              isActive={isRouteActive(appRoutes.users)}
-              iconSrc="/icons/sideNavIcons/users-icon.svg"
-              activeIconSrc="/icons/sideNavIcons/users-icon-active.svg"
-              onClick={() => navigateToRoute(appRoutes.users)}
-            />
-            <NavigationButton
-              labelName="Master"
-              isActive={isRouteActive(appRoutes.masterRoutes.master)}
-              iconSrc="/icons/sideNavIcons/master-icon.svg"
-              activeIconSrc="/icons/sideNavIcons/master-icon-active.svg"
-              onClick={() => navigateToRoute(appRoutes.masterRoutes.master)}
-            />
-            <NavigationButton
-              labelName="Reports"
-              isActive={isRouteActive(appRoutes.reports)}
-              iconSrc="/icons/sideNavIcons/reports-icon.svg"
-              activeIconSrc="/icons/sideNavIcons/reports-icon-active.svg"
-              onClick={() => navigateToRoute(appRoutes.reports)}
-            /> */}
           </div>
         </motion.div>
       </motion.section>

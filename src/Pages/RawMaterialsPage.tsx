@@ -16,7 +16,7 @@ export const RawMaterialsPage = () => {
   // useEffects
   return (
     <main className="flex w-full flex-col gap-4">
-      <section className="flex w-full flex-col gap-3 rounded-[12px] bg-white/80 px-3 py-1.5 shadow-sm">
+      <section className="flex w-full flex-col gap-3 rounded-[12px] bg-white/80 px-3 py-1.5">
         <header className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <PageHeader className="mr-auto!" title="Raw Materials" />
         </header>

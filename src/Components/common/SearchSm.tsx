@@ -53,7 +53,7 @@ const SearchSm: React.FC<SearchSm> = ({
       <motion.div
         animate={{ scale: isFocused ? 1.02 : 1 }}
         transition={{ duration: 0.2 }}
-        className="focus-visible::border-slate-400 relative rounded-xl border-2 border-slate-300 bg-white shadow-sm focus:scale-[1.01]"
+        className="focus-visible::border-slate-400 relative rounded-xl border-2 border-[#F1F1F1] bg-white shadow-sm focus:scale-[1.01]"
       >
         <div
           className="absolute inset-y-0 left-0 flex cursor-pointer items-center pl-3"

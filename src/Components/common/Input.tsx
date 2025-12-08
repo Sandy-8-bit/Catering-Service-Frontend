@@ -209,13 +209,13 @@ export const CheckBox: React.FC<CheckBoxProps> = ({
           htmlFor={uniqueId}
           className={`relative flex max-h-3 max-w-3 ${disabled ? 'cursor-default' : 'cursor-pointer'} rounded-md border-2 p-4 transition-all outline-none focus:outline-none ${
             checked
-              ? 'border-blue-500 bg-blue-500'
-              : 'border-slate-300 bg-slate-100 shadow-sm'
+              ? 'border-transparent bg-orange-500'
+              : 'border-[#F1F1F1] bg-white shadow-sm'
           }`}
         >
           {checked && (
             <img
-              className="pointer-events-none absolute top-1/2 left-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 cursor-default select-none"
+              className="pointer-events-none absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-default select-none"
               src="/icons/tick-icon.svg"
               alt="tick"
             />

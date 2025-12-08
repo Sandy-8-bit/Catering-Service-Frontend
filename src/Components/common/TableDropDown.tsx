@@ -103,10 +103,10 @@ const TableDropDown: React.FC<TableDropdownProps> = ({
         type="button"
         disabled={!isInteractive}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex w-full items-center justify-between bg-transparent px-2 py-2 text-left text-sm font-medium transition-colors ${
+        className={`flex w-full items-center justify-between bg-transparent py-2 text-left text-sm font-medium transition-colors ${
           isInteractive
-            ? 'cursor-pointer border-b border-gray-300 bg-white text-slate-700 hover:border-gray-400 focus:border-orange-500'
-            : 'cursor-default border-transparent bg-transparent text-slate-500'
+            ? 'cursor-pointer border-b border-gray-300 bg-white px-2 text-[#1F1F21] hover:border-gray-400 focus:border-orange-500'
+            : 'cursor-default border-transparent bg-transparent text-[#1F1F21]'
         }`}
       >
         <span className={displayOption.id === 0 ? 'text-slate-400' : ''}>

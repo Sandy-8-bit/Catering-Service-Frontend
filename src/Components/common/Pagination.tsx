@@ -63,7 +63,11 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
             : 'text-slate-800 hover:bg-gray-200'
         }`}
       >
-        <img className="h-5 w-5 rotate-90" src="/icons/arrow-icon.svg" alt="Prev" />
+        <img
+          className="h-5 w-5 rotate-90"
+          src="/icons/arrow-icon.svg"
+          alt="Prev"
+        />
       </button>
 
       {/* Page buttons */}
@@ -71,7 +75,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
         p === '...' ? (
           <span
             key={`ellipsis-${idx}`}
-            className="px-2 text-sm   font-semibold text-gray-500"
+            className="px-2 text-sm font-semibold text-gray-500"
           >
             ...
           </span>
@@ -79,9 +83,9 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
           <button
             key={`page-${p}`}
             onClick={() => onPageChange(p as number)}
-            className={`h-8 w-8 rounded cursor-pointer text-sm font-semibold transition ${
+            className={`h-8 w-8 cursor-pointer rounded text-sm font-semibold transition ${
               currentPage === p
-                ? 'bg-blue-500 text-white'
+                ? 'bg-orange-500 text-white'
                 : 'bg-white text-gray-700 shadow-sm hover:bg-gray-200'
             }`}
           >
