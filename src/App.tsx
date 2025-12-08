@@ -3,6 +3,8 @@ import MainLayout from '@components/layout/MainLayout'
 import ProtectedRoute from '@components/layout/ProtectedRoute'
 import { SignInPage } from '@pages/Auth/Auth'
 import { Dashboard } from '@pages/Dashboard'
+import { RawMaterialsPage } from '@/pages/RawMaterialsPage/RawMaterialsPage'
+import { appRoutes } from '@/routes/appRoutes'
 
 function App() {
   return (
@@ -13,11 +15,14 @@ function App() {
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path={appRoutes.dashboard.path} element={<Dashboard />} />
+          <Route
+            path={appRoutes.rawMaterials.path}
+            element={<RawMaterialsPage />}
+          />
         </Route>
       </Route>
 
-      {/* Default redirect */}
       <Route path="*" element={<SignInPage />} />
     </Routes>
   )

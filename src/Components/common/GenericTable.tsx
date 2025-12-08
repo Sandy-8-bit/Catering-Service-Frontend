@@ -854,7 +854,7 @@ export default function GenericTable({
               </p>
               {isSelectable && (
                 <CheckBox
-                  className="h-6! w-6!"
+                  className="h-6! w-6! origin-top-left scale-[0.70]"
                   label=""
                   checked={isAllCurrentPageSelected()}
                   onChange={toggleAllCurrentPageSelection}
@@ -1022,7 +1022,7 @@ export default function GenericTable({
                       <p className="w-10 text-left">{globalIndex + 1}</p>
                       {isSelectable && (
                         <CheckBox
-                          className="h-6! w-6!"
+                          className="h-6! w-6! origin-top-left scale-[0.70]"
                           label=""
                           checked={isRowSelected(globalIndex)}
                           onChange={() => toggleRowSelection(globalIndex)}
@@ -1107,10 +1107,13 @@ export default function GenericTable({
                               e.stopPropagation()
                               onDelete(row)
                             }}
-                            className="aspect-square bg-white text-red-500 shadow-sm outline-1 outline-white hover:bg-red-100 hover:text-red-800 active:bg-red-100 active:text-red-200"
+                            className="aspect-square bg-white shadow-sm outline-1 outline-white hover:bg-red-100 active:bg-red-100"
                             state="default"
                           >
-                            <Trash2 size={14} />
+                            <Trash2
+                              className="text-red-500 hover:text-red-800 active:text-red-200"
+                              size={14}
+                            />
                           </ButtonSm>
                         )}
                         {/* Dropdown toggle button */}

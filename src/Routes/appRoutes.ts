@@ -10,4 +10,8 @@ export const appRoutes = {
     path: '/dashboard',
     children: {},
   },
+  rawMaterials: {
+    path: '/raw-materials',
+    children: {},
+  },
 }

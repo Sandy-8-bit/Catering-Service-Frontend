@@ -1,4 +1,4 @@
-
+/* eslint-disable react-hooks/purity */
 import { motion } from 'framer-motion'
 import React, { useRef } from 'react'
 
@@ -372,7 +372,6 @@ export const DateInput: React.FC<DateInputProps> = ({
     </div>
   )
 }
-
 
 export interface DropdownOption {
   label: string

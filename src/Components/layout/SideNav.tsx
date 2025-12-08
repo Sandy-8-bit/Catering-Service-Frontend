@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useCallback } from 'react'
-import { appRoutes } from '../../routes/appRoutes'
 import { motion } from 'motion/react'
+import { appRoutes } from '@/routes/appRoutes'
 
 const SideNav: React.FC = () => {
   const [activeRoute, setActiveRoute] = useState<string>('')
@@ -54,25 +54,32 @@ const SideNav: React.FC = () => {
   return (
     <div
       style={{ zoom: 0.85 }}
-      className={`floating-container bg:white relative flex h-screen border-r-2 border-gray-200 shadow-sm transition-all duration-300`}
+      className={`floating-container relative flex min-h-screen bg-zinc-50 shadow-sm transition-all duration-300`}
     >
       <motion.section
-        className={`flex h-screen flex-col items-center justify-center gap-3 overflow-clip bg-white transition-all duration-300 select-none`}
+        className={`flex h-screen flex-col items-center justify-center gap-3 overflow-clip bg-zinc-50 transition-all duration-300 select-none`}
         animate={{ x: 0, opacity: 1 }}
       >
         <motion.div
-          className="main-navigation-items flex h-full flex-col items-center justify-center px-1.5"
+          className="main-navigation-items flex h-full flex-col items-center justify-center bg-zinc-50 px-1.5"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
-          <div className="flex flex-col gap-3 overflow-y-auto">
+          <div className="flex flex-col gap-3 overflow-y-auto bg-zinc-50">
             <NavigationButton
               labelName="Dashboard"
               isActive={isRouteActive(appRoutes.dashboard.path)}
               iconSrc="/icons/sideNavIcons/dashboard-icon.svg"
               activeIconSrc="/icons/sideNavIcons/dashboard-icon-active.svg"
               onClick={() => navigateToRoute(appRoutes.dashboard.path)}
+            />
+            <NavigationButton
+              labelName="Raw Materials"
+              isActive={isRouteActive(appRoutes.rawMaterials.path)}
+              iconSrc="/icons/sideNavIcons/rawMaterials-icon.svg"
+              activeIconSrc="/icons/sideNavIcons/rawMaterials-icon-active.svg"
+              onClick={() => navigateToRoute(appRoutes.rawMaterials.path)}
             />
             {/* <NavigationButton
               labelName="Employees"
@@ -164,7 +171,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
       onClick={onClick}
     >
       <div
-        className={`Navigation-button-container ${isActive ? 'bg-blue-500 p-3 dark:bg-blue-400' : 'bg-white p-1.5 hover:bg-slate-100'} cursor-pointer rounded-[10px] transition-all duration-300 ease-in-out select-none`}
+        className={`Navigation-button-container ${isActive ? 'bg-orange-500 p-3 dark:bg-blue-400' : 'bg-white p-1.5 hover:bg-slate-100'} cursor-pointer rounded-[10px] transition-all duration-300 ease-in-out select-none`}
       >
         <img
           className="url"
@@ -173,7 +180,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
         />
       </div>
       <h4
-        className={`scale-95 text-sm ${isActive ? 'font-medium text-slate-800' : 'font-medium text-slate-500'}`}
+        className={`scale-95 text-center text-sm ${isActive ? 'font-medium text-slate-800' : 'font-medium text-slate-500'}`}
       >
         {labelName}
       </h4>

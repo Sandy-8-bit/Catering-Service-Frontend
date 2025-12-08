@@ -39,9 +39,9 @@ const ButtonSm: React.FC<ButtonSmProps> = ({
       transition={{ duration: 0.3, delay: 0.2 }}
       type={type}
       disabled={disabled}
-      className={`btn-sm flex justify-center cursor-pointer flex-row items-center gap-2 rounded-[9px] px-3 py-2 ${disabled && 'opacity-70'} text-sm select-none ${
+      className={`btn-sm flex cursor-pointer flex-row items-center justify-center gap-2 rounded-[9px] px-3 py-2 ${disabled && 'opacity-70'} text-sm select-none ${
         state === 'default'
-          ? 'btn-primary bg-blue-500 transition-all duration-150 ease-in-out hover:bg-blue-600 active:bg-blue-700'
+          ? 'btn-primary bg-orange-500 text-white transition-all duration-150 ease-in-out hover:bg-orange-600 active:bg-orange-700'
           : `btn-outline bg-white font-medium text-gray-800 shadow-sm outline-2 outline-slate-300 transition-all duration-150 ease-in-out hover:bg-gray-100 active:bg-gray-200`
       } ${className}`}
       onClick={onClick}
@@ -85,7 +85,7 @@ export const ButtonLg: React.FC<ButtonLgProps> = ({
 }) => {
   return (
     <button
-      className={`btn-sm flex cursor-pointer flex-row items-center justify-center gap-2 rounded-[9px] px-4 py-3 text-center text-base font-medium transition-all duration-200 ease-in-out select-none ${state === 'default' ? 'btn-primary bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700' : 'btn-outline bg-white text-blue-500 outline-2 -outline-offset-2 outline-blue-500 hover:bg-blue-50 active:bg-blue-200'} disabled:opacity-45 ${className}`}
+      className={`btn-sm flex cursor-pointer flex-row items-center justify-center gap-2 rounded-[9px] px-4 py-3 text-center text-base font-medium transition-all duration-200 ease-in-out select-none ${state === 'default' ? 'btn-primary bg-orange-500 text-white hover:bg-orange-600 active:bg-orange-700' : 'btn-outline bg-white text-orange-500 outline-2 -outline-offset-2 outline-orange-500 hover:bg-orange-50 active:bg-orange-200'} disabled:opacity-45 ${className}`}
       onClick={onClick}
       type={type}
       disabled={disabled}

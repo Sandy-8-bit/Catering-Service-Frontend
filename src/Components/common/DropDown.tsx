@@ -360,7 +360,11 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
             {/* ✅ Show clear option only if allowClear is true */}
             {allowClear && selected.id !== 0 && (
               <button
-                onClick={(e) => {e.stopPropagation(),e.preventDefault(),handleSelect({ id: 0, label: _placeholder })}}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  handleSelect({ id: 0, label: _placeholder })
+                }}
                 className="flex w-full cursor-pointer items-center justify-between gap-2 px-4 py-2 text-red-600 hover:bg-slate-100"
               >
                 Clear

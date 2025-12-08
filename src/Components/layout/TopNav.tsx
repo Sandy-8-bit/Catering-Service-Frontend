@@ -12,7 +12,7 @@ export const TopNav: React.FC<TopNavProps> = ({ userName, formattedDate }) => {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="shadow-apple z-[99] border-b-2 border-gray-200 bg-white px-4 py-4"
+      className="shadow-apple z-[99] hidden border-b-2 border-gray-200 bg-white px-4 py-2"
     >
       <div className="flex items-center justify-between">
         {/* Welcome Section */}
@@ -21,7 +21,7 @@ export const TopNav: React.FC<TopNavProps> = ({ userName, formattedDate }) => {
           style={{ zoom: 0.8 }}
           className="container flex w-max flex-row items-center"
         >
-          <motion.div
+          {/* <motion.div
             className="relative flex max-w-full origin-left scale-75 flex-col items-center justify-center"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -30,6 +30,8 @@ export const TopNav: React.FC<TopNavProps> = ({ userName, formattedDate }) => {
             <motion.img
               src="/icons/logo-icon-side-nav.svg"
               alt="Logo"
+              width={32}
+              height={32}
               whileHover={{ rotate: 360 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
             />
@@ -42,7 +44,7 @@ export const TopNav: React.FC<TopNavProps> = ({ userName, formattedDate }) => {
             >
               Master
             </motion.p>
-          </motion.div>
+          </motion.div> */}
           <div className="flex flex-col gap-0">
             <motion.h1
               initial={{ opacity: 0, x: -10 }}
