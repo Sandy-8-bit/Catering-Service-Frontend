@@ -251,7 +251,7 @@ export const useDeleteRawMaterial = () => {
         }
       )
 
-      if (res.status !== 200) {
+      if (res.status !== 204) {
         throw new Error(res.data?.message || 'Failed to delete raw material')
       }
 
