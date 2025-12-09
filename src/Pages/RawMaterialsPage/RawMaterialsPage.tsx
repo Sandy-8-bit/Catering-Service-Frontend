@@ -16,7 +16,18 @@ import {
 } from '@/queries/RawMaterialsQueries'
 
 import { DeleteRawMaterialsDialog } from './DeleteRawMaterialsDialog'
-import { Edit3, Filter, Plus, UploadCloud, X } from 'lucide-react'
+import {
+  CloudUpload,
+  Edit3,
+  Filter,
+  Plus,
+  Save,
+  SaveAll,
+  SaveIcon,
+  SaveOff,
+  UploadCloud,
+  X,
+} from 'lucide-react'
 import DropdownSelect from '@/components/common/DropDown'
 
 const createEmptyRawMaterial = (id: number): RawMaterial => ({
@@ -348,6 +359,14 @@ export const RawMaterialsPage = () => {
           {isAddMode ? (
             <>
               <ButtonSm
+                state="outline"
+                onClick={handleDiscardChanges}
+                disabled={isCreateRawMaterialPending}
+                isPending={isCreateRawMaterialPending}
+              >
+                <X className="h-4 w-4 text-black" /> Cancel Add
+              </ButtonSm>
+              <ButtonSm
                 className={
                   !isAddDraftValid ? 'cursor-not-allowed! opacity-100!' : ''
                 }
@@ -356,15 +375,7 @@ export const RawMaterialsPage = () => {
                 disabled={!isAddDraftValid || isCreateRawMaterialPending}
                 isPending={isCreateRawMaterialPending}
               >
-                <Edit3 className="mr-2 h-4 w-4 text-white" /> Save Material
-              </ButtonSm>
-              <ButtonSm
-                state="outline"
-                onClick={handleDiscardChanges}
-                disabled={isCreateRawMaterialPending}
-                isPending={isCreateRawMaterialPending}
-              >
-                <X className="h-4 w-4 text-black" /> Cancel Add
+                <SaveIcon className="mr-2 h-4 w-4 text-white" /> Save Material
               </ButtonSm>
             </>
           ) : (
