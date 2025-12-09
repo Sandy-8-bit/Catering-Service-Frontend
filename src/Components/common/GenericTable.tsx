@@ -842,11 +842,11 @@ export default function GenericTable({
         >
           {/* Header Row */}
           <header
-            className={`header flex min-w-max flex-row items-center justify-between gap-2 border-y-2 border-y-[#F1F1F1] bg-[#f3f3f3] px-3 shadow-sm ${hasFrozenColumns ? 'has-frozen relative' : 'sticky left-0'}`}
+            className={`header flex min-w-max flex-row items-center justify-between gap-2 border-y-2 border-y-[#F1F1F1] bg-black/6 px-3 shadow-sm ${hasFrozenColumns ? 'has-frozen relative' : 'sticky left-0'}`}
           >
             {/* S.No column */}
             <div
-              className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column my-4 shrink-0 flex-row items-center justify-between gap-2 bg-[#f3f3f3] px-1.5`}
+              className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column my-4 shrink-0 flex-row items-center justify-between gap-2 bg-transparent px-1.5`}
             >
               {isSelectable && (
                 <CheckBox

@@ -34,9 +34,9 @@ const ButtonSm: React.FC<ButtonSmProps> = ({
 }) => {
   return (
     <motion.button
-      initial={{ y: -10 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.3, delay: 0.2 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.2, delay: 0, ease: 'easeInOut' }}
       type={type}
       disabled={disabled}
       className={`btn-sm flex cursor-pointer flex-row items-center justify-center rounded-[9px] px-3 text-sm shadow-sm/1 transition-colors duration-200 ease-in-out select-none ${

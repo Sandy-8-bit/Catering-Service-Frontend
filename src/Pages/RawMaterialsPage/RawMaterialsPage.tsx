@@ -10,13 +10,23 @@ import { units } from '@/constants/constants'
 import {
   useFetchRawMaterials,
   type RawMaterial,
+  type RawMaterialPayload,
   useEditRawMaterial,
+  useCreateRawMaterial,
 } from '@/queries/RawMaterialsQueries'
 
-import { AddRawMaterialsDialog } from './AddRawMaterialsDialog'
 import { DeleteRawMaterialsDialog } from './DeleteRawMaterialsDialog'
 import { Edit3, Filter, Plus, UploadCloud, X } from 'lucide-react'
 import DropdownSelect from '@/components/common/DropDown'
+
+const createEmptyRawMaterial = (id: number): RawMaterial => ({
+  id,
+  primaryName: '',
+  secondaryName: '',
+  purchaseUnit: '',
+  consumptionUnit: '',
+  purchasePrice: 0,
+})
 
 export const RawMaterialsPage = () => {
   // queries
@@ -25,20 +35,28 @@ export const RawMaterialsPage = () => {
     isLoading: isRawMaterialsLoading,
     isFetching,
   } = useFetchRawMaterials()
-  const editRawMaterial = useEditRawMaterial()
+  const { mutateAsync: editRawMaterial, isPending: isEditRawMaterialsPending } =
+    useEditRawMaterial()
+  const {
+    mutateAsync: createRawMaterial,
+    isPending: isCreateRawMaterialPending,
+  } = useCreateRawMaterial()
 
   // States
   const [editData, setEditData] = useState<RawMaterial[]>([])
-  const [isEditMode, setIsEditMode] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [selectedRowIndices, setSelectedRowIndices] = useState<number[]>([])
   const [selectedRows, setSelectedRows] = useState<RawMaterial[]>([])
+  const [formState, setFormState] = useState<'add' | 'edit' | 'delete' | null>(
+    null
+  )
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [deleteTargets, setDeleteTargets] = useState<RawMaterial[]>([])
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+
+  const isEditMode = formState === 'edit'
+  const isAddMode = formState === 'add'
+  const canEditRow = (rowId: number) => isEditMode || (isAddMode && rowId < 0)
 
   // useEffects
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditData(rawMaterials.map((item) => ({ ...item })))
   }, [rawMaterials])
 
@@ -50,6 +68,7 @@ export const RawMaterialsPage = () => {
     return editData.filter((row) => {
       const original = originalMap.get(row.id)
       if (!original) return false
+      // comparing only relevant fields isquals gives many error so manul is better
       return (
         original.primaryName !== row.primaryName ||
         (original.secondaryName ?? '') !== (row.secondaryName ?? '') ||
@@ -61,6 +80,32 @@ export const RawMaterialsPage = () => {
   }, [editData, originalMap])
 
   const hasChanges = changedRows.length > 0
+
+  const newMaterialDraft = useMemo(
+    () => editData.find((item) => item.id < 0),
+    [editData]
+  )
+
+  const isAddDraftValid = useMemo(() => {
+    if (!newMaterialDraft) return false
+    const primaryName = newMaterialDraft.primaryName?.trim() ?? ''
+    const purchaseUnit = newMaterialDraft.purchaseUnit?.trim() ?? ''
+    const consumptionUnit = newMaterialDraft.consumptionUnit?.trim() ?? ''
+    const purchasePrice = Number(newMaterialDraft.purchasePrice ?? 0)
+
+    return (
+      primaryName.length > 0 &&
+      purchaseUnit.length > 0 &&
+      consumptionUnit.length > 0 &&
+      purchasePrice > 0
+    )
+  }, [newMaterialDraft])
+
+  const selectedRowIndices = useMemo(() => {
+    return selectedRows
+      .map((row) => editData.findIndex((item) => item.id === row.id))
+      .filter((index) => index !== -1)
+  }, [selectedRows, editData])
 
   const updateRowField = (
     rowId: number,
@@ -80,40 +125,72 @@ export const RawMaterialsPage = () => {
   }
 
   const handleSaveChanges = async () => {
+    if (isAddMode) {
+      if (!newMaterialDraft || !isAddDraftValid || isCreateRawMaterialPending) {
+        return
+      }
+
+      const payload: RawMaterialPayload = {
+        primaryName: newMaterialDraft.primaryName.trim(),
+        secondaryName: newMaterialDraft.secondaryName?.trim() ?? '',
+        purchaseUnit: newMaterialDraft.purchaseUnit,
+        consumptionUnit: newMaterialDraft.consumptionUnit,
+        purchasePrice: Number(newMaterialDraft.purchasePrice) || 0,
+      }
+
+      try {
+        await createRawMaterial(payload)
+        setFormState(null)
+        setSelectedRows([])
+        setEditData((prev) => prev.filter((item) => item.id >= 0))
+      } catch (error) {
+        console.error(error)
+      }
+      return
+    }
+
     if (!isEditMode) {
-      setIsEditMode(true)
+      setFormState('edit')
       return
     }
 
     if (!hasChanges) {
-      setIsEditMode(false)
+      setFormState(null)
       return
     }
 
-    setIsSaving(true)
+    if (isEditRawMaterialsPending) return
+
     try {
-      for (const row of changedRows) {
-        // eslint-disable-next-line no-await-in-loop
-        await editRawMaterial.mutateAsync(row)
-      }
-      setIsEditMode(false)
+      await Promise.all(changedRows.map((row) => editRawMaterial(row)))
+      setFormState(null)
     } catch (error) {
       console.error(error)
-    } finally {
-      setIsSaving(false)
     }
   }
 
   const handleDiscardChanges = () => {
     setEditData(rawMaterials.map((item) => ({ ...item })))
-    setSelectedRowIndices([])
     setSelectedRows([])
-    setIsEditMode(false)
+    setFormState(null)
   }
 
   const handleSelectionChange = (indices: number[], rows: RawMaterial[]) => {
-    setSelectedRowIndices(indices)
     setSelectedRows(rows)
+  }
+
+  const handleAddRawMaterialRow = () => {
+    if (formState === 'add') return
+
+    const newTempId = Date.now() * -1
+    const blankRow = createEmptyRawMaterial(newTempId)
+
+    setFormState('add')
+    setEditData((prev) => {
+      const alreadyExists = prev.some((item) => item.id === newTempId)
+      if (alreadyExists) return prev
+      return [blankRow, ...prev]
+    })
   }
 
   // Data cells layout
@@ -124,7 +201,7 @@ export const RawMaterialsPage = () => {
       className: 'max-w-32',
       render: (value, row) => (
         <TableInput
-          isEditMode={isEditMode}
+          isEditMode={canEditRow(row.id)}
           title=""
           inputValue={value ?? ''}
           onChange={(val) =>
@@ -139,7 +216,7 @@ export const RawMaterialsPage = () => {
       className: 'w-42',
       render: (value, row) => (
         <TableInput
-          isEditMode={isEditMode}
+          isEditMode={canEditRow(row.id)}
           title=""
           inputValue={value ?? ''}
           onChange={(val) =>
@@ -162,7 +239,7 @@ export const RawMaterialsPage = () => {
         }
         return (
           <TableDropDown
-            isEditMode={isEditMode}
+            isEditMode={canEditRow(row.id)}
             title=""
             options={units}
             selected={selectedOption}
@@ -188,7 +265,7 @@ export const RawMaterialsPage = () => {
         }
         return (
           <TableDropDown
-            isEditMode={isEditMode}
+            isEditMode={canEditRow(row.id)}
             title=""
             options={units}
             selected={selectedOption}
@@ -206,7 +283,7 @@ export const RawMaterialsPage = () => {
       className: 'w-48',
       render: (value, row) => (
         <TableInput
-          isEditMode={isEditMode}
+          isEditMode={canEditRow(row.id)}
           title=""
           inputValue={value ?? 0}
           type="num"
@@ -223,7 +300,6 @@ export const RawMaterialsPage = () => {
   ]
   const handleDeleteSelected = () => {
     if (selectedRows.length === 0) return
-    setDeleteTargets(selectedRows)
     setIsDeleteDialogOpen(true)
   }
 
@@ -241,8 +317,8 @@ export const RawMaterialsPage = () => {
             className="font-medium"
             state="outline"
             onClick={() => {}}
-            disabled={isSaving}
-            isPending={isSaving}
+            disabled={isEditRawMaterialsPending}
+            isPending={isEditRawMaterialsPending}
           >
             <Filter className="h-4 w-4 text-black" />
             Filter
@@ -253,7 +329,7 @@ export const RawMaterialsPage = () => {
             onChange={() => {}}
             options={[]}
             selected={{ id: 1, label: 'Table View' }}
-            disabled={isSaving}
+            disabled={isEditRawMaterialsPending}
           />
         </div>
 
@@ -262,62 +338,84 @@ export const RawMaterialsPage = () => {
             className="font-medium"
             state="outline"
             onClick={() => {}}
-            disabled={isSaving}
-            isPending={isSaving}
+            disabled={isEditRawMaterialsPending}
+            isPending={isEditRawMaterialsPending}
           >
             <UploadCloud className="h-5 w-5 text-black" />
             Export Data
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
-          <ButtonSm
-            className={
-              !hasChanges && isEditMode
-                ? 'cursor-not-allowed! opacity-100!'
-                : ''
-            }
-            state={isEditMode ? 'default' : 'outline'}
-            onClick={() => void handleSaveChanges()}
-            disabled={isSaving || (isEditMode && !hasChanges)}
-            isPending={isSaving}
-          >
-            {(hasChanges || !isEditMode) && (
-              <Edit3
-                className={`mr-2 h-4 w-4 ${
-                  isEditMode
-                    ? hasChanges
-                      ? 'text-white'
-                      : 'text-white/80'
-                    : 'text-black'
-                }`}
-              />
-            )}{' '}
-            {isEditMode
-              ? isSaving
-                ? 'Saving…'
-                : 'Save Changes'
-              : 'Edit Table'}
-          </ButtonSm>
-          {isEditMode && (
-            <ButtonSm
-              state="outline"
-              onClick={() => {
-                if (hasChanges) {
-                  handleDiscardChanges()
-                } else {
-                  setIsEditMode(false)
+          {isAddMode ? (
+            <>
+              <ButtonSm
+                className={
+                  !isAddDraftValid ? 'cursor-not-allowed! opacity-100!' : ''
                 }
-              }}
-              disabled={isSaving}
-              isPending={isSaving}
-            >
-              <X className="h-4 w-4 text-black" />{' '}
-              {hasChanges ? 'Discard Changes' : 'Cancel'}
-            </ButtonSm>
+                state="default"
+                onClick={() => void handleSaveChanges()}
+                disabled={!isAddDraftValid || isCreateRawMaterialPending}
+                isPending={isCreateRawMaterialPending}
+              >
+                <Edit3 className="mr-2 h-4 w-4 text-white" /> Save Material
+              </ButtonSm>
+              <ButtonSm
+                state="outline"
+                onClick={handleDiscardChanges}
+                disabled={isCreateRawMaterialPending}
+                isPending={isCreateRawMaterialPending}
+              >
+                <X className="h-4 w-4 text-black" /> Cancel Add
+              </ButtonSm>
+            </>
+          ) : (
+            <>
+              <ButtonSm
+                className={
+                  !hasChanges && isEditMode
+                    ? 'cursor-not-allowed! opacity-100!'
+                    : ''
+                }
+                state={isEditMode ? 'default' : 'outline'}
+                onClick={() => void handleSaveChanges()}
+                disabled={
+                  isEditRawMaterialsPending || (isEditMode && !hasChanges)
+                }
+                isPending={isEditRawMaterialsPending}
+              >
+                {(hasChanges || !isEditMode) && (
+                  <Edit3
+                    className={`mr-2 h-4 w-4 ${
+                      isEditMode
+                        ? hasChanges
+                          ? 'text-white'
+                          : 'text-white/80'
+                        : 'text-black'
+                    }`}
+                  />
+                )}{' '}
+                {isEditMode
+                  ? isEditRawMaterialsPending
+                    ? 'Saving…'
+                    : 'Save Changes'
+                  : 'Edit Table'}
+              </ButtonSm>
+              {isEditMode && (
+                <ButtonSm
+                  state="outline"
+                  onClick={handleDiscardChanges}
+                  disabled={isEditRawMaterialsPending}
+                  isPending={isEditRawMaterialsPending}
+                >
+                  <X className="h-4 w-4 text-black" />{' '}
+                  {hasChanges ? 'Discard Changes' : 'Cancel'}
+                </ButtonSm>
+              )}
+              <ButtonSm state="default" onClick={handleAddRawMaterialRow}>
+                <Plus className="mr-2 h-4 w-4 text-white" />
+                Add Raw Material
+              </ButtonSm>
+            </>
           )}
-          <ButtonSm state="default" onClick={() => setIsAddDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4 text-white" />
-            Add Raw Material
-          </ButtonSm>
         </div>
       </section>
 
@@ -334,38 +432,21 @@ export const RawMaterialsPage = () => {
       />
 
       <AnimatePresence>
-        {isAddDialogOpen && (
-          <DialogBox setToggleDialogueBox={setIsAddDialogOpen}>
-            <AddRawMaterialsDialog
-              onCancel={() => setIsAddDialogOpen(false)}
-              onCreated={(material) => {
-                if (material) {
-                  setEditData((prev) => [...prev, material])
-                }
-                setIsAddDialogOpen(false)
-              }}
-            />
-          </DialogBox>
-        )}
-
-        {isDeleteDialogOpen && deleteTargets.length > 0 && (
+        {isDeleteDialogOpen && selectedRows.length > 0 && (
           <DialogBox setToggleDialogueBox={setIsDeleteDialogOpen}>
             <DeleteRawMaterialsDialog
-              materials={deleteTargets}
+              materials={selectedRows}
               onCancel={() => {
-                setDeleteTargets([])
                 setIsDeleteDialogOpen(false)
               }}
               onDeleted={() => {
                 const idsToDelete = new Set(
-                  deleteTargets.map((material) => material.id)
+                  selectedRows.map((material) => material.id)
                 )
                 setEditData((prev) =>
                   prev.filter((item) => !idsToDelete.has(item.id))
                 )
-                setSelectedRowIndices([])
                 setSelectedRows([])
-                setDeleteTargets([])
                 setIsDeleteDialogOpen(false)
               }}
             />
