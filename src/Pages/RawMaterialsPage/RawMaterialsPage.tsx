@@ -380,6 +380,17 @@ export const RawMaterialsPage = () => {
             </>
           ) : (
             <>
+              {isEditMode && (
+                <ButtonSm
+                  state="outline"
+                  onClick={handleDiscardChanges}
+                  disabled={isEditRawMaterialsPending}
+                  isPending={isEditRawMaterialsPending}
+                >
+                  <X className="h-4 w-4 text-black" />{' '}
+                  {hasChanges ? 'Discard Changes' : 'Cancel'}
+                </ButtonSm>
+              )}
               <ButtonSm
                 className={
                   !hasChanges && isEditMode
@@ -410,21 +421,12 @@ export const RawMaterialsPage = () => {
                     : 'Save Changes'
                   : 'Edit Table'}
               </ButtonSm>
-              {isEditMode && (
-                <ButtonSm
-                  state="outline"
-                  onClick={handleDiscardChanges}
-                  disabled={isEditRawMaterialsPending}
-                  isPending={isEditRawMaterialsPending}
-                >
-                  <X className="h-4 w-4 text-black" />{' '}
-                  {hasChanges ? 'Discard Changes' : 'Cancel'}
+              {!isEditMode && (
+                <ButtonSm state="default" onClick={handleAddRawMaterialRow}>
+                  <Plus className="mr-2 h-4 w-4 text-white" />
+                  Add Raw Material
                 </ButtonSm>
               )}
-              <ButtonSm state="default" onClick={handleAddRawMaterialRow}>
-                <Plus className="mr-2 h-4 w-4 text-white" />
-                Add Raw Material
-              </ButtonSm>
             </>
           )}
         </div>

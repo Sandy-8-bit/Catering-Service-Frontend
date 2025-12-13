@@ -842,7 +842,7 @@ export default function GenericTable({
         >
           {/* Header Row */}
           <header
-            className={`header flex min-w-max flex-row items-center justify-between gap-2 border-y-2 border-y-[#F1F1F1] bg-black/6 px-3 shadow-sm ${hasFrozenColumns ? 'has-frozen relative' : 'sticky left-0'}`}
+            className={`header flex min-w-max flex-row items-center justify-between gap-2 border-y-2 border-y-[#F1F1F1] bg-[#FAFAFA] px-3 shadow-sm ${hasFrozenColumns ? 'has-frozen relative' : 'sticky left-0'}`}
           >
             {/* S.No column */}
             <div
@@ -1014,7 +1014,7 @@ export default function GenericTable({
                     className={`group flex min-w-max flex-row items-center justify-between gap-2 border-b border-[#F1F1F1] px-3 text-sm text-[#1F1F21] ${
                       isRowChecked
                         ? 'bg-orange-100'
-                        : 'bg-white hover:bg-slate-50/50'
+                        : 'bg-white hover:bg-slate-50/70'
                     } ${hasFrozenColumns ? 'has-frozen' : ''}`}
                   >
                     {/* S.No column */}

@@ -165,13 +165,9 @@ export const useCreateRawMaterial = () => {
         },
       })
 
-      if (res.status !== 201 && res.status !== 200) {
-        throw new Error(res.data?.message || 'Failed to create raw material')
-      }
-
       return res.data.data as RawMaterial
-    } catch (error: unknown) {
-      handleApiError(error, 'Raw material')
+    } catch (error) {
+      handleApiError(error, 'Create Raw material')
     }
   }
 
