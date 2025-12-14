@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'motion/react'
+import { LogOut } from 'lucide-react'
 import { appRoutes } from '@/routes/appRoutes'
 
 interface NavigationItem {
@@ -52,24 +53,24 @@ const SideNav: React.FC = () => {
     []
   )
 
-  const activePageTitle = useMemo(() => {
-    const activeItem = navigationItems.find((item) => item.path === activeRoute)
-    return activeItem?.label ?? 'Navigation'
-  }, [activeRoute, navigationItems])
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('token')
+    window.location.href = appRoutes.signInPage
+  }, [])
 
   const toggleExpansion = () => setIsExpanded((prev) => !prev)
 
   return (
     <div
       style={{ zoom: 0.85 }}
-      className="floating-container relative flex min-h-screen bg-[#FAFAFA] transition-all duration-300"
+      className="floating-container relative flex min-h-[125vh] bg-[#FAFAFA] transition-all duration-300"
     >
       <motion.section
-        className={`flex h-screen flex-col gap-4 overflow-hidden bg-[#FAFAFA] px-2 pt-4 transition-all duration-300 select-none ${isExpanded ? 'w-[280px]' : 'w-[120px]'}`}
+        className={`flex h-[115vh] flex-col gap-4 overflow-hidden bg-[#FAFAFA] px-2.5 pt-4 transition-all duration-300 select-none ${isExpanded ? 'w-[280px]' : 'w-[100px]'}`}
         animate={{ x: 0, opacity: 1 }}
       >
         <motion.div
-          className={`mt-1 flex w-full items-center ${isExpanded ? 'justify-between gap-3 rounded-xl border-2 border-[#F1F1F1] bg-white p-2 shadow-sm' : 'flex-col gap-3'} px-1.5`}
+          className={`mt-1 flex w-full items-center ${isExpanded ? 'justify-between gap-3 rounded-xl border-2 border-[#eeeeee] bg-white p-2 shadow-sm' : 'flex-col gap-3'} px-1.5`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.4 }}
@@ -77,15 +78,15 @@ const SideNav: React.FC = () => {
           <img
             onClick={() => toggleExpansion()}
             src="/icons/logo-icon.svg"
-            className={`${isExpanded ? 'h-14 w-14' : 'h-16 w-16'} `}
+            className={`${isExpanded ? 'h-14 w-14 self-center' : 'h-16 w-16 self-center'} `}
           />
 
           {isExpanded && (
             <div className="flex w-full flex-col">
-              <span className="text-md font-semibold text-slate-900">
-                Uxerflow Inc.
+              <span className="text-md min-w-max font-semibold text-slate-900">
+                EBT Catering
               </span>
-              <span className="text-xs text-slate-500">Free Plan</span>
+              <span className="text-sm text-slate-500">Admin</span>
             </div>
           )}
           <button
@@ -110,13 +111,13 @@ const SideNav: React.FC = () => {
           </button>
         </motion.div>
         <motion.div
-          className="flex h-full w-full flex-col items-center justify-start overflow-y-auto px-1.5 pb-6"
+          className="flex h-full w-full flex-col items-center justify-start self-stretch overflow-y-auto"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
         >
           <div
-            className={`mt-4 flex w-full flex-col ${isExpanded ? 'gap-2' : 'items-center gap-3'}`}
+            className={`mt-4 flex w-full flex-col ${isExpanded ? 'gap-2' : 'items-center gap-0'}`}
           >
             {navigationItems.map((item) => (
               <NavigationButton
@@ -130,6 +131,22 @@ const SideNav: React.FC = () => {
               />
             ))}
           </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className={`mt-auto w-full cursor-pointer rounded-[12px] border-2 border-transparent text-red-600 transition-all duration-300 ease-in-out ${isExpanded ? 'flex items-center justify-start gap-3 px-3 py-2 hover:border-[#eeeeee] hover:bg-white' : 'flex flex-col items-center px-1.5 py-2 text-center'}`}
+          >
+            <div
+              className={`flex items-center justify-center rounded-[10px] transition-all duration-200 ease-in-out ${isExpanded ? 'h-11 w-11 bg-white/30 text-red-500' : 'mb-1 h-12 w-12 text-red-500 hover:bg-red-100'}`}
+            >
+              <LogOut className="h-5 w-5" />
+            </div>
+            {isExpanded ? (
+              <span className="text-base font-semibold">Logout</span>
+            ) : (
+              <h4 className="text-sm font-semibold">Logout</h4>
+            )}
+          </button>
         </motion.div>
       </motion.section>
     </div>
@@ -153,21 +170,31 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
   iconSrc,
   onClick,
   isExpanded,
+  activeIconSrc,
 }) => {
-  const activeClasses = isActive
-    ? 'bg-white text-slate-600 shadow-sm'
-    : 'hover:bg-slate-100 text-slate-700'
-
+  // const activeClasses = isActive
+  // ? 'bg-white text-slate-600 shadow-sm'
+  // : 'hover:bg-slate-100 text-slate-700'
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`Navigation-button-container w-full cursor-pointer rounded-[12px] transition-all duration-300 ease-in-out ${activeClasses} ${isExpanded ? 'flex items-center justify-start gap-3 px-3 py-2' : `flex scale-90 flex-col items-center px-1.5 py-2 text-center ${isActive ? 'bg-' : ''}`}`}
+      className={`Navigation-button-container w-full cursor-pointer rounded-[12px] border-2 border-transparent transition-all duration-300 ease-in-out ${isExpanded ? `flex items-center justify-start gap-3 px-3 py-2 ${isActive ? 'border-2! border-[#eeeeee]! bg-white text-slate-600 shadow-sm' : ''}` : `flex scale-90 flex-col items-center px-1.5 py-2 text-center`}`}
     >
       <div
-        className={`flex items-center justify-center rounded-[10px] transition-all ${isExpanded ? 'h-11 w-11 bg-white/20' : 'mb-1 h-12 w-12'}`}
+        className={`flex items-center justify-center rounded-[10px] transition-all ${isExpanded ? 'h-11 w-11 bg-white/20' : `mb-1 h-12 w-12 ${isActive ? 'bg-orange-500' : ''} `}`}
       >
-        <img src={iconSrc} alt={labelName} className="h-7 w-7 brightness-75" />
+        <img
+          src={
+            isExpanded
+              ? iconSrc
+              : isActive && activeIconSrc
+                ? activeIconSrc
+                : iconSrc
+          }
+          alt={labelName}
+          className={`h-7 w-7 ${isExpanded && isActive ? 'brightness-75' : ''}`}
+        />
       </div>
       {isExpanded ? (
         <span

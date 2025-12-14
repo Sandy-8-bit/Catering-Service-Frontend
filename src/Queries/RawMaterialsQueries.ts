@@ -13,26 +13,12 @@
 
 import type { DropdownOption } from '@/components/common/Input'
 import { apiRoutes } from '@/routes/apiRoutes'
+import type { RawMaterial, RawMaterialPayload } from '@/types/RawMaterial'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-
-/**
- * API types
- */
-
-export interface RawMaterial {
-  id: number
-  primaryName: string
-  secondaryName: string
-  purchaseUnit: string
-  consumptionUnit: string
-  purchasePrice: number
-}
-
-export type RawMaterialPayload = Omit<RawMaterial, 'id'>
 
 /**
  * Query keys
