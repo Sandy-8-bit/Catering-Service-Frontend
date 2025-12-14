@@ -14,4 +14,8 @@ export const appRoutes = {
     path: '/raw-materials',
     children: {},
   },
+  catergories: {
+    path: '/categories',
+    children: {},
+  },
 }

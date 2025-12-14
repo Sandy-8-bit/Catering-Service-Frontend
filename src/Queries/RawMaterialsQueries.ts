@@ -18,7 +18,7 @@ import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
-import { toast } from 'react-toastify'
+import { toast } from 'react-hot-toast'
 
 /**
  * Query keys

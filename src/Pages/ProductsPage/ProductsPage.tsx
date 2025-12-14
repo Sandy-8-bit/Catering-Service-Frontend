@@ -14,7 +14,7 @@ import {
   useCreateRawMaterial,
 } from '@/queries/RawMaterialsQueries'
 
-import { DeleteRawMaterialsDialog } from './DeleteRawMaterialsDialog'
+import { DeleteRawMaterialsDialog } from './DeleteProductsDialog'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 import DropdownSelect from '@/components/common/DropDown'
 import type { RawMaterial, RawMaterialPayload } from '@/types/RawMaterial'

@@ -1,6 +1,6 @@
 import { appRoutes } from '@/routes/appRoutes'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { toast } from 'react-hot-toast'
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function authHandler() {

@@ -2,7 +2,7 @@ import axiosInstance from '../utils/axios'
 import axios from 'axios'
 import { useMutation } from '@tanstack/react-query'
 import Cookies from 'js-cookie'
-import { toast } from 'react-toastify'
+import { toast } from 'react-hot-toast'
 import { apiRoutes } from '../routes/apiRoutes'
 import type {
   LoginRequest,

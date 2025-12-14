@@ -1,28 +1,28 @@
 import ButtonSm from '@/components/common/Buttons'
-import type { RawMaterial } from '@/types/RawMaterial'
-import { useDeleteRawMaterial } from '@/queries/RawMaterialsQueries'
+import type { Category } from '@/types/Category'
+import { useDeleteCategory } from '@/queries/CategoryQueries'
 
-interface DeleteRawMaterialsDialogProps {
-  materials: RawMaterial[]
+interface DeleteCategoriesDialogProps {
+  categories: Category[]
   onCancel: () => void
   onDeleted: () => void
 }
 
-export const DeleteRawMaterialsDialog = ({
-  materials,
+export const DeleteCategoriesDialog = ({
+  categories,
   onCancel,
   onDeleted,
-}: DeleteRawMaterialsDialogProps) => {
-  const { mutateAsync, isPending } = useDeleteRawMaterial()
-  const totalToDelete = materials.length
-  const primaryMaterial = materials[0]
+}: DeleteCategoriesDialogProps) => {
+  const { mutateAsync, isPending } = useDeleteCategory()
+  const totalToDelete = categories.length
+  const primaryCategory = categories[0]
 
   const handleDelete = async () => {
     if (totalToDelete === 0) return
     try {
-      for (const material of materials) {
+      for (const category of categories) {
         // eslint-disable-next-line no-await-in-loop
-        await mutateAsync(material)
+        await mutateAsync(category)
       }
       onDeleted()
     } catch (error) {
@@ -39,7 +39,7 @@ export const DeleteRawMaterialsDialog = ({
       }}
     >
       <header className="flex w-full items-center justify-between text-lg font-semibold text-red-600">
-        Delete Raw Material
+        Delete Category
         <img
           onClick={onCancel}
           className="w-5 cursor-pointer"
@@ -48,28 +48,28 @@ export const DeleteRawMaterialsDialog = ({
         />
       </header>
 
-      {primaryMaterial ? (
+      {primaryCategory ? (
         <div className="space-y-2 text-sm leading-relaxed text-zinc-700">
           <p>
             You are about to delete{' '}
             <span className="font-semibold text-red-500">
               {totalToDelete === 1
-                ? primaryMaterial.primaryName
-                : `${totalToDelete} raw materials`}
+                ? primaryCategory.primaryName
+                : `${totalToDelete} categories`}
             </span>
             . This action cannot be undone.
           </p>
           {totalToDelete > 1 && (
             <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-500">
-              {materials.slice(0, 3).map((material) => (
-                <li key={material.id}>{material.primaryName}</li>
+              {categories.slice(0, 3).map((category) => (
+                <li key={category.id}>{category.primaryName}</li>
               ))}
               {totalToDelete > 3 && <li>+ {totalToDelete - 3} more…</li>}
             </ul>
           )}
         </div>
       ) : (
-        <p className="text-sm text-zinc-600">No material selected.</p>
+        <p className="text-sm text-zinc-600">No category selected.</p>
       )}
 
       <section className="mt-1 grid w-full grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
@@ -85,7 +85,7 @@ export const DeleteRawMaterialsDialog = ({
           state="default"
           type="submit"
           text={isPending ? 'Deleting...' : 'Delete'}
-          disabled={isPending || !primaryMaterial}
+          disabled={isPending || !primaryCategory}
           isPending={isPending}
         />
       </section>

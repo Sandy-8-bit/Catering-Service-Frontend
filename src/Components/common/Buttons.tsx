@@ -43,8 +43,8 @@ const ButtonSm: React.FC<ButtonSmProps> = ({
         disabled ? 'cursor-not-allowed opacity-70' : ''
       } ${
         state === 'default'
-          ? 'gap-0! bg-[#1A191E]! py-3! font-medium! text-white! outline-0! hover:bg-zinc-800! focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-1'
-          : 'gap-2 border-2 border-[#F1F1F1] bg-white py-3 font-semibold text-black outline-0 hover:bg-gray-100 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1 active:bg-gray-200'
+          ? 'gap-0! bg-[#1A191E]! py-3! font-medium! text-white! outline-0! hover:bg-zinc-800!'
+          : 'gap-2 border-2 border-[#F1F1F1] bg-white py-3 font-semibold text-black outline-0 hover:bg-gray-100 active:bg-gray-200'
       } ${className}`}
       onClick={onClick}
       value={value}

@@ -838,7 +838,7 @@ export default function GenericTable({
         {/* Table */}
         <div
           ref={tableContainerRef}
-          className="tables flex min-h-[300px] w-full flex-col overflow-x-auto bg-white md:overflow-x-auto"
+          className="tables relative flex min-h-[300px] w-full flex-col overflow-x-auto bg-white md:overflow-x-auto"
         >
           {/* Header Row */}
           <header

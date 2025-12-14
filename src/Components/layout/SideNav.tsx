@@ -49,6 +49,12 @@ const SideNav: React.FC = () => {
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
       },
+      {
+        label: 'Catergories',
+        path: appRoutes.catergories.path,
+        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
+        activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
+      },
     ],
     []
   )

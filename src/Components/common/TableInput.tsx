@@ -90,14 +90,33 @@ export const TableInput = <T extends string | number>({
     const raw = e.target.value
 
     if (type === 'num') {
-      if (raw === '') {
+      let normalized = raw
+
+      if (
+        normalized.length > 1 &&
+        normalized.startsWith('0') &&
+        normalized[1] !== '.'
+      ) {
+        normalized = normalized.replace(/^0+/, '')
+        if (normalized === '') {
+          normalized = '0'
+        } else if (normalized.startsWith('.')) {
+          normalized = `0${normalized}`
+        }
+
+        if (normalized !== raw) {
+          e.target.value = normalized
+        }
+      }
+
+      if (normalized === '') {
         onChange('' as T)
         return
       }
 
       // Allow intermediate decimal input like "12." or "0."
-      if (/^\d*\.?\d*$/.test(raw)) {
-        const num = parseFloat(raw)
+      if (/^\d*\.?\d*$/.test(normalized)) {
+        const num = parseFloat(normalized)
 
         // Skip NaN for incomplete input like "."
         if (!isNaN(num)) {
@@ -109,7 +128,7 @@ export const TableInput = <T extends string | number>({
           onChange(num as T)
         } else {
           // Still call onChange for partial decimals like "12."
-          onChange(raw as T)
+          onChange(normalized as T)
         }
       }
     } else {

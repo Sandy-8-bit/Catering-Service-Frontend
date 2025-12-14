@@ -4,7 +4,7 @@ import { useLogin } from '@/queries/AuthQueries'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { toast } from 'react-hot-toast'
 import VerifyTotpModal from './VerifyTotpModal'
 
 export const SignInPage = () => {

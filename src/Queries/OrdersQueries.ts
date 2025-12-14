@@ -4,7 +4,7 @@ import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
-import { toast } from 'react-toastify'
+import { toast } from 'react-hot-toast'
 
 const ORDERS_KEY = ['orders'] as const
 const orderKey = (id: number | string) => [...ORDERS_KEY, id] as const

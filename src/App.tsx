@@ -5,6 +5,7 @@ import { SignInPage } from '@pages/Auth/Auth'
 import { Dashboard } from '@pages/Dashboard'
 import { RawMaterialsPage } from '@/pages/RawMaterialsPage/RawMaterialsPage'
 import { appRoutes } from '@/routes/appRoutes'
+import CategoriesPage from './pages/CatergoriesPage/CatergoriesPage'
 
 function App() {
   return (
@@ -19,6 +20,10 @@ function App() {
           <Route
             path={appRoutes.rawMaterials.path}
             element={<RawMaterialsPage />}
+          />
+          <Route
+            path={appRoutes.catergories.path}
+            element={<CategoriesPage />}
           />
         </Route>
       </Route>
