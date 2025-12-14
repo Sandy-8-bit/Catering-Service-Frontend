@@ -68,6 +68,12 @@ const SideNav: React.FC = () => {
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
       },
       {
+        label: 'Orders (podala)',
+        path: appRoutes.additionalItems.path,
+        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
+        activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
+      },
+      {
         label: 'User Management',
         path: appRoutes.userManagement.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
@@ -141,10 +147,10 @@ const SideNav: React.FC = () => {
           transition={{ delay: 0.3, duration: 0.5 }}
         >
           <div
-            className={`mt-4 flex w-full flex-col ${isExpanded ? 'gap-2' : 'items-center gap-0'}`}
+            className={`flex w-full flex-col ${isExpanded ? 'gap-0' : 'items-center gap-0'}`}
           >
             {isExpanded && (
-              <h4 className="text-md px-3 font-medium text-slate-600">
+              <h4 className="text-md my-3 px-3 font-medium text-slate-600">
                 Main Menu
               </h4>
             )}
@@ -160,11 +166,27 @@ const SideNav: React.FC = () => {
               />
             ))}
             {isExpanded && (
-              <h4 className="text-md mt-3 px-3 font-medium text-slate-600">
-                Settings
+              <h4 className="text-md my-3 px-3 font-medium text-slate-600">
+                Order Management
               </h4>
             )}
             {navigationItems.slice(5, 6).map((item) => (
+              <NavigationButton
+                key={item.path}
+                labelName={item.label}
+                isActive={isRouteActive(item.path)}
+                iconSrc={item.icon}
+                activeIconSrc={item.activeIcon}
+                onClick={() => navigateToRoute(item.path)}
+                isExpanded={isExpanded}
+              />
+            ))}
+            {isExpanded && (
+              <h4 className="text-md my-3 px-3 font-medium text-slate-600">
+                Settings
+              </h4>
+            )}
+            {navigationItems.slice(6).map((item) => (
               <NavigationButton
                 key={item.path}
                 labelName={item.label}
