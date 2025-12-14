@@ -67,6 +67,12 @@ const SideNav: React.FC = () => {
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
       },
+      {
+        label: 'User Management',
+        path: appRoutes.userManagement.path,
+        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
+        activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
+      },
     ],
     []
   )
@@ -137,7 +143,28 @@ const SideNav: React.FC = () => {
           <div
             className={`mt-4 flex w-full flex-col ${isExpanded ? 'gap-2' : 'items-center gap-0'}`}
           >
-            {navigationItems.map((item) => (
+            {isExpanded && (
+              <h4 className="text-md px-3 font-medium text-slate-600">
+                Main Menu
+              </h4>
+            )}
+            {navigationItems.slice(0, 5).map((item) => (
+              <NavigationButton
+                key={item.path}
+                labelName={item.label}
+                isActive={isRouteActive(item.path)}
+                iconSrc={item.icon}
+                activeIconSrc={item.activeIcon}
+                onClick={() => navigateToRoute(item.path)}
+                isExpanded={isExpanded}
+              />
+            ))}
+            {isExpanded && (
+              <h4 className="text-md mt-3 px-3 font-medium text-slate-600">
+                Settings
+              </h4>
+            )}
+            {navigationItems.slice(5, 6).map((item) => (
               <NavigationButton
                 key={item.path}
                 labelName={item.label}

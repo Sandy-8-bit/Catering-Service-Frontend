@@ -8,6 +8,7 @@ import { appRoutes } from '@/routes/appRoutes'
 import CategoriesPage from '@pages/CatergoriesPage/CatergoriesPage'
 import ProductsPage from '@pages/ProductsPage/ProductsPage'
 import AdditionalItemsPage from '@pages/AdditionalItemsPage/AdditionalItemsPage'
+import UsersPage from '@pages/UsersPage/UsersPage'
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             path={appRoutes.additionalItems.path}
             element={<AdditionalItemsPage />}
           />
+          <Route path={appRoutes.userManagement.path} element={<UsersPage />} />
         </Route>
       </Route>
 

@@ -37,7 +37,7 @@ export const useFetchUsers = () => {
         },
       })
 
-      return (res.data?.data ?? []) as User[]
+      return (res.data ?? []) as User[]
     } catch (error: unknown) {
       handleApiError(error, 'Fetching Users')
       return []

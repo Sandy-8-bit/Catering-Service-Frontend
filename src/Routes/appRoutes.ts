@@ -26,4 +26,8 @@ export const appRoutes = {
     path: '/additional-items',
     children: {},
   },
+  userManagement: {
+    path: '/user-management',
+    children: {},
+  },
 }
