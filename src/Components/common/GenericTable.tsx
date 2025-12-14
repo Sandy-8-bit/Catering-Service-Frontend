@@ -799,8 +799,8 @@ export default function GenericTable({
               {/* Selection Status */}
               {isSelectable && selectedRowIndices.length > 0 && (
                 <>
-                  <div className="ml-4 flex flex-row items-center gap-2 rounded-2xl bg-blue-100 px-3 py-3 text-sm font-medium text-blue-800">
-                    <span className="flex text-sm font-medium text-blue-600">
+                  <div className="ml-4 flex flex-row items-center gap-2 rounded-md bg-[#f3f3f3] px-3 py-3 text-sm font-medium text-blue-800">
+                    <span className="flex text-sm font-medium text-slate-900">
                       Selected:{' '}
                       <span className="flex min-w-4">
                         {selectedRowIndices.length}{' '}
@@ -810,13 +810,13 @@ export default function GenericTable({
                       onClick={clearSelection}
                       className="cursor-pointer border-0 bg-transparent p-0 transition-transform hover:scale-110"
                     >
-                      <X size={16} className="text-blue-600" />
+                      <X size={16} className="text-slate-900" />
                     </button>
                   </div>
-                  <div className="flex flex-row items-center gap-2 rounded-2xl bg-red-100 px-3 py-3 text-sm font-medium text-red-600">
+                  <div className="flex cursor-pointer flex-row items-center gap-2 rounded-md bg-red-600 px-3 py-3 text-sm font-medium text-white transition-transform hover:scale-105">
                     Delete All
                     <Trash2Icon
-                      className="cursor-pointer border-0 bg-transparent p-0 text-red-600 transition-transform hover:scale-110"
+                      className="border-0 bg-transparent p-0 text-white"
                       onClick={() => {
                         onDeleteSelected()
                       }}
