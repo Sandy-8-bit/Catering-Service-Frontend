@@ -12,10 +12,11 @@ import {
   useFetchCategories,
 } from '@/queries/CategoryQueries'
 import type { Category, CategoryPayload } from '@/types/Category'
-import { handleCancelHook } from '@/hooks/handleCancelHook'
+import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 
 import { DeleteCategoriesDialog } from './DeleteCatergoriesDialog'
+import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 
 const createEmptyCategory = (id: number): Category => ({
   id,
@@ -45,8 +46,6 @@ export const CategoriesPage = () => {
   const isAddMode = formState === 'add'
   const canEditRow = (rowId: number) => isEditMode || (isAddMode && rowId < 0)
 
-
-  
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditData(categories.map((item) => ({ ...item })))
@@ -197,7 +196,8 @@ export const CategoriesPage = () => {
     setFormState(null)
   }
 
-  handleCancelHook(formState, handleDiscardChanges)
+  useHandleCancelHook(formState, handleDiscardChanges)
+  useHandleSaveHook(formState, handleSaveChanges)
 
   const handleSelectionChange = (indices: number[], rows: Category[]) => {
     setSelectedRows(rows)

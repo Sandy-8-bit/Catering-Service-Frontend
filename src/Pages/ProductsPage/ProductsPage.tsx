@@ -6,45 +6,50 @@ import DialogBox from '@/components/common/DialogBox'
 import GenericTable, { type DataCell } from '@/components/common/GenericTable'
 import TableDropDown from '@/components/common/TableDropDown'
 import { TableInput } from '@/components/common/TableInput'
-import { units } from '@/constants/constants'
-import { handleCancelHook } from '@/hooks/handleCancelHook'
-import {
-  useFetchRawMaterials,
-  useEditRawMaterial,
-  useCreateRawMaterial,
-} from '@/queries/RawMaterialsQueries'
 
-import { DeleteRawMaterialsDialog } from './DeleteProductsDialog'
-import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 import DropdownSelect from '@/components/common/DropDown'
-import type { RawMaterial, RawMaterialPayload } from '@/types/RawMaterial'
+import { useFetchCategoryOptions } from '@/queries/CategoryQueries'
+import {
+  useCreateProduct,
+  useEditProduct,
+  useFetchProducts,
+} from '@/queries/ProductQueries'
+import type { Product, ProductPayload } from '@/types/Product'
 
-const createEmptyRawMaterial = (id: number): RawMaterial => ({
+import { DeleteProductsDialog } from './DeleteProductsDialog'
+import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
+import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
+import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
+
+const availabilityOptions = [
+  { id: 1, label: 'Available' },
+  { id: 2, label: 'Unavailable' },
+]
+
+const createEmptyProduct = (id: number): Product => ({
   id,
   primaryName: '',
   secondaryName: '',
-  purchaseUnit: '',
-  consumptionUnit: '',
-  purchasePrice: 0,
+  description: '',
+  price: 0,
+  categoryId: 0,
+  available: false,
 })
 
-export const RawMaterialsPage = () => {
-  // queries
+export const ProductsPage = () => {
   const {
-    data: rawMaterials = [],
-    isLoading: isRawMaterialsLoading,
+    data: products = [],
+    isLoading: isProductsLoading,
     isFetching,
-  } = useFetchRawMaterials()
-  const { mutateAsync: editRawMaterial, isPending: isEditRawMaterialsPending } =
-    useEditRawMaterial()
-  const {
-    mutateAsync: createRawMaterial,
-    isPending: isCreateRawMaterialPending,
-  } = useCreateRawMaterial()
+  } = useFetchProducts()
+  const { data: categoryOptions = [] } = useFetchCategoryOptions()
+  const { mutateAsync: editProduct, isPending: isEditProductsPending } =
+    useEditProduct()
+  const { mutateAsync: createProduct, isPending: isCreateProductPending } =
+    useCreateProduct()
 
-  // States
-  const [editData, setEditData] = useState<RawMaterial[]>([])
-  const [selectedRows, setSelectedRows] = useState<RawMaterial[]>([])
+  const [editData, setEditData] = useState<Product[]>([])
+  const [selectedRows, setSelectedRows] = useState<Product[]>([])
   const [formState, setFormState] = useState<'add' | 'edit' | 'delete' | null>(
     null
   )
@@ -54,53 +59,55 @@ export const RawMaterialsPage = () => {
   const isAddMode = formState === 'add'
   const canEditRow = (rowId: number) => isEditMode || (isAddMode && rowId < 0)
 
-  // useEffects
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEditData(rawMaterials.map((item) => ({ ...item })))
-  }, [rawMaterials])
+    setEditData(products.map((item) => ({ ...item })))
+  }, [products])
 
   const originalMap = useMemo(() => {
-    return new Map(rawMaterials.map((item) => [item.id, item]))
-  }, [rawMaterials])
+    return new Map(products.map((item) => [item.id, item]))
+  }, [products])
 
   const changedRows = useMemo(() => {
     return editData.filter((row) => {
       const original = originalMap.get(row.id)
       if (!original) return false
-      // comparing only relevant fields isquals gives many error so manul is better
       return (
         original.primaryName !== row.primaryName ||
         (original.secondaryName ?? '') !== (row.secondaryName ?? '') ||
-        original.purchaseUnit !== row.purchaseUnit ||
-        original.consumptionUnit !== row.consumptionUnit ||
-        original.purchasePrice !== row.purchasePrice
+        (original.description ?? '') !== (row.description ?? '') ||
+        original.categoryId !== row.categoryId ||
+        original.available !== row.available ||
+        original.price !== row.price
       )
     })
   }, [editData, originalMap])
 
   const hasChanges = changedRows.length > 0
 
-  const isDraftRow = (row: RawMaterial) => row.id < 0
+  const isDraftRow = (row: Product) => row.id < 0
 
-  const isRowEmpty = (row: RawMaterial) =>
-    ['primaryName', 'secondaryName', 'purchaseUnit', 'consumptionUnit'].every(
-      (key) => (row[key as keyof RawMaterial]?.toString().trim() ?? '') === ''
-    ) && Number(row.purchasePrice ?? 0) === 0
+  const isRowEmpty = (row: Product) =>
+    ['primaryName', 'secondaryName', 'description'].every(
+      (key) => (row[key as keyof Product]?.toString().trim() ?? '') === ''
+    ) &&
+    Number(row.price ?? 0) === 0 &&
+    Number(row.categoryId ?? 0) === 0 &&
+    row.available === false
 
-  const isDraftValid = (row: RawMaterial) => {
+  const isDraftValid = (row: Product) => {
     const trimmed = {
       primaryName: row.primaryName?.trim() ?? '',
-      purchaseUnit: row.purchaseUnit?.trim() ?? '',
-      consumptionUnit: row.consumptionUnit?.trim() ?? '',
-      purchasePrice: Number(row.purchasePrice ?? 0),
+      description: row.description?.trim() ?? '',
+      categoryId: Number(row.categoryId ?? 0),
+      price: Number(row.price ?? 0),
     }
 
     return (
       trimmed.primaryName &&
-      trimmed.purchaseUnit &&
-      trimmed.consumptionUnit &&
-      trimmed.purchasePrice > 0
+      trimmed.description &&
+      trimmed.categoryId > 0 &&
+      trimmed.price > 0
     )
   }
 
@@ -119,8 +126,8 @@ export const RawMaterialsPage = () => {
 
   const updateRowField = (
     rowId: number,
-    field: keyof RawMaterial,
-    value: string | number,
+    field: keyof Product,
+    value: string | number | boolean,
     opts: { isDraft?: boolean } = {}
   ) => {
     setEditData((prev) => {
@@ -132,11 +139,15 @@ export const RawMaterialsPage = () => {
         const wasEmptyDraft = isDraftRow(item) && isRowEmpty(item)
 
         const normalizedValue =
-          field === 'purchasePrice'
+          field === 'price'
             ? typeof value === 'number'
               ? value
               : Number(value) || 0
-            : value
+            : field === 'categoryId'
+              ? Number(value) || 0
+              : field === 'available'
+                ? Boolean(value)
+                : value
 
         const nextItem = {
           ...item,
@@ -152,7 +163,7 @@ export const RawMaterialsPage = () => {
 
       if (blankRowIndex !== -1) {
         const newTempId = Date.now() * -1
-        const blankRow = createEmptyRawMaterial(newTempId)
+        const blankRow = createEmptyProduct(newTempId)
         updated.splice(blankRowIndex, 0, blankRow)
       }
 
@@ -164,17 +175,18 @@ export const RawMaterialsPage = () => {
     }
   }
 
-  const toRawMaterialPayload = (row: RawMaterial): RawMaterialPayload => ({
+  const toProductPayload = (row: Product): ProductPayload => ({
     primaryName: row.primaryName.trim(),
     secondaryName: row.secondaryName?.trim() ?? '',
-    purchaseUnit: row.purchaseUnit,
-    consumptionUnit: row.consumptionUnit,
-    purchasePrice: Number(row.purchasePrice) || 0,
+    description: row.description?.trim() ?? '',
+    price: Number(row.price) || 0,
+    categoryId: Number(row.categoryId) || 0,
+    available: Boolean(row.available),
   })
 
   const handleSaveChanges = async () => {
     if (isAddMode) {
-      if (!hasValidDraft || isCreateRawMaterialPending) {
+      if (!hasValidDraft || isCreateProductPending) {
         return
       }
 
@@ -184,7 +196,7 @@ export const RawMaterialsPage = () => {
       try {
         for (const draft of draftsToSave) {
           // eslint-disable-next-line no-await-in-loop
-          await createRawMaterial(toRawMaterialPayload(draft))
+          await createProduct(toProductPayload(draft))
           savedDraftIds.add(draft.id)
         }
 
@@ -215,10 +227,10 @@ export const RawMaterialsPage = () => {
       return
     }
 
-    if (isEditRawMaterialsPending) return
+    if (isEditProductsPending) return
 
     try {
-      await Promise.all(changedRows.map((row) => editRawMaterial(row)))
+      await Promise.all(changedRows.map((row) => editProduct(row)))
       setFormState(null)
     } catch (error) {
       console.error(error)
@@ -226,19 +238,19 @@ export const RawMaterialsPage = () => {
   }
 
   const handleDiscardChanges = () => {
-    setEditData(rawMaterials.map((item) => ({ ...item })))
+    setEditData(products.map((item) => ({ ...item })))
     setSelectedRows([])
     setFormState(null)
   }
 
-  handleCancelHook(formState, handleDiscardChanges)
-  
+  useHandleCancelHook(formState, handleDiscardChanges)
+  useHandleSaveHook(formState, handleSaveChanges)
 
-  const handleSelectionChange = (indices: number[], rows: RawMaterial[]) => {
+  const handleSelectionChange = (indices: number[], rows: Product[]) => {
     setSelectedRows(rows)
   }
 
-  const handleAddRawMaterialRow = () => {
+  const handleAddProductRow = () => {
     const hasEmptyDraft = editData.some(
       (item) => isDraftRow(item) && isRowEmpty(item)
     )
@@ -248,7 +260,7 @@ export const RawMaterialsPage = () => {
     }
 
     const newTempId = Date.now() * -1
-    const blankRow = createEmptyRawMaterial(newTempId)
+    const blankRow = createEmptyProduct(newTempId)
 
     setFormState('add')
     setEditData((prev) => {
@@ -277,8 +289,7 @@ export const RawMaterialsPage = () => {
     })
   }
 
-  // Data cells layout
-  const rawMaterialTableColumns: DataCell[] = [
+  const productTableColumns: DataCell[] = [
     {
       headingTitle: 'Primary Name',
       accessVar: 'primaryName',
@@ -324,67 +335,61 @@ export const RawMaterialsPage = () => {
           title=""
           inputValue={value ?? ''}
           onChange={(val) =>
-            updateRowField(row.id, 'secondaryName', String(val ?? ''))
+            updateRowField(row.id, 'secondaryName', String(val ?? ''), {
+              isDraft: isDraftRow(row),
+            })
           }
         />
       ),
     },
     {
-      headingTitle: 'Purchase Unit',
-      accessVar: 'purchaseUnit',
-      className: 'w-32',
-      render: (value, row) => {
-        const normalizedValue = String(value ?? '').trim()
-        const selectedOption = units.find(
-          (unit) => unit.label.toLowerCase() === normalizedValue.toLowerCase()
-        ) ?? {
-          id: 0,
-          label: normalizedValue,
-        }
-        return (
-          <TableDropDown
-            isEditMode={canEditRow(row.id)}
-            title=""
-            options={units}
-            selected={selectedOption}
-            placeholder="Select Unit"
-            onChange={(e) => {
-              updateRowField(row.id, 'purchaseUnit', e.label)
-            }}
-          />
-        )
-      },
+      headingTitle: 'Description',
+      accessVar: 'description',
+      className: 'w-64',
+      render: (value, row) => (
+        <TableInput
+          isEditMode={canEditRow(row.id)}
+          title=""
+          inputValue={value ?? ''}
+          onChange={(val) =>
+            updateRowField(row.id, 'description', String(val ?? ''), {
+              isDraft: isDraftRow(row),
+            })
+          }
+        />
+      ),
     },
     {
-      headingTitle: 'Consumption Unit',
-      accessVar: 'consumptionUnit',
-      className: 'w-42',
-      render: (value, row) => {
-        const normalizedValue = String(value ?? '').trim()
-        const selectedOption = units.find(
-          (unit) => unit.label.toLowerCase() === normalizedValue.toLowerCase()
-        ) ?? {
-          id: 0,
-          label: normalizedValue,
-        }
-        return (
-          <TableDropDown
-            isEditMode={canEditRow(row.id)}
-            title=""
-            options={units}
-            selected={selectedOption}
-            placeholder="Select Unit"
-            onChange={(e) => {
-              updateRowField(row.id, 'consumptionUnit', e.label)
-            }}
-          />
-        )
-      },
-    },
-    {
-      headingTitle: 'Purchase Price (₹)',
-      accessVar: 'purchasePrice',
+      headingTitle: 'Category',
+      accessVar: 'categoryId',
       className: 'w-48',
+      render: (_value, row) => {
+        const selectedOption =
+          categoryOptions.find((option) => option.id === row.categoryId) ??
+          (row.categoryId
+            ? { id: row.categoryId, label: `Category #${row.categoryId}` }
+            : undefined)
+
+        return (
+          <TableDropDown
+            isEditMode={canEditRow(row.id)}
+            title=""
+            options={categoryOptions}
+            selected={selectedOption}
+            placeholder="Select Category"
+            onChange={(option) =>
+              updateRowField(row.id, 'categoryId', option.id, {
+                isDraft: isDraftRow(row),
+              })
+            }
+          />
+        )
+      },
+    },
+    {
+      headingTitle: 'Price (₹)',
+      accessVar: 'price',
+      className: 'w-32',
       render: (value, row) => (
         <TableInput
           isEditMode={canEditRow(row.id)}
@@ -394,14 +399,37 @@ export const RawMaterialsPage = () => {
           onChange={(val) =>
             updateRowField(
               row.id,
-              'purchasePrice',
-              typeof val === 'number' ? val : Number(val) || 0
+              'price',
+              typeof val === 'number' ? val : Number(val) || 0,
+              { isDraft: isDraftRow(row) }
             )
           }
         />
       ),
     },
+    {
+      headingTitle: 'Availability',
+      accessVar: 'available',
+      className: 'w-32',
+      render: (_value, row) => (
+        <TableDropDown
+          isEditMode={canEditRow(row.id)}
+          title=""
+          options={availabilityOptions}
+          selected={
+            row.available ? availabilityOptions[0] : availabilityOptions[1]
+          }
+          placeholder="Availability"
+          onChange={(option) =>
+            updateRowField(row.id, 'available', option.id === 1, {
+              isDraft: isDraftRow(row),
+            })
+          }
+        />
+      ),
+    },
   ]
+
   const handleDeleteSelected = () => {
     if (selectedRows.length === 0) return
     setIsDeleteDialogOpen(true)
@@ -411,7 +439,7 @@ export const RawMaterialsPage = () => {
     <main className="layout-container flex min-h-[95vh] w-full flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
       <header className="flex flex-row gap-4 p-4">
         <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
-          Raw Materials
+          Products
         </h1>
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
@@ -421,8 +449,8 @@ export const RawMaterialsPage = () => {
             className="font-medium"
             state="outline"
             onClick={() => {}}
-            disabled={isEditRawMaterialsPending}
-            isPending={isEditRawMaterialsPending}
+            disabled={isEditProductsPending}
+            isPending={isEditProductsPending}
           >
             <Filter className="h-4 w-4 text-black" />
             Filter
@@ -433,7 +461,7 @@ export const RawMaterialsPage = () => {
             onChange={() => {}}
             options={[]}
             selected={{ id: 1, label: 'Table View' }}
-            disabled={isEditRawMaterialsPending}
+            disabled={isEditProductsPending}
           />
         </div>
 
@@ -442,8 +470,8 @@ export const RawMaterialsPage = () => {
             className="font-medium"
             state="outline"
             onClick={() => {}}
-            disabled={isEditRawMaterialsPending}
-            isPending={isEditRawMaterialsPending}
+            disabled={isEditProductsPending}
+            isPending={isEditProductsPending}
           >
             <UploadCloud className="h-5 w-5 text-black" />
             Export Data
@@ -454,8 +482,8 @@ export const RawMaterialsPage = () => {
               <ButtonSm
                 state="outline"
                 onClick={handleDiscardChanges}
-                disabled={isCreateRawMaterialPending}
-                isPending={isCreateRawMaterialPending}
+                disabled={isCreateProductPending}
+                isPending={isCreateProductPending}
               >
                 <X className="h-4 w-4 text-black" /> Cancel Add
               </ButtonSm>
@@ -465,10 +493,10 @@ export const RawMaterialsPage = () => {
                 }
                 state="default"
                 onClick={() => void handleSaveChanges()}
-                disabled={!hasValidDraft || isCreateRawMaterialPending}
-                isPending={isCreateRawMaterialPending}
+                disabled={!hasValidDraft || isCreateProductPending}
+                isPending={isCreateProductPending}
               >
-                <SaveIcon className="mr-2 h-4 w-4 text-white" /> Save Material
+                <SaveIcon className="mr-2 h-4 w-4 text-white" /> Save Product
               </ButtonSm>
             </>
           ) : (
@@ -477,8 +505,8 @@ export const RawMaterialsPage = () => {
                 <ButtonSm
                   state="outline"
                   onClick={handleDiscardChanges}
-                  disabled={isEditRawMaterialsPending}
-                  isPending={isEditRawMaterialsPending}
+                  disabled={isEditProductsPending}
+                  isPending={isEditProductsPending}
                 >
                   <X className="h-4 w-4 text-black" />{' '}
                   {hasChanges ? 'Discard Changes' : 'Cancel'}
@@ -492,10 +520,8 @@ export const RawMaterialsPage = () => {
                 }
                 state={isEditMode ? 'default' : 'outline'}
                 onClick={() => void handleSaveChanges()}
-                disabled={
-                  isEditRawMaterialsPending || (isEditMode && !hasChanges)
-                }
-                isPending={isEditRawMaterialsPending}
+                disabled={isEditProductsPending || (isEditMode && !hasChanges)}
+                isPending={isEditProductsPending}
               >
                 {(hasChanges || !isEditMode) && (
                   <Edit3
@@ -509,15 +535,15 @@ export const RawMaterialsPage = () => {
                   />
                 )}{' '}
                 {isEditMode
-                  ? isEditRawMaterialsPending
+                  ? isEditProductsPending
                     ? 'Saving…'
                     : 'Save Changes'
                   : 'Edit Table'}
               </ButtonSm>
               {!isEditMode && (
-                <ButtonSm state="default" onClick={handleAddRawMaterialRow}>
+                <ButtonSm state="default" onClick={handleAddProductRow}>
                   <Plus className="mr-2 h-4 w-4 text-white" />
-                  Add Raw Material
+                  Add Product
                 </ButtonSm>
               )}
             </>
@@ -528,9 +554,9 @@ export const RawMaterialsPage = () => {
       <GenericTable
         data={editData}
         className="mx-3"
-        dataCell={rawMaterialTableColumns}
-        isLoading={isRawMaterialsLoading || isFetching}
-        messageWhenNoData="No raw materials available."
+        dataCell={productTableColumns}
+        isLoading={isProductsLoading || isFetching}
+        messageWhenNoData="No products available."
         isSelectable={formState !== 'add'}
         selectedRowIndices={selectedRowIndices}
         onSelectionChange={handleSelectionChange}
@@ -540,15 +566,13 @@ export const RawMaterialsPage = () => {
       <AnimatePresence>
         {isDeleteDialogOpen && selectedRows.length > 0 && (
           <DialogBox setToggleDialogueBox={setIsDeleteDialogOpen}>
-            <DeleteRawMaterialsDialog
-              materials={selectedRows}
+            <DeleteProductsDialog
+              products={selectedRows}
               onCancel={() => {
                 setIsDeleteDialogOpen(false)
               }}
               onDeleted={() => {
-                const idsToDelete = new Set(
-                  selectedRows.map((material) => material.id)
-                )
+                const idsToDelete = new Set(selectedRows.map((item) => item.id))
                 setEditData((prev) =>
                   prev.filter((item) => !idsToDelete.has(item.id))
                 )
@@ -563,4 +587,4 @@ export const RawMaterialsPage = () => {
   )
 }
 
-export default RawMaterialsPage
+export default ProductsPage

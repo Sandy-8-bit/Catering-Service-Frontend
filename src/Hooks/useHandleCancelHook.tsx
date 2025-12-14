@@ -4,7 +4,7 @@ import { useEffect } from 'react'
  * Listens for Escape key presses and triggers the provided callback
  * while the supplied state flag is truthy.
  */
-export const handleCancelHook = (
+export const useHandleCancelHook = (
   activeState: unknown,
   onCancel: () => void
 ) => {

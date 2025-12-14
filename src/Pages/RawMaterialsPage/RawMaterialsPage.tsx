@@ -7,7 +7,6 @@ import GenericTable, { type DataCell } from '@/components/common/GenericTable'
 import TableDropDown from '@/components/common/TableDropDown'
 import { TableInput } from '@/components/common/TableInput'
 import { units } from '@/constants/constants'
-import { handleCancelHook } from '@/hooks/handleCancelHook'
 import {
   useFetchRawMaterials,
   useEditRawMaterial,
@@ -18,6 +17,8 @@ import { DeleteRawMaterialsDialog } from './DeleteRawMaterialsDialog'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 import DropdownSelect from '@/components/common/DropDown'
 import type { RawMaterial, RawMaterialPayload } from '@/types/RawMaterial'
+import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
+import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 
 const createEmptyRawMaterial = (id: number): RawMaterial => ({
   id,
@@ -231,8 +232,8 @@ export const RawMaterialsPage = () => {
     setFormState(null)
   }
 
-  handleCancelHook(formState, handleDiscardChanges)
-  
+  useHandleCancelHook(formState, handleDiscardChanges)
+  useHandleSaveHook(formState, handleSaveChanges)
 
   const handleSelectionChange = (indices: number[], rows: RawMaterial[]) => {
     setSelectedRows(rows)

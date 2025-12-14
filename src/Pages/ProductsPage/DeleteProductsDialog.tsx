@@ -1,28 +1,28 @@
 import ButtonSm from '@/components/common/Buttons'
-import type { RawMaterial } from '@/types/RawMaterial'
-import { useDeleteRawMaterial } from '@/queries/RawMaterialsQueries'
+import { useDeleteProduct } from '@/queries/ProductQueries'
+import type { Product } from '@/types/Product'
 
-interface DeleteRawMaterialsDialogProps {
-  materials: RawMaterial[]
+interface DeleteProductsDialogProps {
+  products: Product[]
   onCancel: () => void
   onDeleted: () => void
 }
 
-export const DeleteRawMaterialsDialog = ({
-  materials,
+export const DeleteProductsDialog = ({
+  products,
   onCancel,
   onDeleted,
-}: DeleteRawMaterialsDialogProps) => {
-  const { mutateAsync, isPending } = useDeleteRawMaterial()
-  const totalToDelete = materials.length
-  const primaryMaterial = materials[0]
+}: DeleteProductsDialogProps) => {
+  const { mutateAsync, isPending } = useDeleteProduct()
+  const totalToDelete = products.length
+  const primaryProduct = products[0]
 
   const handleDelete = async () => {
     if (totalToDelete === 0) return
     try {
-      for (const material of materials) {
+      for (const product of products) {
         // eslint-disable-next-line no-await-in-loop
-        await mutateAsync(material)
+        await mutateAsync(product)
       }
       onDeleted()
     } catch (error) {
@@ -39,7 +39,7 @@ export const DeleteRawMaterialsDialog = ({
       }}
     >
       <header className="flex w-full items-center justify-between text-lg font-semibold text-red-600">
-        Delete Raw Material
+        Delete Product
         <img
           onClick={onCancel}
           className="w-5 cursor-pointer"
@@ -48,28 +48,28 @@ export const DeleteRawMaterialsDialog = ({
         />
       </header>
 
-      {primaryMaterial ? (
+      {primaryProduct ? (
         <div className="space-y-2 text-sm leading-relaxed text-zinc-700">
           <p>
             You are about to delete{' '}
             <span className="font-semibold text-red-500">
               {totalToDelete === 1
-                ? primaryMaterial.primaryName
-                : `${totalToDelete} raw materials`}
+                ? primaryProduct.primaryName
+                : `${totalToDelete} products`}
             </span>
             . This action cannot be undone.
           </p>
           {totalToDelete > 1 && (
             <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-500">
-              {materials.slice(0, 3).map((material) => (
-                <li key={material.id}>{material.primaryName}</li>
+              {products.slice(0, 3).map((product) => (
+                <li key={product.id}>{product.primaryName}</li>
               ))}
               {totalToDelete > 3 && <li>+ {totalToDelete - 3} more…</li>}
             </ul>
           )}
         </div>
       ) : (
-        <p className="text-sm text-zinc-600">No material selected.</p>
+        <p className="text-sm text-zinc-600">No product selected.</p>
       )}
 
       <section className="mt-1 grid w-full grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
@@ -85,7 +85,7 @@ export const DeleteRawMaterialsDialog = ({
           state="default"
           type="submit"
           text={isPending ? 'Deleting...' : 'Delete'}
-          disabled={isPending || !primaryMaterial}
+          disabled={isPending || !primaryProduct}
           isPending={isPending}
         />
       </section>
