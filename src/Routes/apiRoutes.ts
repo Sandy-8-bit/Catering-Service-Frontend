@@ -7,6 +7,7 @@ export const apiRoutes = {
   // MASTER ROUTES
   categories: '/api/admin/categories',
   rawMaterials: '/api/admin/raw-materials',
+  additionalItems: '/api/admin/additional-items',
   orders: '/api/admin/orders',
   products: '/api/admin/products',
 }
