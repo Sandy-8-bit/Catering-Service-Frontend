@@ -423,7 +423,6 @@ export const RawMaterialsPage = () => {
             state="outline"
             onClick={() => {}}
             disabled={isEditRawMaterialsPending}
-            isPending={isEditRawMaterialsPending}
           >
             <Filter className="h-4 w-4 text-black" />
             Filter
@@ -444,7 +443,6 @@ export const RawMaterialsPage = () => {
             state="outline"
             onClick={() => {}}
             disabled={isEditRawMaterialsPending}
-            isPending={isEditRawMaterialsPending}
           >
             <UploadCloud className="h-5 w-5 text-black" />
             Export Data
@@ -456,7 +454,6 @@ export const RawMaterialsPage = () => {
                 state="outline"
                 onClick={handleDiscardChanges}
                 disabled={isCreateRawMaterialPending}
-                isPending={isCreateRawMaterialPending}
               >
                 <X className="h-4 w-4 text-black" /> Cancel Add
               </ButtonSm>
@@ -479,7 +476,6 @@ export const RawMaterialsPage = () => {
                   state="outline"
                   onClick={handleDiscardChanges}
                   disabled={isEditRawMaterialsPending}
-                  isPending={isEditRawMaterialsPending}
                 >
                   <X className="h-4 w-4 text-black" />{' '}
                   {hasChanges ? 'Discard Changes' : 'Cancel'}

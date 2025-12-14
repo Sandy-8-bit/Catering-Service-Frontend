@@ -32,7 +32,7 @@ const createEmptyProduct = (id: number): Product => ({
   secondaryName: '',
   description: '',
   price: 0,
-  categoryId: 0,
+  category: { id: 0, primaryName: '', secondaryName: '' },
   available: false,
 })
 
@@ -76,7 +76,7 @@ export const ProductsPage = () => {
         original.primaryName !== row.primaryName ||
         (original.secondaryName ?? '') !== (row.secondaryName ?? '') ||
         (original.description ?? '') !== (row.description ?? '') ||
-        original.categoryId !== row.categoryId ||
+        original.category.id !== row.category.id ||
         original.available !== row.available ||
         original.price !== row.price
       )
@@ -92,14 +92,14 @@ export const ProductsPage = () => {
       (key) => (row[key as keyof Product]?.toString().trim() ?? '') === ''
     ) &&
     Number(row.price ?? 0) === 0 &&
-    Number(row.categoryId ?? 0) === 0 &&
+    Number(row.category.id ?? 0) === 0 &&
     row.available === false
 
   const isDraftValid = (row: Product) => {
     const trimmed = {
       primaryName: row.primaryName?.trim() ?? '',
       description: row.description?.trim() ?? '',
-      categoryId: Number(row.categoryId ?? 0),
+      categoryId: Number(row.category.id ?? 0),
       price: Number(row.price ?? 0),
     }
 
@@ -127,7 +127,7 @@ export const ProductsPage = () => {
   const updateRowField = (
     rowId: number,
     field: keyof Product,
-    value: string | number | boolean,
+    value: string | number | boolean | Product['category'],
     opts: { isDraft?: boolean } = {}
   ) => {
     setEditData((prev) => {
@@ -138,16 +138,19 @@ export const ProductsPage = () => {
 
         const wasEmptyDraft = isDraftRow(item) && isRowEmpty(item)
 
-        const normalizedValue =
-          field === 'price'
-            ? typeof value === 'number'
-              ? value
-              : Number(value) || 0
-            : field === 'categoryId'
-              ? Number(value) || 0
-              : field === 'available'
-                ? Boolean(value)
-                : value
+        let normalizedValue: Product[keyof Product]
+
+        if (field === 'price') {
+          normalizedValue = (
+            typeof value === 'number' ? value : Number(value) || 0
+          ) as Product[keyof Product]
+        } else if (field === 'category') {
+          normalizedValue = value as Product[keyof Product]
+        } else if (field === 'available') {
+          normalizedValue = Boolean(value) as Product[keyof Product]
+        } else {
+          normalizedValue = value as Product[keyof Product]
+        }
 
         const nextItem = {
           ...item,
@@ -180,7 +183,7 @@ export const ProductsPage = () => {
     secondaryName: row.secondaryName?.trim() ?? '',
     description: row.description?.trim() ?? '',
     price: Number(row.price) || 0,
-    categoryId: Number(row.categoryId) || 0,
+    categoryId: Number(row.category.id) || 0,
     available: Boolean(row.available),
   })
 
@@ -333,7 +336,7 @@ export const ProductsPage = () => {
         <TableInput
           isEditMode={canEditRow(row.id)}
           title=""
-          inputValue={value ?? ''}
+          inputValue={value ?? '-'}
           onChange={(val) =>
             updateRowField(row.id, 'secondaryName', String(val ?? ''), {
               isDraft: isDraftRow(row),
@@ -361,14 +364,12 @@ export const ProductsPage = () => {
     },
     {
       headingTitle: 'Category',
-      accessVar: 'categoryId',
-      className: 'w-48',
-      render: (_value, row) => {
-        const selectedOption =
-          categoryOptions.find((option) => option.id === row.categoryId) ??
-          (row.categoryId
-            ? { id: row.categoryId, label: `Category #${row.categoryId}` }
-            : undefined)
+      accessVar: 'category',
+      className: 'w-38',
+      render: (_value, row: Product) => {
+        const selectedOption = categoryOptions.find(
+          (option) => option.id == row.category.id
+        )
 
         return (
           <TableDropDown
@@ -378,9 +379,18 @@ export const ProductsPage = () => {
             selected={selectedOption}
             placeholder="Select Category"
             onChange={(option) =>
-              updateRowField(row.id, 'categoryId', option.id, {
-                isDraft: isDraftRow(row),
-              })
+              updateRowField(
+                row.id,
+                'category',
+                {
+                  id: option.id,
+                  primaryName: option.label,
+                  secondaryName: '',
+                },
+                {
+                  isDraft: isDraftRow(row),
+                }
+              )
             }
           />
         )
@@ -483,7 +493,6 @@ export const ProductsPage = () => {
                 state="outline"
                 onClick={handleDiscardChanges}
                 disabled={isCreateProductPending}
-                isPending={isCreateProductPending}
               >
                 <X className="h-4 w-4 text-black" /> Cancel Add
               </ButtonSm>
@@ -506,7 +515,6 @@ export const ProductsPage = () => {
                   state="outline"
                   onClick={handleDiscardChanges}
                   disabled={isEditProductsPending}
-                  isPending={isEditProductsPending}
                 >
                   <X className="h-4 w-4 text-black" />{' '}
                   {hasChanges ? 'Discard Changes' : 'Cancel'}
@@ -555,7 +563,7 @@ export const ProductsPage = () => {
         data={editData}
         className="mx-3"
         dataCell={productTableColumns}
-        isLoading={isProductsLoading || isFetching}
+        isLoading={isProductsLoading || isCreateProductPending || isFetching}
         messageWhenNoData="No products available."
         isSelectable={formState !== 'add'}
         selectedRowIndices={selectedRowIndices}

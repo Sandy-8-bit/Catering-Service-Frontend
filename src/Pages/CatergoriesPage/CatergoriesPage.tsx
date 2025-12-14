@@ -317,7 +317,6 @@ export const CategoriesPage = () => {
             state="outline"
             onClick={() => {}}
             disabled={isEditCategoriesPending}
-            isPending={isEditCategoriesPending}
           >
             <Filter className="h-4 w-4 text-black" />
             Filter
@@ -338,7 +337,6 @@ export const CategoriesPage = () => {
             state="outline"
             onClick={() => {}}
             disabled={isEditCategoriesPending}
-            isPending={isEditCategoriesPending}
           >
             <UploadCloud className="h-5 w-5 text-black" />
             Export Data
@@ -350,7 +348,6 @@ export const CategoriesPage = () => {
                 state="outline"
                 onClick={handleDiscardChanges}
                 disabled={isCreateCategoryPending}
-                isPending={isCreateCategoryPending}
               >
                 <X className="h-4 w-4 text-black" /> Cancel Add
               </ButtonSm>
@@ -373,7 +370,6 @@ export const CategoriesPage = () => {
                   state="outline"
                   onClick={handleDiscardChanges}
                   disabled={isEditCategoriesPending}
-                  isPending={isEditCategoriesPending}
                 >
                   <X className="h-4 w-4 text-black" />{' '}
                   {hasChanges ? 'Discard Changes' : 'Cancel'}

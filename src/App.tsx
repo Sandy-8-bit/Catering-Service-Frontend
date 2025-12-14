@@ -5,7 +5,8 @@ import { SignInPage } from '@pages/Auth/Auth'
 import { Dashboard } from '@pages/Dashboard'
 import { RawMaterialsPage } from '@/pages/RawMaterialsPage/RawMaterialsPage'
 import { appRoutes } from '@/routes/appRoutes'
-import CategoriesPage from './pages/CatergoriesPage/CatergoriesPage'
+import CategoriesPage from '@pages/CatergoriesPage/CatergoriesPage'
+import ProductsPage from '@pages/ProductsPage/ProductsPage'
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             path={appRoutes.catergories.path}
             element={<CategoriesPage />}
           />
+          <Route path={appRoutes.products.path} element={<ProductsPage />} />
         </Route>
       </Route>
 

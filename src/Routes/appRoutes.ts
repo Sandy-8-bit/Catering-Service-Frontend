@@ -18,4 +18,8 @@ export const appRoutes = {
     path: '/categories',
     children: {},
   },
+  products: {
+    path: '/products',
+    children: {},
+  },
 }

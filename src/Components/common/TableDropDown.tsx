@@ -112,22 +112,24 @@ const TableDropDown: React.FC<TableDropdownProps> = ({
         <span className={displayOption.id === 0 ? 'text-slate-400' : ''}>
           {displayLabel}
         </span>
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        >
-          <path
-            d="M6 9l6 6 6-6"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        {isEditMode && (
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          >
+            <path
+              d="M6 9l6 6 6-6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
       </button>
 
       {isInteractive && isOpen && (

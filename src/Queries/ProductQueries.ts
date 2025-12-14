@@ -136,11 +136,16 @@ export const useEditProduct = () => {
       const token = authHandler()
       if (!token) throw new Error('Unauthorized to perform this action.')
 
-      const { id, ...payload } = product
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, category, ...payload } = product
+      const cleanedPayload: ProductPayload = {
+        ...payload,
+        categoryId: product.category.id,
+      }
 
       const res = await axiosInstance.put(
         `${apiRoutes.products}/${id}`,
-        payload,
+        cleanedPayload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -150,7 +155,7 @@ export const useEditProduct = () => {
 
       return res.data?.data as Product
     } catch (error: unknown) {
-      handleApiError(error, 'Product')
+      handleApiError(error, 'Edit Product')
     }
   }
 
@@ -186,7 +191,7 @@ export const useDeleteProduct = () => {
 
       return res.data?.data
     } catch (error: unknown) {
-      handleApiError(error, 'Product')
+      handleApiError(error, 'Delete Product')
     }
   }
 
