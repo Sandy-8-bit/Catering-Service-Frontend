@@ -7,6 +7,7 @@ import { RawMaterialsPage } from '@/pages/RawMaterialsPage/RawMaterialsPage'
 import { appRoutes } from '@/routes/appRoutes'
 import CategoriesPage from '@pages/CatergoriesPage/CatergoriesPage'
 import ProductsPage from '@pages/ProductsPage/ProductsPage'
+import AdditionalItemsPage from '@pages/AdditionalItemsPage/AdditionalItemsPage'
 
 function App() {
   return (
@@ -27,6 +28,10 @@ function App() {
             element={<CategoriesPage />}
           />
           <Route path={appRoutes.products.path} element={<ProductsPage />} />
+          <Route
+            path={appRoutes.additionalItems.path}
+            element={<AdditionalItemsPage />}
+          />
         </Route>
       </Route>
 

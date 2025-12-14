@@ -22,4 +22,8 @@ export const appRoutes = {
     path: '/products',
     children: {},
   },
+  additionalItems: {
+    path: '/additional-items',
+    children: {},
+  },
 }
