@@ -91,7 +91,7 @@ export const SignInPage = () => {
             isPending={isPending}
             disabled={!identifier || !password || isPending}
             onClick={handleLogin}
-            className="mt-2 w-full rounded-[16px] bg-blue-500 py-3 text-white hover:bg-blue-700"
+            className="mt-2 w-full rounded-2xl bg-blue-500 py-3 text-white hover:bg-blue-700"
           />
 
           {/* TOTP Modal */}
