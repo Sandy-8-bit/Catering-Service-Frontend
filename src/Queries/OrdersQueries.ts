@@ -13,7 +13,6 @@ export const useFetchOrders = () => {
   const fetchAll = async (): Promise<Order[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(apiRoutes.orders, {
         headers: { Authorization: `Bearer ${token}` },
@@ -42,7 +41,6 @@ export const useFetchOrderById = (id?: number) => {
       }
 
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(`${apiRoutes.orders}/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -73,7 +71,6 @@ export const useCreateOrder = () => {
   const createOrder = async (payload: OrderPayload) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.post(apiRoutes.orders, payload, {
         headers: { Authorization: `Bearer ${token}` },
@@ -107,7 +104,6 @@ export const useUpdateOrder = () => {
   const updateOrder = async ({ id, ...payload }: OrderUpdatePayload) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.patch(
         `${apiRoutes.orders}/${id}`,
@@ -143,7 +139,6 @@ export const useDeleteOrder = () => {
   const deleteOrder = async (orderId: number) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.delete(`${apiRoutes.orders}/${orderId}`, {
         headers: { Authorization: `Bearer ${token}` },

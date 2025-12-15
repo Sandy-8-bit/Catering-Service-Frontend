@@ -6,8 +6,8 @@
  *
  * GET    /api/admin/products
  * GET    /api/admin/products/{id}
- * POST   /api/admin/products
- * PUT    /api/admin/products/{id}
+ * POST   /api/admin/products/bulk/create
+ * PUT    /api/admin/products/bulk/update
  * DELETE /api/admin/products/{id}
  */
 
@@ -36,7 +36,6 @@ export const useFetchProducts = (params?: ProductQueryParams) => {
   const fetchAll = async (): Promise<Product[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(apiRoutes.products, {
         headers: {
@@ -70,7 +69,6 @@ export const useFetchProductById = (id: number) => {
       }
 
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(`${apiRoutes.products}/${id}`, {
         headers: {
@@ -99,19 +97,28 @@ export const useFetchProductById = (id: number) => {
 export const useCreateProduct = () => {
   const queryClient = useQueryClient()
 
-  const createProduct = async (payload: ProductPayload) => {
+  const createProduct = async (
+    payloads: ProductPayload[]
+  ): Promise<Product[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
-      const res = await axiosInstance.post(apiRoutes.products, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      if (!payloads.length) {
+        return []
+      }
 
-      return res.data?.data as Product
-    } catch (error: unknown) {
+      const res = await axiosInstance.post(
+        `${apiRoutes.products}/bulk/create`,
+        payloads,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      return (res.data?.data ?? []) as Product[]
+    } catch (error) {
       handleApiError(error, 'Create product')
     }
   }
@@ -131,21 +138,29 @@ export const useCreateProduct = () => {
 export const useEditProduct = () => {
   const queryClient = useQueryClient()
 
-  const editProduct = async (product: Product) => {
+  const editProduct = async (products: Product[]): Promise<Product[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { id, category, ...payload } = product
-      const cleanedPayload: ProductPayload = {
-        ...payload,
-        categoryId: product.category.id,
+      if (!products.length) {
+        return []
       }
 
+      const updatePayload = products.map((product) => {
+        const { id, category, ...rest } = product
+
+        return {
+          id,
+          request: {
+            categoryId: category.id,
+            ...rest,
+          },
+        }
+      })
+
       const res = await axiosInstance.put(
-        `${apiRoutes.products}/${id}`,
-        cleanedPayload,
+        `${apiRoutes.products}/bulk/update`,
+        updatePayload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -153,7 +168,7 @@ export const useEditProduct = () => {
         }
       )
 
-      return res.data?.data as Product
+      return (res.data?.data ?? []) as Product[]
     } catch (error: unknown) {
       handleApiError(error, 'Edit Product')
     }
@@ -164,7 +179,9 @@ export const useEditProduct = () => {
     onSuccess: (_data, variables) => {
       toast.success('Product updated successfully')
       queryClient.invalidateQueries({ queryKey: PRODUCTS_KEY })
-      queryClient.invalidateQueries({ queryKey: productKey(variables.id) })
+      variables?.forEach((item) => {
+        queryClient.invalidateQueries({ queryKey: productKey(item.id) })
+      })
     },
   })
 }
@@ -178,7 +195,6 @@ export const useDeleteProduct = () => {
   const deleteProduct = async (product: Product) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.delete(
         `${apiRoutes.products}/${product.id}`,

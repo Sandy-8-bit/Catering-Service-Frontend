@@ -6,8 +6,8 @@
  *
  * GET    /api/admin/categories
  * GET    /api/admin/categories/{id}
- * POST   /api/admin/categories
- * PUT    /api/admin/categories/{id}
+ * POST   /api/admin/categories/bulk/create
+ * PUT    /api/admin/categories/bulk/update
  * DELETE /api/admin/categories/{id}
  */
 
@@ -33,7 +33,6 @@ export const useFetchCategories = () => {
   const fetchAll = async (): Promise<Category[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(apiRoutes.categories, {
         headers: {
@@ -67,7 +66,6 @@ export const useFetchCategoryById = (id?: number) => {
       }
 
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(`${apiRoutes.categories}/${id}`, {
         headers: {
@@ -97,7 +95,6 @@ export const useFetchCategoryOptions = () => {
   const fetchOptions = async (): Promise<DropdownOption[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(apiRoutes.categories, {
         headers: { Authorization: `Bearer ${token}` },
@@ -128,20 +125,30 @@ export const useFetchCategoryOptions = () => {
 export const useCreateCategory = () => {
   const queryClient = useQueryClient()
 
-  const createCategory = async (payload: CategoryPayload) => {
+  const createCategory = async (
+    payloads: CategoryPayload[]
+  ): Promise<Category[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
-      const res = await axiosInstance.post(apiRoutes.categories, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      if (!payloads.length) {
+        return []
+      }
 
-      return res.data.data as Category
+      const res = await axiosInstance.post(
+        `${apiRoutes.categories}/bulk/create`,
+        payloads,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      return (res.data?.data ?? []) as Category[]
     } catch (error: unknown) {
       handleApiError(error, 'Create category')
+      return []
     }
   }
 
@@ -161,16 +168,25 @@ export const useCreateCategory = () => {
 export const useEditCategory = () => {
   const queryClient = useQueryClient()
 
-  const editCategory = async (category: Category) => {
+  const editCategory = async (categories: Category[]): Promise<Category[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
-      const { id, ...payload } = category
+      if (!categories.length) {
+        return []
+      }
+
+      const updatePayload = categories.map((item) => {
+        const { id, ...payload } = item
+        return {
+          id,
+          request: payload,
+        }
+      })
 
       const res = await axiosInstance.put(
-        `${apiRoutes.categories}/${id}`,
-        payload,
+        `${apiRoutes.categories}/bulk/update`,
+        updatePayload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -178,9 +194,10 @@ export const useEditCategory = () => {
         }
       )
 
-      return res.data.data as Category
+      return (res.data?.data ?? []) as Category[]
     } catch (error: unknown) {
       handleApiError(error, 'Category')
+      return []
     }
   }
 
@@ -189,8 +206,10 @@ export const useEditCategory = () => {
     onSuccess: (_data, variables) => {
       toast.success('Category updated successfully')
       queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY })
-      queryClient.invalidateQueries({
-        queryKey: categoryKey(variables.id),
+      variables?.forEach((item) => {
+        queryClient.invalidateQueries({
+          queryKey: categoryKey(item.id),
+        })
       })
       queryClient.invalidateQueries({ queryKey: ['categoryOptions'] })
     },
@@ -206,7 +225,6 @@ export const useDeleteCategory = () => {
   const deleteCategory = async (category: Category) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.delete(
         `${apiRoutes.categories}/${category.id}`,

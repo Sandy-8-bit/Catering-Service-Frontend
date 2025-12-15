@@ -20,6 +20,8 @@ import ButtonSm from './Buttons'
 import DropdownSelect from './DropDown'
 import PaginationControls from './Pagination'
 import { CheckBox } from './Input'
+import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
+import { useHandleDeleteHook } from '@/hooks/useHandleDeleteHook'
 
 // ============= TYPES =============
 
@@ -699,6 +701,8 @@ export default function GenericTable({
     []
   )
 
+  useHandleCancelHook(selectedRowIndices.length >= 1, clearSelection)
+  useHandleDeleteHook(selectedRowIndices.length >= 1, onDeleteSelected)
   // ============= JSX RENDER =============
 
   const skeletonCount = isLoading ? itemsPerPage || skeletonRows : 0
@@ -846,7 +850,7 @@ export default function GenericTable({
           >
             {/* S.No column */}
             <div
-              className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column my-4 shrink-0 flex-row items-center justify-between gap-2 bg-transparent px-1.5`}
+              className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column my-4 shrink-0 flex-row items-center justify-between gap-2 bg-transparent! px-1.5`}
             >
               {isSelectable && (
                 <CheckBox
@@ -1020,7 +1024,7 @@ export default function GenericTable({
                     {/* S.No column */}
                     <div
                       className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column frozen-column-hover-bg min-h-full! shrink-0 flex-row items-center justify-between gap-2 px-1.5 py-4 ${
-                        isRowChecked ? 'bg-transparent' : 'bg-white'
+                        isRowChecked ? 'bg-transparent' : 'bg-transparent'
                       }`}
                     >
                       {isSelectable && (

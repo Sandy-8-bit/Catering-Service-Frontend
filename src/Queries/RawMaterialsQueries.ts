@@ -6,8 +6,8 @@
  *
  * GET    /api/admin/raw-materials
  * GET    /api/admin/raw-materials/{id}
- * POST   /api/admin/raw-materials
- * PUT    /api/admin/raw-materials/{id}
+ * POST   /api/admin/raw-materials        (bulk supported)
+ * PUT    /api/admin/raw-materials        (bulk supported)
  * DELETE /api/admin/raw-materials/{id}
  */
 
@@ -34,7 +34,6 @@ export const useFetchRawMaterials = () => {
   const fetchAll = async (): Promise<RawMaterial[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(apiRoutes.rawMaterials, {
         headers: {
@@ -43,7 +42,7 @@ export const useFetchRawMaterials = () => {
       })
 
       // backend returns: { data: RawMaterial[] }
-      return (res.data?.data ?? res.data ?? []) as RawMaterial[]
+      return (res.data?.data ?? []) as RawMaterial[]
     } catch (error: unknown) {
       handleApiError(error, 'Raw materials')
       return []
@@ -61,7 +60,7 @@ export const useFetchRawMaterials = () => {
 /**
  * 🔍 Fetch single raw material by id
  */
-export const useFetchRawMaterialById = (id?: number) => {
+export const useFetchRawMaterialById = (id: number) => {
   const fetchById = async (): Promise<RawMaterial> => {
     try {
       if (!id && id !== 0) {
@@ -69,7 +68,6 @@ export const useFetchRawMaterialById = (id?: number) => {
       }
 
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(`${apiRoutes.rawMaterials}/${id}`, {
         headers: {
@@ -77,19 +75,15 @@ export const useFetchRawMaterialById = (id?: number) => {
         },
       })
 
-      if (res.status !== 200) {
-        throw new Error(res.data?.message || 'Failed to fetch raw material')
-      }
-
       // adjust to res.data.data if your backend wraps it
       return res.data as RawMaterial
-    } catch (error: unknown) {
-      handleApiError(error, 'Raw material')
+    } catch (error) {
+      handleApiError(error, 'Fetch Raw material')
     }
   }
 
   return useQuery({
-    queryKey: rawMaterialKey(id ?? 'unknown'),
+    queryKey: rawMaterialKey(id),
     queryFn: fetchById,
     enabled: typeof id === 'number',
     staleTime: 1000 * 60 * 5,
@@ -105,7 +99,6 @@ export const useFetchRawMaterialOptions = () => {
   const fetchOptions = async (): Promise<DropdownOption[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(apiRoutes.rawMaterials, {
         headers: { Authorization: `Bearer ${token}` },
@@ -140,20 +133,30 @@ export const useFetchRawMaterialOptions = () => {
 export const useCreateRawMaterial = () => {
   const queryClient = useQueryClient()
 
-  const createRawMaterial = async (payload: RawMaterialPayload) => {
+  const createRawMaterial = async (
+    payloads: RawMaterialPayload[]
+  ): Promise<RawMaterial[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
-      const res = await axiosInstance.post(apiRoutes.rawMaterials, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      if (!payloads.length) {
+        return []
+      }
 
-      return res.data.data as RawMaterial
+      const res = await axiosInstance.post(
+        `${apiRoutes.rawMaterials}/bulk/create`,
+        payloads,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      return (res.data?.data ?? []) as RawMaterial[]
     } catch (error) {
       handleApiError(error, 'Create Raw material')
+      return []
     }
   }
 
@@ -173,16 +176,27 @@ export const useCreateRawMaterial = () => {
 export const useEditRawMaterial = () => {
   const queryClient = useQueryClient()
 
-  const editRawMaterial = async (rawMaterial: RawMaterial) => {
+  const editRawMaterial = async (
+    rawMaterials: RawMaterial[]
+  ): Promise<RawMaterial[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
-      const { id, ...payload } = rawMaterial
+      if (!rawMaterials.length) {
+        return []
+      }
+
+      const updatePayload = rawMaterials.map((item) => {
+        const { id, ...rest } = item
+        return {
+          id,
+          ...rest,
+        }
+      })
 
       const res = await axiosInstance.put(
-        `${apiRoutes.rawMaterials}/${id}`,
-        payload,
+        apiRoutes.rawMaterials + '/bulk/update',
+        updatePayload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -190,24 +204,18 @@ export const useEditRawMaterial = () => {
         }
       )
 
-      if (res.status !== 200) {
-        throw new Error(res.data?.message || 'Failed to update raw material')
-      }
-
-      return res.data.data as RawMaterial
+      return (res.data?.data ?? []) as RawMaterial[]
     } catch (error: unknown) {
       handleApiError(error, 'Raw material')
+      return []
     }
   }
 
   return useMutation({
     mutationFn: editRawMaterial,
-    onSuccess: (_data, variables) => {
+    onSuccess: () => {
       toast.success('Raw material updated successfully')
       queryClient.invalidateQueries({ queryKey: RAW_MATERIALS_KEY })
-      queryClient.invalidateQueries({
-        queryKey: rawMaterialKey(variables.id),
-      })
       queryClient.invalidateQueries({ queryKey: ['rawMaterialOptions'] })
     },
   })
@@ -222,7 +230,6 @@ export const useDeleteRawMaterial = () => {
   const deleteRawMaterial = async (rawMaterial: RawMaterial) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.delete(
         `${apiRoutes.rawMaterials}/${rawMaterial.id}`,
@@ -232,10 +239,6 @@ export const useDeleteRawMaterial = () => {
           },
         }
       )
-
-      if (res.status !== 204) {
-        throw new Error(res.data?.message || 'Failed to delete raw material')
-      }
 
       return res.data.data
     } catch (error: unknown) {

@@ -140,30 +140,21 @@ export const CategoriesPage = () => {
       }
 
       const draftsToSave = draftRows.filter((draft) => isDraftValid(draft))
-      const savedDraftIds = new Set<number>()
+
+      if (!draftsToSave.length) {
+        return
+      }
+
+      const payloads: CategoryPayload[] = draftsToSave.map((draft) => ({
+        primaryName: draft.primaryName.trim(),
+        secondaryName: draft.secondaryName?.trim() ?? '',
+      }))
 
       try {
-        for (const draft of draftsToSave) {
-          const payload: CategoryPayload = {
-            primaryName: draft.primaryName.trim(),
-            secondaryName: draft.secondaryName?.trim() ?? '',
-          }
-          // eslint-disable-next-line no-await-in-loop
-          await createCategory(payload)
-          savedDraftIds.add(draft.id)
-        }
-
-        let draftsRemaining = false
-        setEditData((prev) => {
-          const next = prev.filter((item) => {
-            const keep = !savedDraftIds.has(item.id)
-            if (keep && isDraftRow(item)) draftsRemaining = true
-            return keep
-          })
-          return next
-        })
+        await createCategory(payloads)
+        setEditData((prev) => prev.filter((item) => !isDraftRow(item)))
         setSelectedRows([])
-        setFormState(draftsRemaining ? 'add' : null)
+        setFormState(null)
       } catch (error) {
         console.error(error)
       }
@@ -175,15 +166,15 @@ export const CategoriesPage = () => {
       return
     }
 
-    if (!hasChanges) {
-      setFormState(null)
+    if (!hasChanges || isEditCategoriesPending) {
+      if (!hasChanges) {
+        setFormState(null)
+      }
       return
     }
 
-    if (isEditCategoriesPending) return
-
     try {
-      await Promise.all(changedRows.map((row) => editCategory(row)))
+      await editCategory(changedRows)
       setFormState(null)
     } catch (error) {
       console.error(error)

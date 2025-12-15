@@ -354,7 +354,10 @@ export const Dashboard = () => {
             </header>
             <div className="flex flex-col gap-3">
               {kitchenTimeline.map((slot) => (
-                <div key={slot.id} className="rounded-md border border-slate-200 p-4">
+                <div
+                  key={slot.id}
+                  className="rounded-md border border-slate-200 p-4"
+                >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold text-slate-900">

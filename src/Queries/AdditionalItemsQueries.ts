@@ -6,8 +6,8 @@
  *
  * GET    /api/admin/additional-items
  * GET    /api/admin/additional-items/{id}
- * POST   /api/admin/additional-items
- * PUT    /api/admin/additional-items/{id}
+ * POST   /api/admin/additional-items/bulk/create
+ * PUT    /api/admin/additional-items/bulk/update
  * DELETE /api/admin/additional-items/{id}
  */
 
@@ -37,7 +37,6 @@ export const useFetchAdditionalItems = () => {
   const fetchAll = async (): Promise<AdditionalItem[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(apiRoutes.additionalItems, {
         headers: {
@@ -46,9 +45,8 @@ export const useFetchAdditionalItems = () => {
       })
 
       return (res.data?.data ?? []) as AdditionalItem[]
-    } catch (error: unknown) {
+    } catch (error) {
       handleApiError(error, 'Additional items')
-      return []
     }
   }
 
@@ -67,7 +65,6 @@ export const useFetchAdditionalItemById = (id: number) => {
   const fetchById = async (): Promise<AdditionalItem> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(
         `${apiRoutes.additionalItems}/${id}`,
@@ -100,15 +97,10 @@ export const useFetchAdditionalItemOptions = () => {
   const fetchOptions = async (): Promise<DropdownOption[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(apiRoutes.additionalItems, {
         headers: { Authorization: `Bearer ${token}` },
       })
-
-      if (res.status !== 200) {
-        throw new Error(res.data?.message || 'Failed to fetch additional items')
-      }
 
       const items = (res.data?.data ?? []) as AdditionalItem[]
 
@@ -135,18 +127,27 @@ export const useFetchAdditionalItemOptions = () => {
 export const useCreateAdditionalItem = () => {
   const queryClient = useQueryClient()
 
-  const createAdditionalItem = async (payload: AdditionalItemPayload) => {
+  const createAdditionalItem = async (
+    payloads: AdditionalItemPayload[]
+  ): Promise<AdditionalItem[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
-      const res = await axiosInstance.post(apiRoutes.additionalItems, payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      if (!payloads.length) {
+        return []
+      }
 
-      return res.data?.data as AdditionalItem
+      const res = await axiosInstance.post(
+        `${apiRoutes.additionalItems}/bulk/create`,
+        payloads,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      return (res.data?.data ?? []) as AdditionalItem[]
     } catch (error) {
       handleApiError(error, 'Create additional item')
     }
@@ -168,16 +169,27 @@ export const useCreateAdditionalItem = () => {
 export const useEditAdditionalItem = () => {
   const queryClient = useQueryClient()
 
-  const editAdditionalItem = async (additionalItem: AdditionalItem) => {
+  const editAdditionalItem = async (
+    additionalItems: AdditionalItem[]
+  ): Promise<AdditionalItem[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
-      const { id, ...payload } = additionalItem
+      if (!additionalItems.length) {
+        return []
+      }
+
+      const updatePayload = additionalItems.map((item) => {
+        const { id, ...payload } = item
+        return {
+          id,
+          request: payload,
+        }
+      })
 
       const res = await axiosInstance.put(
-        `${apiRoutes.additionalItems}/${id}`,
-        payload,
+        `${apiRoutes.additionalItems}/bulk/update`,
+        updatePayload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -185,7 +197,7 @@ export const useEditAdditionalItem = () => {
         }
       )
 
-      return res.data?.data as AdditionalItem
+      return (res.data?.data ?? []) as AdditionalItem[]
     } catch (error) {
       handleApiError(error, 'Additional item')
     }
@@ -196,8 +208,10 @@ export const useEditAdditionalItem = () => {
     onSuccess: (_data, variables) => {
       toast.success('Additional item updated successfully')
       queryClient.invalidateQueries({ queryKey: ADDITIONAL_ITEMS_KEY })
-      queryClient.invalidateQueries({
-        queryKey: additionalItemKey(variables.id),
+      variables?.forEach((item) => {
+        queryClient.invalidateQueries({
+          queryKey: additionalItemKey(item.id),
+        })
       })
       queryClient.invalidateQueries({ queryKey: ['additionalItemOptions'] })
     },
@@ -213,7 +227,6 @@ export const useDeleteAdditionalItem = () => {
   const deleteAdditionalItem = async (additionalItem: AdditionalItem) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.delete(
         `${apiRoutes.additionalItems}/${additionalItem.id}`,

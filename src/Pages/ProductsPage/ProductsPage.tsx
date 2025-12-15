@@ -194,26 +194,16 @@ export const ProductsPage = () => {
       }
 
       const draftsToSave = draftRows.filter((draft) => isDraftValid(draft))
-      const savedDraftIds = new Set<number>()
+
+      if (!draftsToSave.length) {
+        return
+      }
 
       try {
-        for (const draft of draftsToSave) {
-          // eslint-disable-next-line no-await-in-loop
-          await createProduct(toProductPayload(draft))
-          savedDraftIds.add(draft.id)
-        }
-
-        let draftsRemaining = false
-        setEditData((prev) => {
-          const next = prev.filter((item) => {
-            const keep = !savedDraftIds.has(item.id)
-            if (keep && isDraftRow(item)) draftsRemaining = true
-            return keep
-          })
-          return next
-        })
+        await createProduct(draftsToSave.map(toProductPayload))
+        setEditData((prev) => prev.filter((item) => !isDraftRow(item)))
         setSelectedRows([])
-        setFormState(draftsRemaining ? 'add' : null)
+        setFormState(null)
       } catch (error) {
         console.error(error)
       }
@@ -225,15 +215,15 @@ export const ProductsPage = () => {
       return
     }
 
-    if (!hasChanges) {
-      setFormState(null)
+    if (!hasChanges || isEditProductsPending) {
+      if (!hasChanges) {
+        setFormState(null)
+      }
       return
     }
 
-    if (isEditProductsPending) return
-
     try {
-      await Promise.all(changedRows.map((row) => editProduct(row)))
+      await editProduct(changedRows)
       setFormState(null)
     } catch (error) {
       console.error(error)

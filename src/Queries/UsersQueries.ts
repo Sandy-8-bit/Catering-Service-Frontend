@@ -29,7 +29,6 @@ export const useFetchUsers = () => {
   const fetchAll = async (): Promise<User[]> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(apiRoutes.users, {
         headers: {
@@ -40,7 +39,6 @@ export const useFetchUsers = () => {
       return (res.data ?? []) as User[]
     } catch (error: unknown) {
       handleApiError(error, 'Fetching Users')
-      return []
     }
   }
 
@@ -59,7 +57,6 @@ export const useFetchUserById = (id: number) => {
   const fetchById = async (): Promise<User> => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.get(`${apiRoutes.users}/${id}`, {
         headers: {
@@ -95,7 +92,6 @@ export const useCreateUser = () => {
   const createUser = async (payload: UserPayload) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.post(apiRoutes.users, payload, {
         headers: {
@@ -127,7 +123,6 @@ export const useEditUser = () => {
   const editUser = async (user: User) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const { userId, ...payload } = user
       if (!userId && userId !== 0) {
@@ -174,7 +169,6 @@ export const useDeleteUser = () => {
   const deleteUser = async (user: User) => {
     try {
       const token = authHandler()
-      if (!token) throw new Error('Unauthorized to perform this action.')
 
       const res = await axiosInstance.delete(
         `${apiRoutes.users}/${user.userId}`,

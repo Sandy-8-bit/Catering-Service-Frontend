@@ -21,7 +21,7 @@ createRoot(document.getElementById('root')!).render(
         position="top-center"
         reverseOrder={false}
         gutter={8}
-        containerClassName=""
+        containerClassName="mt-3"
         containerStyle={{}}
         toasterId="default"
         // toastOptions={{

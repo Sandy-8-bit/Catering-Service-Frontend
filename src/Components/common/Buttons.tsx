@@ -63,7 +63,9 @@ const ButtonSm: React.FC<ButtonSmProps> = ({
       {isPending && (
         <Spinner
           size="sm"
-          className={state === 'default' ? 'text-white' : 'text-gray-700'}
+          className={
+            state === 'default' ? 'px-2 text-white' : 'px-2 text-gray-700'
+          }
         />
       )}
       {children}

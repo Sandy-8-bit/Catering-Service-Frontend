@@ -180,26 +180,16 @@ export const RawMaterialsPage = () => {
       }
 
       const draftsToSave = draftRows.filter((draft) => isDraftValid(draft))
-      const savedDraftIds = new Set<number>()
+
+      if (!draftsToSave.length) {
+        return
+      }
 
       try {
-        for (const draft of draftsToSave) {
-          // eslint-disable-next-line no-await-in-loop
-          await createRawMaterial(toRawMaterialPayload(draft))
-          savedDraftIds.add(draft.id)
-        }
-
-        let draftsRemaining = false
-        setEditData((prev) => {
-          const next = prev.filter((item) => {
-            const keep = !savedDraftIds.has(item.id)
-            if (keep && isDraftRow(item)) draftsRemaining = true
-            return keep
-          })
-          return next
-        })
+        await createRawMaterial(draftsToSave.map(toRawMaterialPayload))
+        setEditData((prev) => prev.filter((item) => !isDraftRow(item)))
         setSelectedRows([])
-        setFormState(draftsRemaining ? 'add' : null)
+        setFormState(null)
       } catch (error) {
         console.error(error)
       }
@@ -211,15 +201,15 @@ export const RawMaterialsPage = () => {
       return
     }
 
-    if (!hasChanges) {
-      setFormState(null)
+    if (!hasChanges || isEditRawMaterialsPending) {
+      if (!hasChanges) {
+        setFormState(null)
+      }
       return
     }
 
-    if (isEditRawMaterialsPending) return
-
     try {
-      await Promise.all(changedRows.map((row) => editRawMaterial(row)))
+      await editRawMaterial(changedRows)
       setFormState(null)
     } catch (error) {
       console.error(error)
