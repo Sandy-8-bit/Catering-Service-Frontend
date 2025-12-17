@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/purity */
 import { motion } from 'framer-motion'
+import { Check } from 'lucide-react'
 import React, { useRef } from 'react'
 
 type InputType = 'str' | 'num'
@@ -46,6 +47,8 @@ interface InputProps<T extends string | number> {
   viewMode?: boolean
   /** Extra custom CSS classes */
   className?: string
+  /** Optional ref forwarded to the underlying input element */
+  inputRef?: React.Ref<HTMLInputElement>
 }
 
 /**
@@ -80,6 +83,7 @@ const Input = <T extends string | number>({
   disabled = false,
   minLength = 0,
   viewMode = false, //depriciate dont-use
+  inputRef,
 }: InputProps<T>) => {
   const inputType = type === 'num' ? 'number' : 'text'
 
@@ -139,6 +143,7 @@ const Input = <T extends string | number>({
           </div>
         )}
         <input
+          ref={inputRef}
           required={required}
           readOnly={disabled}
           onWheel={(e) => (e.target as HTMLInputElement).blur()}
@@ -283,16 +288,12 @@ export const InputCheckbox: React.FC<InputCheckboxProps> = ({
             htmlFor={uniqueId}
             className={`relative block h-5 w-5 ${disabled ? 'cursor-default' : 'cursor-pointer'} rounded-md border-2 p-3 transition-all outline-none focus:outline-none ${
               checked
-                ? 'border-blue-500 bg-blue-500'
+                ? 'border-orange-500 bg-orange-500'
                 : 'border-[#F1F1F1] bg-slate-100 shadow-sm'
             }`}
           >
             {checked && (
-              <img
-                className="pointer-events-none absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-default select-none"
-                src="/icons/tick-icon.svg"
-                alt="tick"
-              />
+              <Check className="pointer-events-none absolute top-1/2 left-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 cursor-default text-white select-none" />
             )}
           </label>
         </div>
