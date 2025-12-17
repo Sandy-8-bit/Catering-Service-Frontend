@@ -228,12 +228,14 @@ export const TimeInput: React.FC<TimeInputProps> = ({
       }}
       ref={containerRef}
     >
-      <h3 className={`mb-0.5 w-full justify-start text-xs leading-loose font-semibold text-slate-700 ${disabled ? 'opacity-65' : ''}`}>
+      <h3
+        className={`mb-0.5 w-full justify-start text-xs leading-loose font-semibold text-slate-700 ${disabled ? 'opacity-65' : ''}`}
+      >
         {title}
       </h3>
 
       <div
-        className={`input-container group flex cursor-pointer flex-row items-center justify-between gap-2 overflow-clip rounded-xl border-2 border-slate-300 bg-white transition-all ${
+        className={`input-container group flex cursor-pointer flex-row items-center justify-between gap-2 overflow-clip rounded-xl border-2 border-[#F1F1F1] bg-white transition-all ${
           !disabled && 'focus-within:border-slate-500'
         } ${isOpen ? 'border-slate-500' : ''} ${className}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -262,7 +264,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
       {isOpen && portalStyle && (
         <div
           ref={portalRef}
-          className="animate-in fade-in-0 zoom-in-95 fixed z-50 overflow-hidden rounded-xl border-2 border-slate-200 bg-white shadow-2xl duration-200"
+          className="animate-in fade-in-0 zoom-in-95 fixed z-50 overflow-hidden rounded-xl border-2 border-[#F1F1F1] bg-white shadow-2xl duration-200"
           style={{
             // animation: 'slideDown 0.2s ease-out forwards',
             top: `${portalStyle.top + 5}px`,
@@ -324,7 +326,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
                   min={0}
                   max={23}
                   type="number"
-                  className="flex h-12 w-16 items-center justify-center rounded-lg border-2 border-slate-200 bg-slate-50 text-center text-lg font-bold text-slate-700 select-none"
+                  className="flex h-12 w-16 items-center justify-center rounded-lg border-2 border-[#F1F1F1] bg-slate-50 text-center text-lg font-bold text-slate-700 select-none"
                   value={tempHour.toString().padStart(2, '0')}
                   onChange={(e) => {
                     const val = parseInt(e.target.value, 10)
@@ -396,7 +398,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
                   min={0}
                   max={59}
                   type="number"
-                  className="flex h-12 w-16 items-center justify-center rounded-lg border-2 border-slate-200 bg-slate-50 text-center text-lg font-bold text-slate-700 select-none"
+                  className="flex h-12 w-16 items-center justify-center rounded-lg border-2 border-[#F1F1F1] bg-slate-50 text-center text-lg font-bold text-slate-700 select-none"
                   value={tempMinute.toString().padStart(2, '0')}
                   onChange={(e) => {
                     const val = parseInt(e.target.value, 10)
@@ -442,7 +444,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-2 border-t border-slate-200 pt-3">
+            <div className="flex gap-2 border-t border-[#F1F1F1] pt-3">
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}

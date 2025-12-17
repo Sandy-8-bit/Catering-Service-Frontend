@@ -87,6 +87,7 @@ export const DeleteRawMaterialsDialog = ({
           text={isPending ? 'Deleting...' : 'Delete'}
           disabled={isPending || !primaryMaterial}
           isPending={isPending}
+          autoFocus
         />
       </section>
     </form>

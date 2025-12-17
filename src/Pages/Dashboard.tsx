@@ -178,8 +178,8 @@ const severityTone: Record<string, string> = {
   info: 'text-slate-500 bg-slate-50',
 }
 
-const CARD = 'rounded-md border border-slate-200 bg-white p-4'
-const SLIM_CARD = 'rounded-md border border-slate-200 bg-white p-3'
+const CARD = 'rounded-md border border-[#F1F1F1] bg-white p-4'
+const SLIM_CARD = 'rounded-md border border-[#F1F1F1] bg-white p-3'
 
 export const Dashboard = () => {
   const [selectedRange, setSelectedRange] = useState<TimeRange>('today')
@@ -190,7 +190,7 @@ export const Dashboard = () => {
   }).format(new Date())
 
   return (
-    <main className="layout-container flex min-h-[95vh] w-full flex-col gap-6 rounded-md border border-slate-200 bg-white p-6">
+    <main className="layout-container flex min-h-[95vh] w-full flex-col gap-6 rounded-md border border-[#F1F1F1] bg-white p-6">
       <section className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">
@@ -209,7 +209,7 @@ export const Dashboard = () => {
               className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                 selectedRange === filter.id
                   ? 'border-orange-500 bg-orange-100 text-orange-700'
-                  : 'border-slate-200 text-slate-600'
+                  : 'border-[#F1F1F1] text-slate-600'
               }`}
             >
               {filter.label}
@@ -285,7 +285,7 @@ export const Dashboard = () => {
                         {order.crew.map((crew) => (
                           <span
                             key={`${order.id}-${crew}`}
-                            className="rounded-full border border-slate-200 px-2 py-0.5 text-xs text-slate-600"
+                            className="rounded-full border border-[#F1F1F1] px-2 py-0.5 text-xs text-slate-600"
                           >
                             {crew}
                           </span>
@@ -356,7 +356,7 @@ export const Dashboard = () => {
               {kitchenTimeline.map((slot) => (
                 <div
                   key={slot.id}
-                  className="rounded-md border border-slate-200 p-4"
+                  className="rounded-md border border-[#F1F1F1] p-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>

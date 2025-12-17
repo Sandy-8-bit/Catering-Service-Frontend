@@ -87,6 +87,7 @@ export const DeleteProductsDialog = ({
           text={isPending ? 'Deleting...' : 'Delete'}
           disabled={isPending || !primaryProduct}
           isPending={isPending}
+          autoFocus
         />
       </section>
     </form>

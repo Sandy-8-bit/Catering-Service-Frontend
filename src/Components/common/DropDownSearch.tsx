@@ -304,7 +304,7 @@ const DebouncedSearchDropdown: React.FC<DebouncedSearchDropdownProps> = ({
 
       {isOpen && (
         <div
-          className={`scrollbar-visible absolute z-10 max-h-[200px] w-full overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-lg ${getDirectionClass()} custom-scrollbar`}
+          className={`scrollbar-visible absolute z-10 max-h-[200px] w-full overflow-y-auto rounded-xl border border-[#F1F1F1] bg-white shadow-lg ${getDirectionClass()} custom-scrollbar`}
         >
           {(loading || externalLoading || fullLoading) &&
           query.trim() !== '' ? (

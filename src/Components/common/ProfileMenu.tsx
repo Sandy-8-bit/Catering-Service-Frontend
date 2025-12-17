@@ -79,7 +79,7 @@ export default function ProfileMenu() {
             className="absolute right-0 mt-2 w-64 rounded-2xl bg-white p-4 shadow-lg ring-1 ring-slate-200"
           >
             {/* Profile details */}
-            <div className="mb-3 flex items-center gap-3 border-b border-slate-200 pb-3">
+            <div className="mb-3 flex items-center gap-3 border-b border-[#F1F1F1] pb-3">
               <img
                 src={`https://randomuser.me/api/portraits/men/${random}.jpg`}
                 alt="Profile"

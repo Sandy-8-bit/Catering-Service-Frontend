@@ -87,6 +87,7 @@ export const DeleteAdditionalItemsDialog = ({
           text={isPending ? 'Deleting...' : 'Delete'}
           disabled={isPending || !primaryItem}
           isPending={isPending}
+          autoFocus
         />
       </section>
     </form>

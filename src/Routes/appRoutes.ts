@@ -26,6 +26,14 @@ export const appRoutes = {
     path: '/additional-items',
     children: {},
   },
+  orders: {
+    path: '/order-management',
+    children: {},
+  },
+  ordersForm: {
+    path: '/order-management/form',
+    children: {},
+  },
   userManagement: {
     path: '/user-management',
     children: {},

@@ -87,6 +87,7 @@ export const DeleteCategoriesDialog = ({
           text={isPending ? 'Deleting...' : 'Delete'}
           disabled={isPending || !primaryCategory}
           isPending={isPending}
+          autoFocus
         />
       </section>
     </form>

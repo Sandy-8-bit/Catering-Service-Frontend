@@ -318,7 +318,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
           isInvalid
             ? 'border-red-500'
             : isOpen
-              ? 'border-slate-200'
+              ? 'border-[#F1F1F1]'
               : 'border-[#F1F1F1]'
         } ${disabled ? 'pointer-events-none' : ''} ${MainclassName}`}
       >
@@ -428,7 +428,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
                 <button
                   key={option.label}
                   onClick={() => handleSelect(option)}
-                  className={`flex w-full cursor-pointer items-center justify-between ${idx == 0 ? 'mt-2 border-t-2 border-slate-200' : ''} px-4 py-3 hover:bg-slate-100 ${
+                  className={`flex w-full cursor-pointer items-center justify-between ${idx == 0 ? 'mt-2 border-t-2 border-[#F1F1F1]' : ''} px-4 py-3 hover:bg-slate-100 ${
                     selected.label === option.label
                       ? 'font-semibold text-blue-600'
                       : 'text-slate-700'

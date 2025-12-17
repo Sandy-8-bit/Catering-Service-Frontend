@@ -9,6 +9,8 @@ import CategoriesPage from '@pages/CatergoriesPage/CatergoriesPage'
 import ProductsPage from '@pages/ProductsPage/ProductsPage'
 import AdditionalItemsPage from '@pages/AdditionalItemsPage/AdditionalItemsPage'
 import UsersPage from '@pages/UsersPage/UsersPage'
+import { OrdersPage } from '@pages/OrdersPage/OrdersPage'
+import { OrdersForm } from '@pages/OrdersPage/OrdersForm'
 
 function App() {
   return (
@@ -34,6 +36,8 @@ function App() {
             element={<AdditionalItemsPage />}
           />
           <Route path={appRoutes.userManagement.path} element={<UsersPage />} />
+          <Route path={appRoutes.orders.path} element={<OrdersPage />} />
+          <Route path={appRoutes.ordersForm.path} element={<OrdersForm />} />
         </Route>
       </Route>
 

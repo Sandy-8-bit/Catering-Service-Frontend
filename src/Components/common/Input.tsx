@@ -131,10 +131,10 @@ const Input = <T extends string | number>({
         {title} {required && <span className="text-red-500"> *</span>}
       </h3>
       <div
-        className={`input-container flex cursor-text flex-row items-center justify-center gap-0 overflow-clip rounded-xl ${viewMode ? '' : 'border-2 border-slate-300 bg-white transition-all focus-within:border-slate-500'} `}
+        className={`input-container flex cursor-text flex-row items-center justify-center gap-0 overflow-clip rounded-xl ${viewMode ? '' : 'border-2 border-[#F1F1F1] bg-white transition-all focus-within:border-slate-500'} `}
       >
         {prefixText && (
-          <div className="flex h-full items-center justify-start bg-slate-100 px-3 py-2 text-sm leading-loose font-medium text-slate-700">
+          <div className="flex h-full min-w-[35px] items-center justify-center bg-slate-100 px-3 py-2 text-center align-middle text-sm leading-loose font-medium text-slate-700 lg:min-w-[45px]">
             {prefixText}
           </div>
         )}
@@ -266,7 +266,7 @@ export const InputCheckbox: React.FC<InputCheckboxProps> = ({
         {label}
       </h3>
       <div
-        className={`input-container flex flex-row items-center justify-between rounded-xl border-2 border-slate-300 bg-white px-3 py-2 pr-2 transition-all duration-200 ease-in-out`}
+        className={`input-container flex flex-row items-center justify-between rounded-xl border-2 border-[#F1F1F1] bg-white px-3 py-2 pr-2 transition-all duration-200 ease-in-out`}
       >
         <span className="text-sm font-medium text-slate-600">{title}</span>
 
@@ -284,7 +284,7 @@ export const InputCheckbox: React.FC<InputCheckboxProps> = ({
             className={`relative block h-5 w-5 ${disabled ? 'cursor-default' : 'cursor-pointer'} rounded-md border-2 p-3 transition-all outline-none focus:outline-none ${
               checked
                 ? 'border-blue-500 bg-blue-500'
-                : 'border-slate-300 bg-slate-100 shadow-sm'
+                : 'border-[#F1F1F1] bg-slate-100 shadow-sm'
             }`}
           >
             {checked && (
@@ -341,7 +341,7 @@ export const DateInput: React.FC<DateInputProps> = ({
           if (!disabled) inputRef.current?.showPicker?.()
           inputRef.current?.focus()
         }}
-        className={`input-container group flex flex-row items-center justify-between gap-2 overflow-clip rounded-xl border-2 border-slate-300 bg-white transition-all select-none ${
+        className={`input-container group flex flex-row items-center justify-between gap-2 overflow-clip rounded-xl border-2 border-[#F1F1F1] bg-white transition-all select-none ${
           !disabled
             ? 'cursor-pointer focus-within:border-slate-500'
             : 'cursor-not-allowed'

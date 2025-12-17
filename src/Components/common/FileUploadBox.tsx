@@ -111,7 +111,7 @@ const MultiFileUpload: React.FC<MultiFileUploadProps> = ({
       </div>
 
       {/* Right: Uploaded Files List */}
-      <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="w-full rounded-xl border border-[#F1F1F1] bg-white p-4 shadow-sm">
         <h3 className="mb-3 text-base font-semibold text-slate-700">
           Uploaded Files ( Max : 7 files )
         </h3>

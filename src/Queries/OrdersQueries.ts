@@ -34,6 +34,7 @@ export const useFetchOrders = () => {
 }
 
 export const useFetchOrderById = (id?: number) => {
+  console.log(id)
   const fetchById = async (): Promise<Order> => {
     try {
       if (!id && id !== 0) {
@@ -46,20 +47,16 @@ export const useFetchOrderById = (id?: number) => {
         headers: { Authorization: `Bearer ${token}` },
       })
 
-      if (res.status !== 200) {
-        throw new Error(res.data?.message || 'Failed to fetch order')
-      }
-
       return (res.data?.data ?? res.data) as Order
     } catch (error: unknown) {
-      handleApiError(error, 'Order')
+      handleApiError(error, 'Fetch Order')
     }
   }
 
   return useQuery({
     queryKey: orderKey(id ?? 'unknown'),
     queryFn: fetchById,
-    enabled: typeof id === 'number',
+    enabled: typeof id === 'number' && id > 0,
     staleTime: 1000 * 60 * 5,
     retry: 1,
   })

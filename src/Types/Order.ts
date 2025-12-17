@@ -40,7 +40,8 @@ export interface Order {
   customerPhone: string
   customerAddress: string
   eventType: string
-  eventDateTime: string
+  eventDate: string
+  eventTime: string
   totalPeople: number
   deliveredByUs: boolean
   driver?: OrderDriver
@@ -75,7 +76,8 @@ export interface OrderPayload {
   customerPhone: string
   customerAddress: string
   eventType: string
-  eventDateTime: string
+  eventDate: string
+  eventTime: string
   totalPeople: number
   deliveredByUs: boolean
   driverId?: number

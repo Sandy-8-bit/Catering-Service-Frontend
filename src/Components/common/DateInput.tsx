@@ -451,7 +451,7 @@ export const DateInput: React.FC<DateInputProps> = ({
     return (
       <>
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-200 p-4">
+        <div className="flex items-center justify-between border-b border-[#F1F1F1] p-4">
           <motion.button
             type="button"
             onClick={handlePrevMonth}
@@ -527,7 +527,7 @@ export const DateInput: React.FC<DateInputProps> = ({
         </div>
 
         {/* Actions */}
-        {/* <div className="flex gap-2 border-t border-slate-200 p-4">
+        {/* <div className="flex gap-2 border-t border-[#F1F1F1] p-4">
           <motion.button
             type="button"
             onClick={() => {
@@ -620,7 +620,7 @@ export const DateInput: React.FC<DateInputProps> = ({
 
     return (
       <>
-        <div className="flex items-center justify-between border-b border-slate-200 p-4">
+        <div className="flex items-center justify-between border-b border-[#F1F1F1] p-4">
           <motion.button
             type="button"
             onClick={() => setShowYearPicker(false)}
@@ -653,7 +653,7 @@ export const DateInput: React.FC<DateInputProps> = ({
           <div className="grid grid-cols-4 gap-2">{years}</div>
         </div>
 
-        <div className="flex gap-2 border-t border-slate-200 p-4">
+        <div className="flex gap-2 border-t border-[#F1F1F1] p-4">
           <motion.button
             type="button"
             onClick={() => setShowYearPicker(false)}
@@ -676,7 +676,9 @@ export const DateInput: React.FC<DateInputProps> = ({
       // keep this wrapper small by default; the inner className controls width/scale
     >
       {
-        <h3  className={`mb-0.5 w-full justify-start text-xs leading-loose font-semibold text-slate-700 ${disabled ? 'opacity-65' : ''}`}>
+        <h3
+          className={`mb-0.5 w-full justify-start text-xs leading-loose font-semibold text-slate-700 ${disabled ? 'opacity-65' : ''}`}
+        >
           {title} {required && <span className="text-red-500">*</span>}
         </h3>
       }
@@ -691,7 +693,7 @@ export const DateInput: React.FC<DateInputProps> = ({
               ? 'border-red-500 ring-1 ring-red-200'
               : isOpen
                 ? 'border-slate-500'
-                : 'border-slate-300'
+                : 'border-[#F1F1F1]'
           } ${disabled ? 'cursor-not-allowed opacity-60' : ''}`}
           onClick={(e) => {
             e.stopPropagation()
@@ -740,7 +742,7 @@ export const DateInput: React.FC<DateInputProps> = ({
                 minWidth: 280,
                 zIndex: 9999,
               }}
-              className="mt-1 overflow-hidden rounded-xl border-2 border-slate-200 bg-white shadow-2xl"
+              className="mt-1 overflow-hidden rounded-xl border-2 border-[#F1F1F1] bg-white shadow-2xl"
             >
               {showYearPicker ? renderYearPicker() : renderCalendar()}
             </motion.div>

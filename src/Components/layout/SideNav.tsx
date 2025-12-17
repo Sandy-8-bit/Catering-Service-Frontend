@@ -68,8 +68,8 @@ const SideNav: React.FC = () => {
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
       },
       {
-        label: 'Orders (podala)',
-        path: appRoutes.additionalItems.path,
+        label: 'Order Managmenet',
+        path: appRoutes.orders.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
       },

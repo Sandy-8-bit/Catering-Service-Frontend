@@ -87,6 +87,7 @@ export const DeleteUsersDialog = ({
           text={isPending ? 'Deleting...' : 'Delete'}
           disabled={isPending || !primaryUser}
           isPending={isPending}
+          autoFocus
         />
       </section>
     </form>
