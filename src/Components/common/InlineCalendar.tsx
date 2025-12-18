@@ -25,6 +25,13 @@ const MONTH_OPTIONS: DropdownOption[] = MONTHS.map((label, index) => ({
   label,
 }))
 
+const formatDateKey = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const getYearsRange = (centerYear: number, span = 5) => {
   const years: number[] = []
   for (let year = centerYear - span; year <= centerYear + span; year += 1) {
@@ -75,6 +82,7 @@ export interface InlineCalendarProps {
   initialViewDate?: Date
   className?: string
   showSelectedLabel?: boolean
+  dateCounts?: Record<string, number>
 }
 
 const InlineCalendar = ({
@@ -83,6 +91,7 @@ const InlineCalendar = ({
   initialViewDate,
   className = '',
   showSelectedLabel = true,
+  dateCounts = {},
 }: InlineCalendarProps) => {
   const today = useMemo(() => new Date(), [])
   const isControlled = typeof selectedDate !== 'undefined'
@@ -97,6 +106,7 @@ const InlineCalendar = ({
 
   useEffect(() => {
     if (isControlled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInternalSelectedDate(selectedDate ?? null)
       if (selectedDate) {
         setViewDate(
@@ -229,10 +239,16 @@ const InlineCalendar = ({
               const stateClasses = !date
                 ? 'cursor-default'
                 : isSelected
-                  ? 'cursor-pointer bg-[#4F46E5] font-semibold text-white shadow-sm'
+                  ? 'cursor-pointer bg-orange-500 font-semibold text-white shadow-sm'
                   : isToday
                     ? 'cursor-pointer border-2 border-[#4F46E5]/70 text-[#4F46E5]'
                     : 'cursor-pointer hover:bg-zinc-100'
+              const markerCount = date
+                ? (dateCounts[formatDateKey(date)] ?? 0)
+                : 0
+              const orangeDots = Math.min(markerCount, 4)
+              const showOverflow = markerCount > 4
+
               return (
                 <button
                   type="button"
@@ -243,7 +259,24 @@ const InlineCalendar = ({
                   onClick={() => handleSelectDate(date)}
                   disabled={!date}
                 >
-                  {date?.getDate() ?? ''}
+                  <div className="flex h-full flex-col items-center justify-center gap-1">
+                    <span>{date?.getDate() ?? ''}</span>
+                    {markerCount > 0 && (
+                      <span className="flex gap-1">
+                        {Array.from({ length: orangeDots }).map(
+                          (_, dotIndex) => (
+                            <span
+                              key={`dot-${key}-${dotIndex}`}
+                              className={`h-1 w-1 rounded-full ${isSelected ? 'bg-white' : 'bg-orange-500'}`}
+                            />
+                          )
+                        )}
+                        {showOverflow && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                        )}
+                      </span>
+                    )}
+                  </div>
                 </button>
               )
             })}

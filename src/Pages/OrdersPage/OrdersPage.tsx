@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Edit3, Plus } from 'lucide-react'
+import { ArrowLeft, Edit3, Plus } from 'lucide-react'
 import InlineCalendar from '@/components/common/InlineCalendar'
 import ButtonSm from '@/components/common/Buttons'
 import { appRoutes } from '@/routes/appRoutes'
@@ -15,28 +15,28 @@ interface SummaryListProps {
 
 const SummaryList = ({ title, items, emptyLabel }: SummaryListProps) => {
   return (
-    <article className="rounded-2xl border border-[#F1F1F1] bg-white p-4 shadow-sm">
-      <header className="mb-3 flex items-center justify-between">
-        <h3 className="text-base font-semibold text-zinc-800">{title}</h3>
+    <article className="">
+      <header className="mb-4 flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-zinc-900">{title}</h3>
         {items.length > 0 && (
-          <span className="text-xs font-medium text-zinc-400">
+          <span className="text-sm font-medium text-zinc-400">
             {items.length} items
           </span>
         )}
       </header>
       {items.length === 0 ? (
-        <p className="text-sm text-zinc-500">{emptyLabel}</p>
+        <p className="text-base text-zinc-500">{emptyLabel}</p>
       ) : (
-        <ul className="max-h-80 space-y-2 overflow-y-auto pr-1 text-sm text-zinc-700">
+        <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto text-base text-zinc-700">
           {items.map((item) => (
             <li
               key={`${title}-${item.label}`}
-              className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2"
+              className="flex items-center justify-between px-1 py-3"
             >
-              <span className="truncate font-medium text-zinc-800">
+              <span className="truncate text-sm font-medium text-zinc-900 md:text-base">
                 {item.label}
               </span>
-              <span className="ml-3 shrink-0 font-semibold text-zinc-900">
+              <span className="ml-4 shrink-0 text-base font-semibold text-zinc-900">
                 {item.quantity}
               </span>
             </li>
@@ -50,35 +50,44 @@ const SummaryList = ({ title, items, emptyLabel }: SummaryListProps) => {
 const OrderDetailsCard = ({ order }: { order: Order | null }) => {
   if (!order) {
     return (
-      <article className="rounded-2xl border border-dashed border-[#F1F1F1] bg-white p-4 text-sm text-zinc-500">
+      <article className="rounded-2xl border border-dashed border-slate-200 p-4 text-base text-zinc-500">
         Select an order from the list to view detailed customer and delivery
         information.
       </article>
     )
   }
 
-  const eventDate = new Date(order.eventDateTime)
+  const eventDate = new Date(order.eventDate)
 
   return (
-    <article className="rounded-2xl border border-[#F1F1F1] bg-white p-4 shadow-sm">
-      <header className="mb-3 flex items-center justify-between text-base font-semibold text-zinc-800">
-        Order Details
-        <span className="text-xs font-medium text-zinc-500">#{order.id}</span>
+    <article className="">
+      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-medium tracking-wide text-orange-500 uppercase">
+          Order Details
+        </p>
+
+        <span className="rounded-full bg-zinc-100 px-4 py-1 text-sm font-semibold text-zinc-600">
+          #{order.id}
+        </span>
       </header>
-      <dl className="grid grid-cols-1 gap-2 text-sm text-zinc-700 sm:grid-cols-2">
-        <div>
-          <dt className="text-xs tracking-wide text-zinc-400 uppercase">
+      <dl className="grid grid-cols-1 gap-6 text-sm text-zinc-600 md:grid-cols-2">
+        <div className="space-y-1 border-t border-slate-100 pt-4">
+          <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
             Customer
           </dt>
-          <dd className="font-medium text-zinc-900">{order.customerName}</dd>
-          <p className="text-xs text-zinc-500">{order.customerPhone}</p>
+          <dd className="text-base font-semibold text-zinc-900">
+            {order.customerName}
+          </dd>
+          <p className="text-sm text-zinc-500">{order.customerPhone}</p>
         </div>
-        <div>
-          <dt className="text-xs tracking-wide text-zinc-400 uppercase">
+        <div className="space-y-1 border-t border-slate-100 pt-4">
+          <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
             Event
           </dt>
-          <dd className="font-medium text-zinc-900">{order.eventType}</dd>
-          <p className="text-xs text-zinc-500">
+          <dd className="text-base font-semibold text-zinc-900">
+            {order.eventType}
+          </dd>
+          <p className="text-sm text-zinc-500">
             {eventDate.toLocaleDateString(undefined, {
               weekday: 'short',
               month: 'short',
@@ -91,20 +100,22 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
             })}
           </p>
         </div>
-        <div>
-          <dt className="text-xs tracking-wide text-zinc-400 uppercase">
+        <div className="space-y-1 border-t border-slate-100 pt-4">
+          <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
             Headcount
           </dt>
-          <dd className="font-medium text-zinc-900">
+          <dd className="text-base font-semibold text-zinc-900">
             {order.totalPeople} guests
           </dd>
         </div>
-        <div>
-          <dt className="text-xs tracking-wide text-zinc-400 uppercase">
+        <div className="space-y-1 border-t border-slate-100 pt-4">
+          <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
             Payment
           </dt>
-          <dd className="font-medium text-zinc-900">{order.paymentType}</dd>
-          <p className="text-xs text-zinc-500">
+          <dd className="text-base font-semibold text-zinc-900">
+            {order.paymentType}
+          </dd>
+          <p className="text-sm text-zinc-500">
             Advance ₹{order.advanceAmount.toLocaleString()} / Balance ₹
             {order.balanceAmount.toLocaleString()}
           </p>
@@ -122,33 +133,80 @@ const isSameDay = (first: Date, second: Date) => {
   )
 }
 
+const getProductDisplayName = (
+  product: Order['items'][number]['product']
+): string => {
+  return (
+    product.productPrimaryName ||
+    product.primaryName ||
+    product.productSecondaryName ||
+    product.secondaryName ||
+    ''
+  )
+}
+
+const buildQuantitySummary = <T,>(
+  orders: Order[],
+  getItems: (order: Order) => T[],
+  getLabel: (item: T) => string,
+  getQuantity: (item: T) => number
+) => {
+  const map = new Map<string, number>()
+  orders.forEach((order) => {
+    getItems(order).forEach((item) => {
+      const label = getLabel(item)
+      if (!label) return
+      map.set(label, (map.get(label) ?? 0) + getQuantity(item))
+    })
+  })
+  return Array.from(map.entries()).map(([label, quantity]) => ({
+    label,
+    quantity,
+  }))
+}
+
+const detailSectionTitleClass =
+  'text-sm font-semibold uppercase tracking-[0.2em] text-orange-500'
+
 export const OrdersPage = () => {
   const navigate = useNavigate()
   const { data: orders = [], isLoading } = useFetchOrders()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
 
+  const ordersPerDate = useMemo(() => {
+    const counts: Record<string, number> = {}
+    orders.forEach((order) => {
+      if (!order.eventDate) return
+      const key = order.eventDate.split('T')[0]
+      if (!key) return
+      counts[key] = (counts[key] ?? 0) + 1
+    })
+    return counts
+  }, [orders])
+
   const ordersForDate = useMemo(() => {
     return orders
       .filter((order) => {
-        if (!order.eventDateTime) return false
-        const eventDate = new Date(order.eventDateTime)
+        if (!order.eventDate) return false
+        const eventDate = new Date(order.eventDate)
         return isSameDay(eventDate, selectedDate)
       })
       .sort(
         (a, b) =>
-          new Date(a.eventDateTime).getTime() -
-          new Date(b.eventDateTime).getTime()
+          new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime()
       )
   }, [orders, selectedDate])
 
   useEffect(() => {
-    setSelectedOrderId((prev) => {
-      if (!prev) return null
-      const exists = ordersForDate.some((order) => order.id === prev)
-      return exists ? prev : null
-    })
-  }, [ordersForDate])
+    if (!selectedOrderId) return
+    const stillExists = ordersForDate.some(
+      (order) => order.id === selectedOrderId
+    )
+    if (!stillExists) {
+      setSelectedOrderId(null)
+    }
+  }, [ordersForDate, selectedOrderId])
 
   const selectedOrder = useMemo(() => {
     if (!selectedOrderId) return null
@@ -157,41 +215,35 @@ export const OrdersPage = () => {
 
   const sourceOrders = selectedOrder ? [selectedOrder] : ordersForDate
 
-  const itemsSummary = useMemo(() => {
-    const map = new Map<string, number>()
-    sourceOrders.forEach((order) => {
-      order.items.forEach((item) => {
-        const label = item.product.productPrimaryName || `Item ${item.id}`
-        map.set(label, (map.get(label) ?? 0) + item.quantity)
-      })
-    })
-    return Array.from(map.entries()).map(([label, quantity]) => ({
-      label,
-      quantity,
-    }))
-  }, [sourceOrders])
+  const itemsSummary = useMemo(
+    () =>
+      buildQuantitySummary(
+        sourceOrders,
+        (order) => order.items,
+        (item) => getProductDisplayName(item.product) || `Item ${item.id}`,
+        (item) => item.quantity
+      ),
+    [sourceOrders]
+  )
 
-  const additionalItemsSummary = useMemo(() => {
-    const map = new Map<string, number>()
-    sourceOrders.forEach((order) => {
-      order.additionalItems.forEach((item) => {
-        const label =
+  const additionalItemsSummary = useMemo(
+    () =>
+      buildQuantitySummary(
+        sourceOrders,
+        (order) => order.additionalItems,
+        (item) =>
           item.additionalItem.additionalItemPrimaryName ||
-          `Additional ${item.id}`
-        map.set(label, (map.get(label) ?? 0) + item.quantity)
-      })
-    })
-    return Array.from(map.entries()).map(([label, quantity]) => ({
-      label,
-      quantity,
-    }))
-  }, [sourceOrders])
+          `Additional ${item.id}`,
+        (item) => item.quantity
+      ),
+    [sourceOrders]
+  )
 
-  const infoMessage = useMemo(() => {
-    if (isLoading) return 'Loading orders…'
-    if (ordersForDate.length === 0) return 'No orders scheduled for this date.'
-    return null
-  }, [isLoading, ordersForDate.length])
+  const infoMessage = isLoading
+    ? 'Loading orders…'
+    : ordersForDate.length === 0
+      ? 'No orders scheduled for this date.'
+      : null
 
   const formattedDateLabel = selectedDate.toLocaleDateString(undefined, {
     month: 'long',
@@ -213,19 +265,11 @@ export const OrdersPage = () => {
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
-      <header className="flex flex-row gap-4 p-4">
-        <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
-          Orders
-        </h1>
-      </header>
-      <div className="divider min-w-full border border-[#F1F1F1]" />
-
-      <section className="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold text-zinc-800">Pick a date</h2>
-          <p className="text-sm text-zinc-500">
-            Use the calendar to filter and aggregate daily production.
-          </p>
+      <header className="flex flex-col items-center gap-2 px-4 py-2 sm:flex-row sm:justify-between">
+        <div>
+          <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
+            Orders
+          </h1>
         </div>
         <div className="flex flex-row items-center gap-3">
           <ButtonSm
@@ -244,40 +288,47 @@ export const OrdersPage = () => {
             <Plus className="mr-2 h-4 w-4 text-white" /> Add New Order
           </ButtonSm>
         </div>
-      </section>
+      </header>
+      <div className="divider min-w-full border border-[#F1F1F1]" />
 
-      <section className="grid gap-6 p-6 lg:grid-cols-[360px,1fr]">
-        <div className="flex flex-col gap-5" style={{ zoom: 0.9 }}>
+      <section className="mt-6 flex flex-col gap-6 px-4 pb-6 lg:flex-row">
+        <div
+          className="flex w-full flex-col gap-6 lg:w-auto"
+          style={{ zoom: 0.95 }}
+        >
           <InlineCalendar
-            className="w-full"
+            className="min-w-[360px]!"
             showSelectedLabel={false}
             selectedDate={selectedDate}
+            dateCounts={ordersPerDate}
             onSelectDate={(date) => {
               setSelectedDate(date)
               setSelectedOrderId(null)
             }}
           />
 
-          <div className="rounded-2xl border border-[#F1F1F1] bg-white p-4 shadow-sm">
-            <header className="flex items-center justify-between">
+          <div className="rounded-2xl border border-slate-100 bg-white/95 p-5 shadow-sm">
+            <header className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs tracking-wide text-zinc-400 uppercase">
+                <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
                   Orders on
                 </p>
-                <h3 className="text-base font-semibold text-zinc-800">
+                <h3 className="text-lg font-semibold text-zinc-900">
                   {formattedDateLabel}
                 </h3>
               </div>
               {ordersForDate.length > 0 && (
-                <span className="text-xs font-medium text-zinc-500">
+                <span className="rounded-full bg-zinc-50 px-3 py-1 text-sm font-medium text-zinc-600">
                   {ordersForDate.length} total
                 </span>
               )}
             </header>
 
-            <div className="mt-3 space-y-2">
+            <div className="mt-4 flex flex-col gap-3">
               {infoMessage ? (
-                <p className="text-sm text-zinc-500">{infoMessage}</p>
+                <p className="rounded-md border border-dashed border-slate-200 px-4 py-6 text-base text-zinc-500">
+                  {infoMessage}
+                </p>
               ) : (
                 ordersForDate.map((order) => {
                   const isActive = order.id === selectedOrderId
@@ -290,12 +341,16 @@ export const OrdersPage = () => {
                           prev === order.id ? null : order.id
                         )
                       }
-                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${(isActive && 'border-[#4F46E5] bg-[#4F46E5]/5 text-[#1F1F21]') || 'border-[#F1F1F1] hover:border-zinc-200'}`}
+                      className={`w-full cursor-pointer rounded-2xl px-4 py-3 text-left text-base transition ${
+                        isActive
+                          ? 'border border-orange-300 bg-orange-100 text-zinc-900'
+                          : 'border border-[#f1f1f1] bg-white hover:border-zinc-200'
+                      }`}
                     >
-                      <p className="font-semibold text-zinc-800">
+                      <p className="text-lg font-semibold">
                         {order.customerName}
                       </p>
-                      <span className="text-xs text-zinc-500">
+                      <span className="text-sm text-zinc-500">
                         #{order.id} · {order.eventType}
                       </span>
                     </button>
@@ -306,7 +361,27 @@ export const OrdersPage = () => {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex w-full flex-col gap-5 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+          <div className="flex flex-row items-start gap-3">
+            {selectedOrder && (
+              <ArrowLeft
+                className="mt-1 cursor-pointer text-orange-500"
+                onClick={() => {
+                  setSelectedOrderId(null)
+                }}
+                size={14}
+              />
+            )}
+            <div className="flex flex-col gap-0">
+              <p className={detailSectionTitleClass}> Summary</p>
+              <p className="text-xl font-semibold text-zinc-900">
+                {selectedOrder
+                  ? selectedOrder.customerName
+                  : 'Overall Orders for the Day'}
+              </p>
+            </div>
+          </div>
+
           <SummaryList
             title={selectedOrder ? 'Items in this order' : 'Items required'}
             items={itemsSummary}

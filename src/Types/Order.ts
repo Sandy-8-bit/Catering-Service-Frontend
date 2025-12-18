@@ -8,6 +8,8 @@ export interface OrderProductRef {
   productId: number
   productPrimaryName: string
   productSecondaryName: string
+  primaryName?: string
+  secondaryName?: string
 }
 
 export interface OrderAdditionalItemRef {
