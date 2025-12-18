@@ -11,6 +11,7 @@ import AdditionalItemsPage from '@pages/AdditionalItemsPage/AdditionalItemsPage'
 import UsersPage from '@pages/UsersPage/UsersPage'
 import { OrdersPage } from '@pages/OrdersPage/OrdersPage'
 import { OrdersForm } from '@pages/OrdersPage/OrdersForm'
+import MasterPage from '@pages/MasterPage/MasterPage'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
           <Route path={appRoutes.dashboard.path} element={<Dashboard />} />
+          <Route path={appRoutes.master.path} element={<MasterPage />} />
           <Route
             path={appRoutes.rawMaterials.path}
             element={<RawMaterialsPage />}

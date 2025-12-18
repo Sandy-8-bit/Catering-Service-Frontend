@@ -49,7 +49,6 @@ export const SignInPage = () => {
       {
         onSuccess: (res) => {
           if (res.token) {
-            toast.success(t('login_success'))
             navigate('/dashboard')
           } else {
             setLoginIdentifier(identifier)
@@ -132,7 +131,7 @@ export const SignInPage = () => {
               {t('password_label')}
               <span className="text-red-500"> *</span>
             </label>
-            <div className="parent-input-wrapper flex items-center justify-between overflow-clip rounded-xl border-2 border-[#F1F1F1] bg-white px-3 py-2 transition-all focus-within:border-slate-500">
+            <div className="parent-input-wrapper flex items-center justify-between overflow-clip rounded-xl border-2 border-[#F1F1F1] bg-white px-3 py-1.5 transition-all focus-within:border-slate-500">
               <input
                 id="password"
                 name="password"

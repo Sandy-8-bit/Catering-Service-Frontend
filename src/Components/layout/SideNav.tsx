@@ -4,12 +4,21 @@ import { motion } from 'motion/react'
 import { LogOut } from 'lucide-react'
 import { appRoutes } from '@/routes/appRoutes'
 
+type NavigationSection = 'main' | 'orders' | 'settings'
+
 interface NavigationItem {
   label: string
   path: string
   icon: string
   activeIcon: string
+  section: NavigationSection
 }
+
+const NAVIGATION_SECTIONS: Array<{ title: string; key: NavigationSection }> = [
+  { title: 'Main Menu', key: 'main' },
+  { title: 'Order Management', key: 'orders' },
+  { title: 'Settings', key: 'settings' },
+]
 
 const SideNav: React.FC = () => {
   const [activeRoute, setActiveRoute] = useState<string>('')
@@ -18,11 +27,7 @@ const SideNav: React.FC = () => {
   useEffect(() => {
     const currentPath = window.location.pathname
 
-    if (currentPath.startsWith('/master')) {
-      setActiveRoute(appRoutes.dashboard.path)
-    } else {
-      setActiveRoute(currentPath)
-    }
+    setActiveRoute(currentPath)
   }, [])
 
   const navigateToRoute = useCallback((route: string) => {
@@ -42,42 +47,28 @@ const SideNav: React.FC = () => {
         path: appRoutes.dashboard.path,
         icon: '/icons/sideNavIcons/dashboard-icon.svg',
         activeIcon: '/icons/sideNavIcons/dashboard-icon-active.svg',
+        section: 'main',
       },
       {
-        label: 'Raw Materials',
-        path: appRoutes.rawMaterials.path,
+        label: 'Master Configuration',
+        path: appRoutes.master.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
-      },
-      {
-        label: 'Catergories',
-        path: appRoutes.catergories.path,
-        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
-        activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
-      },
-      {
-        label: 'Products',
-        path: appRoutes.products.path,
-        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
-        activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
-      },
-      {
-        label: 'Additional Items',
-        path: appRoutes.additionalItems.path,
-        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
-        activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
+        section: 'main',
       },
       {
         label: 'Order Managmenet',
         path: appRoutes.orders.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
+        section: 'orders',
       },
       {
         label: 'User Management',
         path: appRoutes.userManagement.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
+        section: 'settings',
       },
     ],
     []
@@ -149,54 +140,36 @@ const SideNav: React.FC = () => {
           <div
             className={`flex w-full flex-col ${isExpanded ? 'gap-0' : 'items-center gap-0'}`}
           >
-            {isExpanded && (
-              <h4 className="text-md my-3 px-3 font-medium text-slate-600">
-                Main Menu
-              </h4>
-            )}
-            {navigationItems.slice(0, 5).map((item) => (
-              <NavigationButton
-                key={item.path}
-                labelName={item.label}
-                isActive={isRouteActive(item.path)}
-                iconSrc={item.icon}
-                activeIconSrc={item.activeIcon}
-                onClick={() => navigateToRoute(item.path)}
-                isExpanded={isExpanded}
-              />
-            ))}
-            {isExpanded && (
-              <h4 className="text-md my-3 px-3 font-medium text-slate-600">
-                Order Management
-              </h4>
-            )}
-            {navigationItems.slice(5, 6).map((item) => (
-              <NavigationButton
-                key={item.path}
-                labelName={item.label}
-                isActive={isRouteActive(item.path)}
-                iconSrc={item.icon}
-                activeIconSrc={item.activeIcon}
-                onClick={() => navigateToRoute(item.path)}
-                isExpanded={isExpanded}
-              />
-            ))}
-            {isExpanded && (
-              <h4 className="text-md my-3 px-3 font-medium text-slate-600">
-                Settings
-              </h4>
-            )}
-            {navigationItems.slice(6).map((item) => (
-              <NavigationButton
-                key={item.path}
-                labelName={item.label}
-                isActive={isRouteActive(item.path)}
-                iconSrc={item.icon}
-                activeIconSrc={item.activeIcon}
-                onClick={() => navigateToRoute(item.path)}
-                isExpanded={isExpanded}
-              />
-            ))}
+            {NAVIGATION_SECTIONS.map(({ title, key }) => {
+              const sectionItems = navigationItems.filter(
+                (item) => item.section === key
+              )
+
+              if (sectionItems.length === 0) {
+                return null
+              }
+
+              return (
+                <React.Fragment key={key}>
+                  {isExpanded && (
+                    <h4 className="my-3 mt-2 px-3 text-sm font-medium text-slate-500">
+                      {title}
+                    </h4>
+                  )}
+                  {sectionItems.map((item) => (
+                    <NavigationButton
+                      key={item.path}
+                      labelName={item.label}
+                      isActive={isRouteActive(item.path)}
+                      iconSrc={item.icon}
+                      activeIconSrc={item.activeIcon}
+                      onClick={() => navigateToRoute(item.path)}
+                      isExpanded={isExpanded}
+                    />
+                  ))}
+                </React.Fragment>
+              )
+            })}
           </div>
           <button
             type="button"

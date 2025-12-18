@@ -10,6 +10,10 @@ export const appRoutes = {
     path: '/dashboard',
     children: {},
   },
+  master: {
+    path: '/master',
+    children: {},
+  },
   rawMaterials: {
     path: '/raw-materials',
     children: {},
