@@ -166,7 +166,7 @@ const buildQuantitySummary = <T,>(
 }
 
 const detailSectionTitleClass =
-  'text-sm font-semibold uppercase tracking-[0.2em] text-orange-500'
+  'text-md font-semibold uppercase tracking-[0.2em] text-orange-500'
 
 export const OrdersPage = () => {
   const navigate = useNavigate()
@@ -362,24 +362,22 @@ export const OrdersPage = () => {
         </div>
 
         <div className="flex w-full flex-col gap-5 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-          <div className="flex flex-row items-start gap-3">
+          <div className="flex flex-col items-start gap-1">
             {selectedOrder && (
               <ArrowLeft
-                className="mt-1 cursor-pointer text-orange-500"
+                className="cursor-pointer text-orange-500"
                 onClick={() => {
                   setSelectedOrderId(null)
                 }}
                 size={14}
               />
             )}
-            <div className="flex flex-col gap-0">
-              <p className={detailSectionTitleClass}> Summary</p>
-              <p className="text-xl font-semibold text-zinc-900">
-                {selectedOrder
-                  ? selectedOrder.customerName
-                  : 'Overall Orders for the Day'}
-              </p>
-            </div>
+            <p className={detailSectionTitleClass}> Summary</p>
+            <p className="text-xl font-semibold text-zinc-900">
+              {selectedOrder
+                ? selectedOrder.customerName
+                : 'Overall Orders for the Day'}
+            </p>
           </div>
 
           <SummaryList
