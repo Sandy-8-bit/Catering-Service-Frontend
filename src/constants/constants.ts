@@ -1,5 +1,5 @@
 import type { DropdownOption } from '@/components/common/DropDown'
-import type { OrderPayload } from '@/types/Order'
+import type { Order } from '@/types/Order'
 
 export const units: DropdownOption[] = [
   { id: 1, label: 'Kg' },
@@ -29,16 +29,24 @@ export const paymentTypeOptions: DropdownOption[] = [
   'Cheque',
 ].map((label, index) => ({ id: index + 1, label }))
 
-export const defaultOrderData: OrderPayload = {
+export const defaultOrderData: Order = {
+  id: 0,
   customerName: '',
   customerPhone: '',
   customerAddress: '',
   eventType: '',
-  eventDateTime: '',
+  eventDate: '',
+  eventTime: '',
   totalPeople: 0,
   deliveredByUs: false,
+  totalAmount: 0,
   advanceAmount: 0,
+  balanceAmount: 0,
   paymentType: '',
+  status: '',
+  returnableItemsChecked: false,
   items: [],
   additionalItems: [],
+  createdAt: '',
+  updatedAt: '',
 }

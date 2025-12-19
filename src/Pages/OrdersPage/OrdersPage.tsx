@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Edit3, Plus } from 'lucide-react'
+import { Archive, ArrowLeft, Edit3, Plus } from 'lucide-react'
 import InlineCalendar from '@/components/common/InlineCalendar'
 import ButtonSm from '@/components/common/Buttons'
 import { appRoutes } from '@/routes/appRoutes'
@@ -25,23 +25,25 @@ const SummaryList = ({ title, items, emptyLabel }: SummaryListProps) => {
         )}
       </header>
       {items.length === 0 ? (
-        <p className="text-base text-zinc-500">{emptyLabel}</p>
+        <p className="flex flex-row items-center gap-2 rounded-md border-2 border-dashed border-[#f1f1f1] bg-white p-3 text-base text-zinc-500 shadow-sm">
+          <Archive className="mr-2" size={18} /> {emptyLabel}
+        </p>
       ) : (
-        <ul className="max-h-80 divide-y divide-slate-100 overflow-y-auto text-base text-zinc-700">
+        <section className="max-h-80 min-w-[100px] flex-wrap divide-slate-100 overflow-y-auto text-base text-zinc-700">
           {items.map((item) => (
-            <li
+            <div
               key={`${title}-${item.label}`}
-              className="flex items-center justify-between px-1 py-3"
+              className="mr-2 mb-2 flex w-max items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
             >
-              <span className="truncate text-sm font-medium text-zinc-900 md:text-base">
+              <span className="text-sm font-medium text-zinc-900 md:text-base">
                 {item.label}
               </span>
-              <span className="ml-4 shrink-0 text-base font-semibold text-zinc-900">
+              <span className="ml-4 text-base font-medium text-zinc-900">
                 {item.quantity}
               </span>
-            </li>
+            </div>
           ))}
-        </ul>
+        </section>
       )}
     </article>
   )
@@ -49,12 +51,7 @@ const SummaryList = ({ title, items, emptyLabel }: SummaryListProps) => {
 
 const OrderDetailsCard = ({ order }: { order: Order | null }) => {
   if (!order) {
-    return (
-      <article className="rounded-2xl border border-dashed border-slate-200 p-4 text-base text-zinc-500">
-        Select an order from the list to view detailed customer and delivery
-        information.
-      </article>
-    )
+    return <></>
   }
 
   const eventDate = new Date(order.eventDate)
@@ -66,7 +63,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
           Order Details
         </p>
 
-        <span className="rounded-full bg-zinc-100 px-4 py-1 text-sm font-semibold text-zinc-600">
+        <span className="roundezinc-100 fo uppercasent-semibold px-4 py-1 text-sm text-zinc-600">
           #{order.id}
         </span>
       </header>
@@ -170,9 +167,14 @@ const detailSectionTitleClass =
 
 export const OrdersPage = () => {
   const navigate = useNavigate()
-  const { data: orders = [], isLoading } = useFetchOrders()
+
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
+
+  const { data: orders = [], isLoading } = useFetchOrders({
+    year: selectedDate.getFullYear(),
+    month: selectedDate.getMonth() + 1,
+  })
 
   const ordersPerDate = useMemo(() => {
     const counts: Record<string, number> = {}
@@ -204,6 +206,7 @@ export const OrdersPage = () => {
       (order) => order.id === selectedOrderId
     )
     if (!stillExists) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedOrderId(null)
     }
   }, [ordersForDate, selectedOrderId])
@@ -272,14 +275,16 @@ export const OrdersPage = () => {
           </h1>
         </div>
         <div className="flex flex-row items-center gap-3">
-          <ButtonSm
-            state="outline"
-            disabled={!selectedOrderId}
-            onClick={() => handleNavigateToForm('edit', selectedOrderId)}
-            className="font-medium"
-          >
-            <Edit3 className="mr-2 h-4 w-4 text-black" /> Edit Order
-          </ButtonSm>
+          {selectedOrder && (
+            <ButtonSm
+              state="outline"
+              disabled={!selectedOrderId}
+              onClick={() => handleNavigateToForm('edit', selectedOrderId)}
+              className="font-medium"
+            >
+              <Edit3 className="mr-2 h-4 w-4 text-black" /> Edit Order
+            </ButtonSm>
+          )}
           <ButtonSm
             state="default"
             onClick={() => handleNavigateToForm('create')}
@@ -307,7 +312,7 @@ export const OrdersPage = () => {
             }}
           />
 
-          <div className="rounded-2xl border border-slate-100 bg-white/95 p-5 shadow-sm">
+          <div className="rounded-2xl border-2 border-[#F1F1F1] p-5">
             <header className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
@@ -326,7 +331,7 @@ export const OrdersPage = () => {
 
             <div className="mt-4 flex flex-col gap-3">
               {infoMessage ? (
-                <p className="rounded-md border border-dashed border-slate-200 px-4 py-6 text-base text-zinc-500">
+                <p className="rounded-md border-2 border-dashed border-[#f1f1f1] p-3 text-base text-zinc-500">
                   {infoMessage}
                 </p>
               ) : (
@@ -361,7 +366,7 @@ export const OrdersPage = () => {
           </div>
         </div>
 
-        <div className="flex w-full flex-col gap-5 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="flex w-full flex-col gap-5 rounded-2xl border-2 border-[#F1F1F1] bg-white p-5">
           <div className="flex flex-col items-start gap-1">
             {selectedOrder && (
               <ArrowLeft
@@ -373,7 +378,7 @@ export const OrdersPage = () => {
               />
             )}
             <p className={detailSectionTitleClass}> Summary</p>
-            <p className="text-xl font-semibold text-zinc-900">
+            <p className="text-lg font-semibold text-zinc-900">
               {selectedOrder
                 ? selectedOrder.customerName
                 : 'Overall Orders for the Day'}

@@ -61,12 +61,14 @@ export interface Order {
 
 // Payload fragment for POST / PATCH item entries
 export interface OrderItemPayload {
+  id?: number
   productId: number
   quantity: number
 }
 
 // Payload fragment for POST / PATCH additional items
 export interface OrderAdditionalItemPayload {
+  id?: number
   additionalItemId: number
   quantity: number
   returned: boolean
@@ -81,6 +83,10 @@ export interface OrderPayload {
   eventDate: string
   eventTime: string
   totalPeople: number
+  totalAmount?: number
+  balanceAmount?: number
+  status?: string
+  returnableItemsChecked?: boolean
   deliveredByUs: boolean
   driverId?: number
   advanceAmount: number
@@ -92,11 +98,4 @@ export interface OrderPayload {
 // Body for PATCH /api/admin/orders/{orderId}
 export type OrderUpdatePayload = {
   id: number
-} & Partial<
-  OrderPayload & {
-    totalAmount: number
-    balanceAmount: number
-    status: string
-    returnableItemsChecked: boolean
-  }
->
+} & Partial<OrderPayload>

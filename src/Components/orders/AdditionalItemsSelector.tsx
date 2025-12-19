@@ -1,14 +1,14 @@
 import { useMemo } from 'react'
 import Spinner from '@/components/common/Spinner'
 import type { AdditionalItem } from '@/types/AdditionalItem'
-import type { OrderAdditionalItemPayload } from '@/types/Order'
+import type { OrderAdditionalItem } from '@/types/Order'
 import { Minus, Plus } from 'lucide-react'
 import ButtonSm from '@/components/common/Buttons'
 
 interface AdditionalItemsSelectorProps {
   availableItems: AdditionalItem[]
-  selectedItems?: OrderAdditionalItemPayload[]
-  onChange: (items: OrderAdditionalItemPayload[]) => void
+  selectedItems?: OrderAdditionalItem[]
+  onChange: (items: OrderAdditionalItem[]) => void
   isLoading?: boolean
 }
 
@@ -33,48 +33,75 @@ const AdditionalItemsSelector = ({
     return map
   }, [availableItems])
 
+  const createOrderAdditionalItem = (
+    item: AdditionalItem
+  ): OrderAdditionalItem => ({
+    id: 0,
+    additionalItem: {
+      additionalItemId: item.id,
+      additionalItemPrimaryName: item.primaryName,
+      additionalItemSecondaryName: item.secondaryName,
+    },
+    quantity: 1,
+    priceAtOrder: item.pricePerUnit ?? 0,
+    lineTotal: item.pricePerUnit ?? 0,
+    returned: false,
+  })
+
   const handleAddItem = (additionalItemId: number) => {
+    const catalogItem = additionalItemMap.get(additionalItemId)
+    if (!catalogItem) return
+
     const existing = safeItems.find(
-      (item) => item.additionalItemId === additionalItemId
+      (item) => item.additionalItem.additionalItemId === additionalItemId
     )
 
     if (existing) {
       onChange(
         safeItems.map((item) =>
-          item.additionalItemId === additionalItemId
-            ? { ...item, quantity: item.quantity + 1 }
+          item.additionalItem.additionalItemId === additionalItemId
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                lineTotal:
+                  (item.priceAtOrder ?? catalogItem.pricePerUnit ?? 0) *
+                  (item.quantity + 1),
+              }
             : item
         )
       )
       return
     }
 
-    onChange([...safeItems, { additionalItemId, quantity: 1, returned: false }])
+    onChange([...safeItems, createOrderAdditionalItem(catalogItem)])
   }
 
   const handleQuantityChange = (additionalItemId: number, delta: number) => {
-    const nextItems = safeItems.reduce<OrderAdditionalItemPayload[]>(
-      (acc, item) => {
-        if (item.additionalItemId !== additionalItemId) {
-          acc.push(item)
-          return acc
-        }
-
-        const nextQuantity = item.quantity + delta
-        if (nextQuantity > 0) {
-          acc.push({ ...item, quantity: nextQuantity })
-        }
+    const nextItems = safeItems.reduce<OrderAdditionalItem[]>((acc, item) => {
+      if (item.additionalItem.additionalItemId !== additionalItemId) {
+        acc.push(item)
         return acc
-      },
-      []
-    )
+      }
+
+      const nextQuantity = item.quantity + delta
+      if (nextQuantity > 0) {
+        const catalogItem = additionalItemMap.get(additionalItemId)
+        const unitPrice = item.priceAtOrder ?? catalogItem?.pricePerUnit ?? 0
+        acc.push({
+          ...item,
+          quantity: nextQuantity,
+          lineTotal: unitPrice * nextQuantity,
+        })
+      }
+      return acc
+    }, [])
 
     onChange(nextItems)
   }
 
   const selectedDetails = safeItems.map((item) => ({
-    ...item,
-    additionalItem: additionalItemMap.get(item.additionalItemId),
+    record: item,
+    catalog: additionalItemMap.get(item.additionalItem.additionalItemId),
   }))
 
   return (
@@ -104,7 +131,8 @@ const AdditionalItemsSelector = ({
           <div className="flex flex-col gap-2">
             {availableItems.map((item) => {
               const isAdded = safeItems.some(
-                (selected) => selected.additionalItemId === item.id
+                (selected) =>
+                  selected.additionalItem.additionalItemId === item.id
               )
               return (
                 <div
@@ -163,11 +191,22 @@ const AdditionalItemsSelector = ({
               <span className="w-28 text-left">Price</span>
               <span className="w-36 text-left">Quantity</span>
             </div>
-            {selectedDetails.map((line, index) => {
-              const item = line.additionalItem
+            {selectedDetails.map(({ record, catalog }, index) => {
+              const item = record.additionalItem
+              const displayName =
+                item.additionalItemPrimaryName ||
+                catalog?.primaryName ||
+                'Additional Item'
+              const description =
+                catalog?.secondaryName ||
+                catalog?.description ||
+                item.additionalItemSecondaryName ||
+                'No description'
+              const unitPrice =
+                record.priceAtOrder ?? catalog?.pricePerUnit ?? 0
               return (
                 <div
-                  key={`${line.additionalItemId}-${index}`}
+                  key={`${item.additionalItemId}-${index}`}
                   className="bg-white px-3"
                 >
                   <div className="flex flex-col text-left md:flex-row md:items-center md:justify-between">
@@ -176,34 +215,30 @@ const AdditionalItemsSelector = ({
                     </span>
                     <div className="min-w-0 flex-1 text-left">
                       <p className="font-semibold text-gray-900">
-                        {item?.primaryName || 'Additional Item'}
+                        {displayName}
                       </p>
-                      <p className="text-xs text-gray-500">
-                        {item?.secondaryName ||
-                          item?.description ||
-                          'No description'}
-                      </p>
+                      <p className="text-xs text-gray-500">{description}</p>
                     </div>
                     <span className="w-28 text-left text-sm font-semibold text-gray-900">
-                      {formatCurrency(item?.pricePerUnit)}
+                      {formatCurrency(unitPrice)}
                     </span>
                     <div className="flex w-36 items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-gray-700">
                       <button
                         type="button"
                         onClick={() =>
-                          handleQuantityChange(line.additionalItemId, -1)
+                          handleQuantityChange(item.additionalItemId, -1)
                         }
                         className="cursor-pointer rounded-md px-2 py-1 text-sm font-semibold text-gray-600 hover:text-gray-900"
                       >
                         <Minus size={12} />
                       </button>
                       <span className="w-10 text-center text-sm font-medium">
-                        {line.quantity}
+                        {record.quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() =>
-                          handleQuantityChange(line.additionalItemId, 1)
+                          handleQuantityChange(item.additionalItemId, 1)
                         }
                         className="cursor-pointer rounded-md px-2 py-1 text-sm font-semibold text-gray-600 hover:text-gray-900"
                       >

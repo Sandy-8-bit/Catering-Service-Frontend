@@ -128,10 +128,49 @@ const InlineCalendar = ({
     (option) => option.id === viewDate.getFullYear()
   ) ?? { id: viewDate.getFullYear(), label: viewDate.getFullYear().toString() }
 
+  const isSameDay = (first: Date | null, second: Date | null) => {
+    if (!first || !second) return false
+    return (
+      first.getFullYear() === second.getFullYear() &&
+      first.getMonth() === second.getMonth() &&
+      first.getDate() === second.getDate()
+    )
+  }
+
   const currentSelected = internalSelectedDate
 
-  const handleNavigate = (direction: 'prev' | 'next') => {
+  const syncSelectedDateWithView = (nextViewDate: Date) => {
+    const baseDay = currentSelected?.getDate() ?? nextViewDate.getDate()
+    const daysInTargetMonth = new Date(
+      nextViewDate.getFullYear(),
+      nextViewDate.getMonth() + 1,
+      0
+    ).getDate()
+    const normalizedDay = Math.min(baseDay, daysInTargetMonth)
+    const nextSelectedDate = new Date(
+      nextViewDate.getFullYear(),
+      nextViewDate.getMonth(),
+      normalizedDay
+    )
+
+    if (isSameDay(nextSelectedDate, currentSelected)) return
+
+    if (!isControlled) {
+      setInternalSelectedDate(nextSelectedDate)
+    }
+    onSelectDate?.(nextSelectedDate)
+  }
+
+  const applyViewDateChange = (deriveNextDate: (previous: Date) => Date) => {
     setViewDate((prev) => {
+      const nextViewDate = deriveNextDate(prev)
+      syncSelectedDateWithView(nextViewDate)
+      return nextViewDate
+    })
+  }
+
+  const handleNavigate = (direction: 'prev' | 'next') => {
+    applyViewDateChange((prev) => {
       const nextMonth =
         direction === 'prev' ? prev.getMonth() - 1 : prev.getMonth() + 1
       return new Date(prev.getFullYear(), nextMonth, 1)
@@ -146,18 +185,9 @@ const InlineCalendar = ({
     onSelectDate?.(date)
   }
 
-  const isSameDay = (first: Date | null, second: Date | null) => {
-    if (!first || !second) return false
-    return (
-      first.getFullYear() === second.getFullYear() &&
-      first.getMonth() === second.getMonth() &&
-      first.getDate() === second.getDate()
-    )
-  }
-
   return (
     <section
-      className={`w-full max-w-[470px] rounded-2xl border border-[#F1F1F1] bg-white p-4 shadow-sm transition-all sm:p-5 ${className}`}
+      className={`w-full max-w-[470px] rounded-2xl border-2 border-[#F1F1F1] bg-white p-4 transition-all sm:p-5 ${className}`}
       style={{ minWidth: 0 }}
     >
       <header className="mb-4 flex items-center justify-between">
@@ -201,7 +231,9 @@ const InlineCalendar = ({
             selected={selectedMonthOption}
             onChange={(option) => {
               const monthIndex = option.id - 1
-              setViewDate((prev) => new Date(prev.getFullYear(), monthIndex, 1))
+              applyViewDateChange(
+                (prev) => new Date(prev.getFullYear(), monthIndex, 1)
+              )
             }}
             placeholder="Select month"
             MainclassName="border-zinc-200"
@@ -212,7 +244,9 @@ const InlineCalendar = ({
             options={yearOptions}
             selected={selectedYearOption}
             onChange={(option) => {
-              setViewDate((prev) => new Date(option.id, prev.getMonth(), 1))
+              applyViewDateChange(
+                (prev) => new Date(option.id, prev.getMonth(), 1)
+              )
             }}
             placeholder="Select year"
             MainclassName="border-zinc-200"
@@ -239,7 +273,7 @@ const InlineCalendar = ({
               const stateClasses = !date
                 ? 'cursor-default'
                 : isSelected
-                  ? 'cursor-pointer bg-orange-500 font-semibold text-white shadow-sm'
+                  ? 'cursor-pointer bg-orange-500 font-semibold text-white '
                   : isToday
                     ? 'cursor-pointer border-2 border-[#4F46E5]/70 text-[#4F46E5]'
                     : 'cursor-pointer hover:bg-zinc-100'

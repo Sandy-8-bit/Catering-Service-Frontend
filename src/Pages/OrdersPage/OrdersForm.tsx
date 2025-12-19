@@ -3,12 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import ButtonSm from '@/components/common/Buttons'
 import Input, { InputCheckbox } from '@/components/common/Input'
 import { appRoutes } from '@/routes/appRoutes'
+import lodash from 'lodash'
 import {
   useCreateOrder,
   useFetchOrderById,
   useUpdateOrder,
 } from '@/queries/OrdersQueries'
-import type { Order, OrderPayload } from '@/types/Order'
+import type { Order } from '@/types/Order'
 import { useFetchAdditionalItems } from '@/queries/AdditionalItemsQueries'
 import {
   defaultOrderData,
@@ -20,33 +21,8 @@ import DateInput from '@/components/common/DateInput'
 import TimeInput from '@/components/common/TimeInput'
 import ProductMenuSelector from '@/components/orders/ProductMenuSelector'
 import AdditionalItemsSelector from '@/components/orders/AdditionalItemsSelector'
-
-const mapOrderToPayload = (order: Order): OrderPayload => ({
-  customerName: order.customerName ?? '',
-  customerPhone: order.customerPhone ?? '',
-  customerAddress: order.customerAddress ?? '',
-  eventType: order.eventType ?? '',
-  eventDate: order.eventDate ?? '',
-  eventTime: order.eventTime ?? '',
-  totalPeople: order.totalPeople ?? 0,
-  deliveredByUs: order.deliveredByUs ?? true,
-  driverId: order.driver?.driverId,
-  advanceAmount: order.advanceAmount ?? 0,
-  paymentType: order.paymentType ?? '',
-  items:
-    order.items?.map((item) => ({
-      productId: item.product.productId,
-      quantity: item.quantity,
-    })) ?? [],
-  additionalItems:
-    order.additionalItems && order.additionalItems.length
-      ? order.additionalItems.map((item) => ({
-          additionalItemId: item.additionalItem.additionalItemId,
-          quantity: item.quantity,
-          returned: item.returned,
-        }))
-      : undefined,
-})
+import { mapOrderToUpdatePayload, mapOrderToPayload } from '@/utils/TypeMappers'
+import { ArrowLeft } from 'lucide-react'
 
 export const OrdersForm = () => {
   const navigate = useNavigate()
@@ -61,17 +37,12 @@ export const OrdersForm = () => {
   const { data: additionalItems = [], isLoading: isAdditionalLoading } =
     useFetchAdditionalItems()
 
-  const { mutateAsync: createOrder, isPending: isCreatePending } =
-    useCreateOrder()
-  const { mutateAsync: updateOrder, isPending: isUpdatePending } =
-    useUpdateOrder()
-
-  const [editData, setEditData] = useState<OrderPayload>(() => defaultOrderData)
+  const [editData, setEditData] = useState<Order>(defaultOrderData)
 
   useEffect(() => {
     if (!existingOrder) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEditData(mapOrderToPayload(existingOrder))
+    setEditData(existingOrder)
   }, [existingOrder])
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -87,10 +58,25 @@ export const OrdersForm = () => {
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
-      <header className="flex flex-row gap-4 p-4">
-        <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
+      <header className="flex flex-row items-center justify-between gap-4 p-4">
+        <h1 className="flex w-max flex-row items-center gap-2 text-start text-xl font-semibold text-zinc-800">
+          <ArrowLeft
+            onClick={() => {
+              navigate(-1)
+            }}
+            size={24}
+            className="cursor-pointer hover:scale-105 active:scale-110"
+          />
           {isEditMode ? 'Edit Order' : 'Create Order'}
         </h1>
+        <ActionButtons
+          isEditMode={isEditMode}
+          editData={editData}
+          existingOrder={existingOrder}
+          defaultOrderData={defaultOrderData}
+          setEditData={setEditData}
+          navigate={navigate}
+        />
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
 
@@ -201,7 +187,7 @@ export const OrdersForm = () => {
               title="Driver Id"
               name="driverId"
               placeholder="10-digit contact"
-              inputValue={editData.driverId?.toString() || ''}
+              inputValue={editData.driver?.driverId.toString() || ''}
               onChange={(value) =>
                 setEditData((prev) => ({
                   ...prev,
@@ -216,7 +202,9 @@ export const OrdersForm = () => {
               required
               selected={
                 paymentTypeOptions.find(
-                  (option) => option.label === editData.paymentType
+                  (option) =>
+                    option.label.toLocaleLowerCase() ===
+                    editData.paymentType.toLocaleLowerCase()
                 ) || { id: 0, label: 'Select Payment Type' }
               }
               onChange={(option) =>
@@ -225,7 +213,6 @@ export const OrdersForm = () => {
             />
             <Input
               title="Advance Amount"
-              name="advanceAmount"
               placeholder="Enter advance amount"
               prefixText="₹"
               inputValue={editData.advanceAmount?.toString() || ''}
@@ -235,6 +222,53 @@ export const OrdersForm = () => {
                   advanceAmount: Number(value),
                 }))
               }
+            />
+            <Input
+              title="Balance Amount"
+              placeholder="Enter balance amount"
+              prefixText="₹"
+              inputValue={editData.balanceAmount?.toString() || ''}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  balanceAmount: Number(value),
+                }))
+              }
+            />
+            <Input
+              title="Total Amount"
+              placeholder="Enter total amount"
+              prefixText="₹"
+              inputValue={editData.totalAmount?.toString() || ''}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  totalAmount: Number(value),
+                }))
+              }
+            />
+            <Input
+              title="Total People"
+              prefixText="Count"
+              placeholder="Enter total people count"
+              inputValue={editData.totalPeople?.toString() || ''}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  totalPeople: Number(value),
+                }))
+              }
+            />
+            <InputCheckbox
+              title="Returnable Items Checked "
+              checked={editData.returnableItemsChecked}
+              onChange={(checked) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  returnableItemsChecked: checked,
+                }))
+              }
+              label="Returnable items "
             />
           </div>
           {/* Menu items */}
@@ -279,21 +313,81 @@ export const OrdersForm = () => {
             }
           />
 
-          <div className="flex flex-wrap justify-end gap-3">
-            <ButtonSm
-              state="outline"
-              type="button"
-              onClick={() => navigate(appRoutes.orders.path)}
-            >
-              Cancel
-            </ButtonSm>
-            <ButtonSm state="default" type="submit">
-              Create New Order
-            </ButtonSm>
-          </div>
+          <ActionButtons
+            isEditMode={isEditMode}
+            editData={editData}
+            existingOrder={existingOrder}
+            defaultOrderData={defaultOrderData}
+            setEditData={setEditData}
+            navigate={navigate}
+          />
         </form>
       </section>
     </main>
+  )
+}
+
+const ActionButtons: React.FC<{
+  isEditMode: boolean
+  editData: Order
+  existingOrder?: Order
+  defaultOrderData: Order
+  setEditData: React.Dispatch<React.SetStateAction<Order>>
+  navigate: ReturnType<typeof useNavigate>
+}> = ({
+  isEditMode,
+  editData,
+  existingOrder,
+  defaultOrderData,
+  setEditData,
+  navigate,
+}: {
+  isEditMode: boolean
+  editData: Order
+  existingOrder?: Order
+  defaultOrderData: Order
+  setEditData: React.Dispatch<React.SetStateAction<Order>>
+  navigate: ReturnType<typeof useNavigate>
+}) => {
+  const { mutateAsync: createOrder, isPending: isCreatePending } =
+    useCreateOrder()
+  const { mutateAsync: updateOrder, isPending: isUpdatePending } =
+    useUpdateOrder()
+  return (
+    <div className="flex flex-wrap justify-end gap-3">
+      <ButtonSm
+        state="outline"
+        className="disabled:cursor-not-allowed disabled:opacity-80!"
+        type="button"
+        disabled={isEditMode ? lodash.isEqual(editData, existingOrder) : false}
+        onClick={() => {
+          if (isEditMode) setEditData(existingOrder || defaultOrderData)
+          else navigate(-1)
+        }}
+      >
+        {isEditMode ? 'Discard Changes' : 'Cancel'}
+      </ButtonSm>
+      <ButtonSm
+        className="disabled:cursor-not-allowed disabled:opacity-80!"
+        type="submit"
+        disabled={
+          isEditMode
+            ? lodash.isEqual(editData, existingOrder)
+            : lodash.isEqual(editData, defaultOrderData)
+        }
+        state="default"
+        isPending={isCreatePending || isUpdatePending}
+        onClick={() => {
+          if (isEditMode) {
+            updateOrder(mapOrderToUpdatePayload(editData))
+          } else {
+            createOrder(mapOrderToPayload(editData))
+          }
+        }}
+      >
+        {isEditMode ? 'Save Changes' : 'Create New Order'}
+      </ButtonSm>
+    </div>
   )
 }
 

@@ -112,7 +112,6 @@ export const useVerifyTotp = () => {
     onSuccess: (data) => {
       Cookies.set('token', data.token)
       localStorage.setItem('token', data.token)
-      toast.success('Verification Successful')
     },
   })
 }

@@ -9,24 +9,32 @@ import { toast } from 'react-hot-toast'
 const ORDERS_KEY = ['orders'] as const
 const orderKey = (id: number | string) => [...ORDERS_KEY, id] as const
 
-export const useFetchOrders = () => {
+export const useFetchOrders = ({
+  year,
+  month,
+  date,
+}: {
+  year?: number
+  month?: number
+  date?: number
+}) => {
   const fetchAll = async (): Promise<Order[]> => {
     try {
       const token = authHandler()
 
-      const res = await axiosInstance.get(apiRoutes.orders, {
+      const res = await axiosInstance.get(apiRoutes.orders + '/summary', {
         headers: { Authorization: `Bearer ${token}` },
+        params: { year, month, date },
       })
 
       return (res.data?.data ?? res.data ?? []) as Order[]
     } catch (error: unknown) {
       handleApiError(error, 'Orders')
-      return []
     }
   }
 
   return useQuery({
-    queryKey: ORDERS_KEY,
+    queryKey: [ORDERS_KEY, year, month, date],
     queryFn: fetchAll,
     staleTime: 1000 * 60 * 5,
     retry: 1,

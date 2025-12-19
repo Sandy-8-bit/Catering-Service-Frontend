@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import Spinner from '@/components/common/Spinner'
 import { useFetchProducts } from '@/queries/ProductQueries'
-import type { OrderItemPayload } from '@/types/Order'
+import type { OrderItem, OrderProductRef } from '@/types/Order'
 import type { Product } from '@/types/Product'
 import { Minus, Plus } from 'lucide-react'
 import ButtonSm from '../common/Buttons'
 
 interface ProductMenuSelectorProps {
-  selectedItems: OrderItemPayload[]
-  onChange: (items: OrderItemPayload[]) => void
+  selectedItems: OrderItem[]
+  onChange: (items: OrderItem[]) => void
 }
 
 interface GroupedProducts {
@@ -23,6 +23,25 @@ const formatCurrency = (value: number) =>
     currency: 'INR',
     maximumFractionDigits: 2,
   }).format(value || 0)
+
+const buildOrderProductRef = (product: Product): OrderProductRef => ({
+  productId: product.id,
+  productPrimaryName: product.primaryName,
+  productSecondaryName: product.secondaryName,
+  primaryName: product.primaryName,
+  secondaryName: product.secondaryName,
+})
+
+const buildOrderItem = (product: Product): OrderItem => ({
+  id: 0,
+  product: buildOrderProductRef(product),
+  quantity: 1,
+  unitPrice: product.price ?? 0,
+  totalPrice: product.price ?? 0,
+})
+
+const getOrderItemProductId = (item: OrderItem): number | undefined =>
+  item.product.productId ?? (item.product as Partial<{ id?: number }>).id
 
 const ProductMenuSelector = ({
   selectedItems,
@@ -81,48 +100,58 @@ const ProductMenuSelector = ({
     })
   }, [groupedProducts])
 
-  const updateItems = (nextItems: OrderItemPayload[]) => {
+  const updateItems = (nextItems: OrderItem[]) => {
     onChange(nextItems)
   }
 
   const handleAddProduct = (productId: number) => {
+    const product = productsById.get(productId)
+    if (!product) return
+
     const alreadySelected = safeItems.find(
-      (item) => item.productId === productId
+      (item) => getOrderItemProductId(item) === productId
     )
     if (alreadySelected) {
+      const unitPrice = alreadySelected.unitPrice ?? product.price ?? 0
       updateItems(
         safeItems.map((item) =>
-          item.productId === productId
-            ? { ...item, quantity: item.quantity + 1 }
+          item.product.productId === productId
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                totalPrice: unitPrice * (item.quantity + 1),
+              }
             : item
         )
       )
     } else {
-      updateItems([...safeItems, { productId, quantity: 1 }])
+      updateItems([...safeItems, buildOrderItem(product)])
     }
   }
 
   const handleQuantityChange = (productId: number, delta: number) => {
-    const nextItems = safeItems.reduce<OrderItemPayload[]>((acc, item) => {
-      if (item.productId !== productId) {
+    const nextItems = safeItems.reduce<OrderItem[]>((acc, item) => {
+      const lineProductId = getOrderItemProductId(item)
+      if (lineProductId !== productId) {
         acc.push(item)
         return acc
       }
 
       const nextQuantity = item.quantity + delta
       if (nextQuantity > 0) {
-        acc.push({ ...item, quantity: nextQuantity })
+        const fallbackProduct = productsById.get(lineProductId ?? productId)
+        const unitPrice = item.unitPrice ?? fallbackProduct?.price ?? 0
+        acc.push({
+          ...item,
+          quantity: nextQuantity,
+          totalPrice: unitPrice * nextQuantity,
+        })
       }
       return acc
     }, [])
 
     updateItems(nextItems)
   }
-
-  const selectedDetails = safeItems.map((item) => ({
-    ...item,
-    product: productsById.get(item.productId),
-  }))
 
   return (
     <div className="flex flex-col gap-3 lg:flex-row">
@@ -182,7 +211,7 @@ const ProductMenuSelector = ({
                       <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
                         {group.products.map((product) => {
                           const isAdded = safeItems.some(
-                            (item) => item.productId === product.id
+                            (item) => getOrderItemProductId(item) === product.id
                           )
                           return (
                             <div
@@ -247,11 +276,23 @@ const ProductMenuSelector = ({
               <span className="w-28 text-left">Price</span>
               <span className="w-36 text-left">Quantity</span>
             </div>
-            {selectedDetails.map((line, index) => {
-              const product = line.product
+            {safeItems.map((line, index) => {
+              const productRef = line.product
+              const lineProductId =
+                productRef.productId ??
+                (productRef as Partial<{ id?: number }>).id
+              const fallbackProduct = lineProductId
+                ? productsById.get(lineProductId)
+                : undefined
+              const displayName =
+                productRef.productPrimaryName ||
+                productRef.primaryName ||
+                fallbackProduct?.primaryName ||
+                'Product'
+              const unitPrice = line.unitPrice ?? fallbackProduct?.price ?? 0
               return (
                 <div
-                  key={`${line.productId}-${index}`}
+                  key={`order-item-${lineProductId ?? index}-${index}`}
                   className="bg-white px-3"
                 >
                   <div className="flex flex-col text-left md:flex-row md:items-center md:justify-between">
@@ -260,21 +301,22 @@ const ProductMenuSelector = ({
                     </span>
                     <div className="min-w-0 flex-1 text-left">
                       <p className="font-semibold text-gray-900">
-                        {product?.primaryName || 'Product'}
+                        {displayName}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {product
-                          ? `${formatCurrency(product.price)} each`
-                          : 'Price unavailable'}
+                        {formatCurrency(unitPrice)} each
                       </p>
                     </div>
                     <span className="w-28 text-left text-sm font-semibold text-gray-900">
-                      {formatCurrency(product?.price || 0)}
+                      {formatCurrency(unitPrice)}
                     </span>
                     <div className="flex w-36 items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-gray-700">
                       <button
                         type="button"
-                        onClick={() => handleQuantityChange(line.productId, -1)}
+                        onClick={() =>
+                          lineProductId &&
+                          handleQuantityChange(lineProductId, -1)
+                        }
                         className="cursor-pointer rounded-md px-2 py-1 text-sm font-semibold text-gray-600 transition-all duration-150 ease-in-out hover:text-gray-900"
                       >
                         <Minus size={12} />
@@ -284,7 +326,10 @@ const ProductMenuSelector = ({
                       </span>
                       <button
                         type="button"
-                        onClick={() => handleQuantityChange(line.productId, 1)}
+                        onClick={() =>
+                          lineProductId &&
+                          handleQuantityChange(lineProductId, 1)
+                        }
                         className="transtio cursor-pointer rounded-md px-2 py-1 text-sm font-semibold text-gray-600 hover:text-gray-900"
                       >
                         <Plus size={12} />
