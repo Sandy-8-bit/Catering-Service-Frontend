@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'
-import ConfigCard, { type ConfigCardType } from '@components/common/ConfigCard'
+import ConfigCard, { type ConfigCardType } from '@/components/common/ConfigCard'
 import { appRoutes } from '@/routes/appRoutes'
 
 const MasterPage: React.FC = () => {

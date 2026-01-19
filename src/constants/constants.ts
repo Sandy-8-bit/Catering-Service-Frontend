@@ -1,5 +1,5 @@
 import type { DropdownOption } from '@/components/common/DropDown'
-import type { Order } from '@/types/Order'
+import type { Order } from '@/types/order'
 
 export const units: DropdownOption[] = [
   { id: 1, label: 'Kg' },

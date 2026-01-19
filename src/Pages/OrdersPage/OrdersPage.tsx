@@ -4,8 +4,8 @@ import { Archive, ArrowLeft, Edit3, Plus } from 'lucide-react'
 import InlineCalendar from '@/components/common/InlineCalendar'
 import ButtonSm from '@/components/common/Buttons'
 import { appRoutes } from '@/routes/appRoutes'
-import { useFetchOrders } from '@/queries/OrdersQueries'
-import type { Order } from '@/types/Order'
+import { useFetchOrders } from '@/queries/ordersQueries'
+import type { Order } from '@/types/order'
 
 interface SummaryListProps {
   title: string

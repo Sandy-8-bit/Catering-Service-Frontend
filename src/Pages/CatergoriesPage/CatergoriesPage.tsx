@@ -10,8 +10,8 @@ import {
   useCreateCategory,
   useEditCategory,
   useFetchCategories,
-} from '@/queries/CategoryQueries'
-import type { Category, CategoryPayload } from '@/types/Category'
+} from '@/queries/categoryQueries'
+import type { Category, CategoryPayload } from '@/types/category'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 

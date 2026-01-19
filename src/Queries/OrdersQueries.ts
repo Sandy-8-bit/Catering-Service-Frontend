@@ -1,5 +1,5 @@
 import { apiRoutes } from '@/routes/apiRoutes'
-import type { Order, OrderPayload, OrderUpdatePayload } from '@/types/Order'
+import type { Order, OrderPayload, OrderUpdatePayload } from '@/types/order'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'

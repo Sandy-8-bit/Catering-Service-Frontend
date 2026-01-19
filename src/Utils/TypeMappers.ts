@@ -4,7 +4,7 @@ import type {
   OrderItemPayload,
   OrderPayload,
   OrderUpdatePayload,
-} from '@/types/Order'
+} from '@/types/order'
 
 export const mapOrderToPayload = (order: Order): OrderPayload => {
   const driverId = (order as Partial<{ driverId?: number }>).driverId

@@ -1,6 +1,6 @@
 import ButtonSm from '@/components/common/Buttons'
-import { useDeleteProduct } from '@/queries/ProductQueries'
-import type { Product } from '@/types/Product'
+import { useDeleteProduct } from '@/queries/productQueries'
+import type { Product } from '@/types/product'
 
 interface DeleteProductsDialogProps {
   products: Product[]

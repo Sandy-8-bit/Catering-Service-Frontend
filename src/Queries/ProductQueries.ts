@@ -16,7 +16,7 @@ import type {
   Product,
   ProductPayload,
   ProductQueryParams,
-} from '@/types/Product'
+} from '@/types/product'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'

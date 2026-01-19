@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import Spinner from '@/components/common/Spinner'
-import { useFetchProducts } from '@/queries/ProductQueries'
-import type { OrderItem, OrderProductRef } from '@/types/Order'
-import type { Product } from '@/types/Product'
+import { useFetchProducts } from '@/queries/productQueries'
+import type { OrderItem, OrderProductRef } from '@/types/order'
+import type { Product } from '@/types/product'
 import { Minus, Plus } from 'lucide-react'
 import ButtonSm from '../common/Buttons'
 

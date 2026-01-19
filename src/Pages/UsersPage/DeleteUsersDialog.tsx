@@ -1,6 +1,6 @@
 import ButtonSm from '@/components/common/Buttons'
-import { useDeleteUser } from '@/queries/UsersQueries'
-import type { User } from '@/types/User'
+import { useDeleteUser } from '@/queries/usersQueries'
+import type { User } from '@/types/user'
 
 interface DeleteUsersDialogProps {
   users: User[]

@@ -16,7 +16,7 @@ import { apiRoutes } from '@/routes/apiRoutes'
 import type {
   AdditionalItem,
   AdditionalItemPayload,
-} from '@/types/AdditionalItem'
+} from '@/types/additionalItem'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'

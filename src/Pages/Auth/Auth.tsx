@@ -3,7 +3,7 @@ import DropdownSelect, {
   type DropdownOption,
 } from '@/components/common/DropDown'
 import Input from '@/components/common/Input'
-import { useLogin } from '@/queries/AuthQueries'
+import { useLogin } from '@/queries/authQueries'
 import { type FormEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'

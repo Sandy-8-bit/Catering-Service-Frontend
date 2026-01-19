@@ -14,8 +14,8 @@ import {
   useCreateUser,
   useEditUser,
   useFetchUsers,
-} from '@/queries/UsersQueries'
-import type { User, UserPayload } from '@/types/User'
+} from '@/queries/usersQueries'
+import type { User, UserPayload } from '@/types/user'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 import { DeleteUsersDialog } from './DeleteUsersDialog'
 

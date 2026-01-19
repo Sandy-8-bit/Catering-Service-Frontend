@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import Spinner from '@/components/common/Spinner'
-import type { AdditionalItem } from '@/types/AdditionalItem'
-import type { OrderAdditionalItem } from '@/types/Order'
+import type { AdditionalItem } from '@/types/additionalItem'
+import type { OrderAdditionalItem } from '@/types/order'
 import { Minus, Plus } from 'lucide-react'
 import ButtonSm from '@/components/common/Buttons'
 

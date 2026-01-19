@@ -1,6 +1,6 @@
 import ButtonSm from '@/components/common/Buttons'
-import { useDeleteAdditionalItem } from '@/queries/AdditionalItemsQueries'
-import type { AdditionalItem } from '@/types/AdditionalItem'
+import { useDeleteAdditionalItem } from '@/queries/additionalItemsQueries'
+import type { AdditionalItem } from '@/types/additionalItem'
 
 interface DeleteAdditionalItemsDialogProps {
   items: AdditionalItem[]

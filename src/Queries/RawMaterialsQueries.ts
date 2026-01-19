@@ -13,7 +13,7 @@
 
 import type { DropdownOption } from '@/components/common/Input'
 import { apiRoutes } from '@/routes/apiRoutes'
-import type { RawMaterial, RawMaterialPayload } from '@/types/RawMaterial'
+import type { RawMaterial, RawMaterialPayload } from '@/types/rawMaterial'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'

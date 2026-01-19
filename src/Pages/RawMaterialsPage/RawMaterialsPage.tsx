@@ -11,12 +11,12 @@ import {
   useFetchRawMaterials,
   useEditRawMaterial,
   useCreateRawMaterial,
-} from '@/queries/RawMaterialsQueries'
+} from '@/queries/rawMaterialsQueries'
 
 import { DeleteRawMaterialsDialog } from './DeleteRawMaterialsDialog'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 import DropdownSelect from '@/components/common/DropDown'
-import type { RawMaterial, RawMaterialPayload } from '@/types/RawMaterial'
+import type { RawMaterial, RawMaterialPayload } from '@/types/tawMaterial'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 

@@ -8,13 +8,13 @@ import TableDropDown from '@/components/common/TableDropDown'
 import { TableInput } from '@/components/common/TableInput'
 
 import DropdownSelect from '@/components/common/DropDown'
-import { useFetchCategoryOptions } from '@/queries/CategoryQueries'
+import { useFetchCategoryOptions } from '@/queries/categoryQueries'
 import {
   useCreateProduct,
   useEditProduct,
   useFetchProducts,
-} from '@/queries/ProductQueries'
-import type { Product, ProductPayload } from '@/types/Product'
+} from '@/queries/productQueries'
+import type { Product, ProductPayload } from '@/types/product'
 
 import { DeleteProductsDialog } from './DeleteProductsDialog'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'

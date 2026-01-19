@@ -1,6 +1,6 @@
 import ButtonSm from '@/components/common/Buttons'
-import type { Category } from '@/types/Category'
-import { useDeleteCategory } from '@/queries/CategoryQueries'
+import type { Category } from '@/types/category'
+import { useDeleteCategory } from '@/queries/categoryQueries'
 
 interface DeleteCategoriesDialogProps {
   categories: Category[]

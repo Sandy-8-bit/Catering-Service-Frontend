@@ -1,6 +1,6 @@
 import ButtonSm from '@/components/common/Buttons'
 import Input from '@/components/common/Input'
-import { useVerifyTotp } from '@/queries/AuthQueries'
+import { useVerifyTotp } from '@/queries/authQueries'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 

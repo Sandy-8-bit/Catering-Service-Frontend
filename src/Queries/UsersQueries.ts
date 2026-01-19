@@ -12,7 +12,7 @@
  */
 
 import { apiRoutes } from '@/routes/apiRoutes'
-import type { User, UserPayload } from '@/types/User'
+import type { User, UserPayload } from '@/types/user'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'

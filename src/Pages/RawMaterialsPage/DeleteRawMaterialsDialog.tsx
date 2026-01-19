@@ -1,6 +1,6 @@
 import ButtonSm from '@/components/common/Buttons'
-import type { RawMaterial } from '@/types/RawMaterial'
-import { useDeleteRawMaterial } from '@/queries/RawMaterialsQueries'
+import type { RawMaterial } from '@/types/tawMaterial'
+import { useDeleteRawMaterial } from '@/queries/rawMaterialsQueries'
 
 interface DeleteRawMaterialsDialogProps {
   materials: RawMaterial[]

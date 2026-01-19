@@ -11,11 +11,11 @@ import {
   useFetchAdditionalItems,
   useEditAdditionalItem,
   useCreateAdditionalItem,
-} from '@/queries/AdditionalItemsQueries'
+} from '@/queries/additionalItemsQueries'
 import type {
   AdditionalItem,
   AdditionalItemPayload,
-} from '@/types/AdditionalItem'
+} from '@/types/additionalItem'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'

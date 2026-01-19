@@ -8,9 +8,9 @@ import {
   useCreateOrder,
   useFetchOrderById,
   useUpdateOrder,
-} from '@/queries/OrdersQueries'
-import type { Order } from '@/types/Order'
-import { useFetchAdditionalItems } from '@/queries/AdditionalItemsQueries'
+} from '@/queries/ordersQueries'
+import type { Order } from '@/types/order'
+import { useFetchAdditionalItems } from '@/queries/additionalItemsQueries'
 import {
   defaultOrderData,
   eventTypeOptions,
