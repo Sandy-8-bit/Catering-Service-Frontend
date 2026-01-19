@@ -12,6 +12,7 @@ import UsersPage from '@/Pages/usersPage/UsersPage'
 import { OrdersPage } from '@/Pages/ordersPage/OrdersPage'
 import { OrdersForm } from '@/Pages/ordersPage/OrdersForm'
 import MasterPage from '@/Pages/masterPage/MasterPage'
+import DriveDashboard from './Pages/driver/DriveDashboard'
 
 function App() {
   return (
@@ -40,7 +41,7 @@ function App() {
           <Route path={appRoutes.userManagement.path} element={<UsersPage />} />
           <Route path={appRoutes.orders.path} element={<OrdersPage />} />
           <Route path={appRoutes.ordersForm.path} element={<OrdersForm />} />
-        
+          <Route path={appRoutes.driver.children.driverDashboard} element={<DriveDashboard />} /> 
         </Route>
       </Route>
 

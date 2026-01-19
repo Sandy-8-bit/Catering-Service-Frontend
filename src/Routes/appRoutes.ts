@@ -1,3 +1,4 @@
+
 export const appRoutes = {
   // -------- Public Pages --------
   homePage: '/Home',
@@ -42,4 +43,10 @@ export const appRoutes = {
     path: '/user-management',
     children: {},
   },
+  driver:{
+    path:'/driver',
+    children:{
+      driverDashboard:'/driver/driver-dashboard/:id'
+    }
+  }
 }
