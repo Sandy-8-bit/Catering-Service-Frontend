@@ -8,7 +8,7 @@ export interface RegisterRequest {
  email: string;
  password: string;
  phone?: string;
- roles?: string[];
+ role?: string;
 }
 
 export interface Verify {
@@ -19,12 +19,15 @@ export interface Verify {
 
 export interface AuthResponse {
     status: 'SUCCESS' | 'TOTP_REQUIRED' | 'FAILED';
-    roles: string[];
-    userId: number;
+    role: string;
+    Id: number;
     message?: string;
     token?: string;
 }
 
 export interface VerifyResponse {
-  token: string;
+    role: string;
+    Id: number;
+    message?: string;
+    token: string;
 }

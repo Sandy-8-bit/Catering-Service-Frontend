@@ -7,7 +7,7 @@ export interface User {
   name: string
   email: string
   phone: string
-  roles: string[]
+  role: string
   password?: string
 }
 
@@ -16,5 +16,5 @@ export interface UserPayload {
   email: string
   phone: string
   password?: string
-  roles: string[]
+  role: string
 }

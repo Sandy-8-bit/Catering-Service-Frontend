@@ -40,7 +40,7 @@ export default function ProfileMenu() {
   const [containerRef, open, setOpen] = useClickOutside(false)
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
+    localStorage.removeItem('CATERING_TOKEN')
     window.location.href = appRoutes.signInPage
   }
 

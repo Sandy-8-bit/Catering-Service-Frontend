@@ -190,7 +190,7 @@ export const Dashboard = () => {
   }).format(new Date())
 
   return (
-    <main className="layout-container flex min-h-[95vh] w-full flex-col gap-6 rounded-md border border-[#F1F1F1] bg-white p-6">
+    <main   className="layout-container flex min-h-[95vh] w-full flex-col gap-6 rounded-md border border-[#F1F1F1] bg-white p-6">
       <section className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">

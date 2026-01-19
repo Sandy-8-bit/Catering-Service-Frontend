@@ -131,7 +131,7 @@ export const useEditUser = () => {
 
       const body: UserPayload = {
         ...payload,
-        roles: payload.roles ?? [],
+        role: payload.role ?? '',
       }
 
       const res = await axiosInstance.put(

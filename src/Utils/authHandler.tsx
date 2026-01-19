@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast'
 export function authHandler() {
   const token = document.cookie
     .split('; ')
-    .find((row) => row.startsWith('token='))
+    .find((row) => row.startsWith('CATERING_TOKEN='))
     ?.split('=')[1]
 
   if (!token) {

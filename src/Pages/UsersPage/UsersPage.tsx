@@ -27,7 +27,7 @@ const createEmptyUser = (id: number): EditableUser => ({
   email: '',
   phone: '',
   password: '',
-  roles: [],
+  role: "",
 })
 
 const areRolesEqual = (left: string[], right: string[]) => {
@@ -65,7 +65,7 @@ export const UsersPage = () => {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditData(
-      users.map((user) => ({ ...user, password: '', roles: user.roles ?? [] }))
+      users.map((user) => ({ ...user, password: '', role: user.role ?? "" }))
     )
   }, [users])
 
@@ -100,7 +100,7 @@ export const UsersPage = () => {
         original.name !== row.name ||
         original.email !== row.email ||
         original.phone !== row.phone ||
-        !areRolesEqual(original.roles ?? [], row.roles ?? []) ||
+        original.role !== row.role ||
         passwordChanged
       )
     })
@@ -115,10 +115,10 @@ export const UsersPage = () => {
     const stringsEmpty = emptyFields.every(
       (field) => (row[field]?.toString().trim() ?? '') === ''
     )
-    const rolesEmpty = (row.roles?.length ?? 0) === 0
+    const roleEmpty = (row.role?.trim() ?? '').length === 0
     const passwordEmpty = (row.password?.trim() ?? '').length === 0
 
-    return stringsEmpty && rolesEmpty && passwordEmpty
+    return stringsEmpty && roleEmpty && passwordEmpty
   }
 
   const isDraftValid = (row: EditableUser) => {
@@ -132,7 +132,7 @@ export const UsersPage = () => {
       trimmedEmail &&
       trimmedPhone &&
       passwordOk &&
-      (row.roles?.length ?? 0) > 0
+      (row.role?.trim() ?? '').length > 0
     )
   }
 
@@ -164,10 +164,8 @@ export const UsersPage = () => {
         const wasEmptyDraft = isDraftRow(item) && isRowEmpty(item)
 
         let normalizedValue: EditableUser[typeof field]
-        if (field === 'roles') {
-          normalizedValue = (
-            Array.isArray(value) ? value : []
-          ) as EditableUser[typeof field]
+        if (field === 'role') {
+          normalizedValue = value as EditableUser[typeof field]
         } else {
           normalizedValue = value as EditableUser[typeof field]
         }
@@ -203,7 +201,7 @@ export const UsersPage = () => {
       name: row.name.trim(),
       email: row.email.trim(),
       phone: row.phone.trim(),
-      roles: row.roles.map((role) => role.trim()).filter(Boolean),
+      role: row.role?.trim() ?? '',
     }
 
     const password = row.password?.trim()
@@ -269,7 +267,7 @@ export const UsersPage = () => {
 
   const handleDiscardChanges = () => {
     setEditData(
-      users.map((user) => ({ ...user, password: '', roles: user.roles ?? [] }))
+      users.map((user) => ({ ...user, password: '', role: user.role ?? '' }))
     )
     setSelectedRows([])
     setFormState(null)
@@ -410,15 +408,15 @@ export const UsersPage = () => {
           isEditMode={canEditRow(row.userId)}
           title=""
           options={ROLE_OPTIONS}
-          selectedValues={(row.roles ?? []).map(
+          selectedValues={((row.role ?? "") as string).split(',').filter(Boolean).map(
             (role) => roleIdByLabel.get(role.trim().toLowerCase()) ?? role
           )}
           placeholder="Select Roles"
           onChange={(values) =>
             updateRowField(
               row.userId,
-              'roles',
-              values.map((id) => roleLabelById.get(id) ?? id)
+              'role',
+              values.map((id) => roleLabelById.get(id) ?? id).join(',')
             )
           }
         />

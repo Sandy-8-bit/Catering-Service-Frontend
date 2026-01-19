@@ -75,7 +75,7 @@ const SideNav: React.FC = () => {
   )
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('token')
+    localStorage.removeItem('CATERING_TOKEN')
     window.location.href = appRoutes.signInPage
   }, [])
 

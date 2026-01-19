@@ -1,8 +1,8 @@
-import axiosInstance from '../utils/axios'
 import axios from 'axios'
 import { useMutation } from '@tanstack/react-query'
 import Cookies from 'js-cookie'
 import { toast } from 'react-hot-toast'
+import axiosInstance from '../utils/axios'
 import { apiRoutes } from '../routes/apiRoutes'
 import type {
   LoginRequest,
@@ -13,39 +13,42 @@ import type {
 } from '../types/authTypes'
 
 /**
- * -------------------------------------------
- * USER AUTH HOOKS - LOGIN / REGISTER / VERIFY TOTP
- * -------------------------------------------
- */
-
-/**
  * 🔐 LOGIN USER
  */
 export const useLogin = () => {
   const loginUser = async (payload: LoginRequest): Promise<AuthResponse> => {
-    try {
-      const res = await axiosInstance.post(apiRoutes.login, payload)
+    const res = await axiosInstance.post(apiRoutes.login, payload)
 
-      if (res.status !== 200) {
-        throw new Error(res.data?.message || 'Login failed')
-      }
-
-      return res.data as AuthResponse
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || 'Login failed')
-      } else {
-        toast.error('Something went wrong while logging in')
-      }
-      throw error
+    if (res.status !== 200) {
+      throw new Error(res.data?.message || 'Login failed')
     }
+
+    return res.data
   }
 
   return useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
-      if (data.token) {
-        Cookies.set('token', data.token)
+      if (!data?.token) return
+
+      // ✅ Store JWT in cookie (CATERING prefix)
+      Cookies.set('CATERING_TOKEN', data.token, {
+        expires: 1, // 1 day
+        secure: true,
+        sameSite: 'strict',
+      })
+
+      // ✅ Store user info in localStorage (CATERING prefix)
+      localStorage.setItem('CATERING_ROLE', data.role || '')
+      localStorage.setItem('CATERING_USER_ID', String(data.Id))
+
+      toast.success('Logged in successfully')
+    },
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Login failed')
+      } else {
+        toast.error('Something went wrong')
       }
     },
   })
@@ -58,60 +61,64 @@ export const useRegister = () => {
   const registerUser = async (
     payload: RegisterRequest
   ): Promise<AuthResponse> => {
-    try {
-      const res = await axiosInstance.post(apiRoutes.register, payload)
+    const res = await axiosInstance.post(apiRoutes.register, payload)
 
-      if (res.status !== 201 && res.status !== 200) {
-        throw new Error(res.data?.message || 'Registration failed')
-      }
-
-      return res.data as AuthResponse
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || 'Registration failed')
-      } else {
-        toast.error('Something went wrong while registering')
-      }
-      throw error
+    if (res.status !== 200 && res.status !== 201) {
+      throw new Error(res.data?.message || 'Registration failed')
     }
+
+    return res.data
   }
 
   return useMutation({
     mutationFn: registerUser,
-    onSuccess: () => {
-      toast.success('Registration Successful')
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Registration successful')
+    },
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Registration failed')
+      } else {
+        toast.error('Something went wrong')
+      }
     },
   })
 }
 
 /**
- * 🔑 VERIFY TOTP CODE
+ * 🔑 VERIFY TOTP
  */
 export const useVerifyTotp = () => {
   const verifyTotp = async (payload: Verify): Promise<VerifyResponse> => {
-    try {
-      const res = await axiosInstance.post(apiRoutes.verify, payload)
+    const res = await axiosInstance.post(apiRoutes.verify, payload)
 
-      if (res.status !== 200) {
-        throw new Error(res.data?.message || 'Verification failed')
-      }
-
-      return res.data as VerifyResponse
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || 'Verification failed')
-      } else {
-        toast.error('Something went wrong while verifying')
-      }
-      throw error
+    if (res.status !== 200) {
+      throw new Error(res.data?.message || 'Verification failed')
     }
+
+    return res.data
   }
 
   return useMutation({
     mutationFn: verifyTotp,
     onSuccess: (data) => {
-      Cookies.set('token', data.token)
-      localStorage.setItem('token', data.token)
+      if (!data?.token) return
+
+      // ✅ Store JWT in cookie (CATERING prefix)
+      Cookies.set('CATERING_TOKEN', data.token, {
+        expires: 1, // 1 day
+        secure: true,
+        sameSite: 'strict',
+      })
+
+      // ✅ Store user info in localStorage (CATERING prefix)
+      localStorage.setItem('CATERING_ROLE', data.role || '')
+      localStorage.setItem('CATERING_USER_ID', String(data.Id))
+
+      toast.success('Logged in successfully')
+    },
+    onError: () => {
+      toast.error('Verification failed')
     },
   })
 }
