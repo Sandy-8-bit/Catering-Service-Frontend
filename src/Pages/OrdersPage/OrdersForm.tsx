@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import ButtonSm from '@/components/common/Buttons'
 import Input, { InputCheckbox } from '@/components/common/Input'
-import { appRoutes } from '@/routes/appRoutes'
 import lodash from 'lodash'
 import {
   useCreateOrder,
@@ -23,6 +22,7 @@ import ProductMenuSelector from '@/components/orders/ProductMenuSelector'
 import AdditionalItemsSelector from '@/components/orders/AdditionalItemsSelector'
 import { mapOrderToUpdatePayload, mapOrderToPayload } from '@/utils/TypeMappers'
 import { ArrowLeft } from 'lucide-react'
+import { useFetchUsers } from '@/queries/usersQueries'
 
 export const OrdersForm = () => {
   const navigate = useNavigate()
@@ -30,7 +30,7 @@ export const OrdersForm = () => {
   const isEditMode = searchParams.get('mode') === 'edit'
   const orderIdParam = Number(searchParams.get('orderId'))
   const orderId = Number.isFinite(orderIdParam) ? orderIdParam : undefined
-
+  const {data:user = []} = useFetchUsers()
   const { data: existingOrder, isLoading: isOrderLoading } =
     useFetchOrderById(orderId)
 
@@ -38,6 +38,25 @@ export const OrdersForm = () => {
     useFetchAdditionalItems()
 
   const [editData, setEditData] = useState<Order>(defaultOrderData)
+
+  const driverOptions = user!
+  .filter((user) => user.role === 'DRIVER')
+  .map((driver) => ({
+    id: driver.userId,
+    label: driver.name,
+  }))
+
+  useEffect(() => {
+  const total = Number(editData.totalAmount) || 0
+  const advance = Number(editData.advanceAmount) || 0
+
+  const balance = Math.max(total - advance, 0)
+
+  setEditData((prev) => ({
+    ...prev,
+    balanceAmount: balance,
+  }))
+}, [editData.totalAmount, editData.advanceAmount])
 
   useEffect(() => {
     if (!existingOrder) return
@@ -182,20 +201,24 @@ export const OrdersForm = () => {
               }
               label="Delivery Preference"
             />
-
-            <Input
-              title="Driver Id"
-              name="driverId"
-              placeholder="10-digit contact"
-              inputValue={editData.driver?.driverId.toString() || ''}
-              onChange={(value) =>
+{editData.deliveredByUs && (
+            <DropdownSelect
+              title="Assign Driver"
+              options={driverOptions}
+              required
+              selected={
+                driverOptions.find(
+                  (option) => option.id === editData.driver?.driverId
+                ) || { id: 0, label: 'Select Driver' }
+              }
+              onChange={(option) =>
                 setEditData((prev) => ({
                   ...prev,
-                  driverId: Number(value),
+                  driver: { driverId: option.id, driverName: option.label, driverNumber: '' },
                 }))
               }
-            />
-
+            />             
+            )}
             <DropdownSelect
               title="Payment Type"
               options={paymentTypeOptions}
@@ -209,6 +232,18 @@ export const OrdersForm = () => {
               }
               onChange={(option) =>
                 setEditData((prev) => ({ ...prev, paymentType: option.label }))
+              }
+            />
+             <Input
+              title="Total Amount"
+              placeholder="Enter total amount"
+              prefixText="₹"
+              inputValue={editData.totalAmount?.toString() || ''}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  totalAmount: Number(value),
+                }))
               }
             />
             <Input
@@ -228,25 +263,9 @@ export const OrdersForm = () => {
               placeholder="Enter balance amount"
               prefixText="₹"
               inputValue={editData.balanceAmount?.toString() || ''}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  balanceAmount: Number(value),
-                }))
-              }
-            />
-            <Input
-              title="Total Amount"
-              placeholder="Enter total amount"
-              prefixText="₹"
-              inputValue={editData.totalAmount?.toString() || ''}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  totalAmount: Number(value),
-                }))
-              }
-            />
+              onChange={()=>{}}
+             />
+           
             <Input
               title="Total People"
               prefixText="Count"
