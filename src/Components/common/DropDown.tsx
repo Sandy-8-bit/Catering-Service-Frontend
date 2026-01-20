@@ -314,7 +314,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         onClick={toggleDropdown}
         animate={shake ? { x: [-5, 5, -5, 5, 0] } : {}}
         transition={{ duration: 0.4 }}
-        className={`input-container flex cursor-pointer flex-row items-center justify-between rounded-xl border-2 bg-white px-3 py-3 transition-all ${
+        className={`input-container flex cursor-pointer flex-row items-center justify-between rounded-xl border-2 bg-white px-3 py-3 shadow-sm transition-all ${
           isInvalid
             ? 'border-red-500'
             : isOpen

@@ -686,7 +686,7 @@ export const DateInput: React.FC<DateInputProps> = ({
       {/* INNER WRAPPER: this gets user-provided className so you can scale / size it */}
       <div className={`${className} min-w-[180px]`}>
         <div
-          className={`input-container group flex cursor-pointer flex-row items-center justify-between gap-2 overflow-clip rounded-xl border-2 bg-white transition-all ${
+          className={`input-container group flex cursor-pointer flex-row items-center justify-between gap-2 overflow-clip rounded-xl border-2 bg-white shadow-sm transition-all ${
             !disabled && 'focus-within:border-slate-500'
           } ${
             isError

@@ -31,15 +31,12 @@ export const OrdersForm = () => {
   const isEditMode = searchParams.get('mode') === 'edit'
   const orderIdParam = Number(searchParams.get('orderId'))
   const orderId = Number.isFinite(orderIdParam) ? orderIdParam : undefined
-  const { data: user = [] } = useFetchUsers()
+  const { data: user = [], isLoading: isUserOptionLoading } = useFetchUsers()
   const { data: existingOrder, isLoading: isOrderLoading } =
     useFetchOrderById(orderId)
 
   const { data: additionalItems = [], isLoading: isAdditionalLoading } =
     useFetchAdditionalItems()
-
-  // const { data: driverOptions = [], isLoading: isDriverOptionsLoading } =
-  //   useFetchDriverOptions()
 
   const [editData, setEditData] = useState<Order>(defaultOrderData)
 
@@ -53,9 +50,7 @@ export const OrdersForm = () => {
   useEffect(() => {
     const total = Number(editData.totalAmount) || 0
     const advance = Number(editData.advanceAmount) || 0
-
     const balance = Math.max(total - advance, 0)
-
     setEditData((prev) => ({
       ...prev,
       balanceAmount: balance,
@@ -77,7 +72,7 @@ export const OrdersForm = () => {
     })
   }
 
-  if (isOrderLoading || isDriverOptionsLoading || isAdditionalLoading)
+  if (isOrderLoading || isUserOptionLoading || isAdditionalLoading)
     return <div>Loading...</div>
 
   return (

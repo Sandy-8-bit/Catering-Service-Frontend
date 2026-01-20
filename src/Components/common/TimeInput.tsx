@@ -235,7 +235,7 @@ export const TimeInput: React.FC<TimeInputProps> = ({
       </h3>
 
       <div
-        className={`input-container group flex cursor-pointer flex-row items-center justify-between gap-2 overflow-clip rounded-xl border-2 border-[#F1F1F1] bg-white transition-all ${
+        className={`input-container group flex cursor-pointer flex-row items-center justify-between gap-2 overflow-clip rounded-xl border-2 border-[#F1F1F1] bg-white shadow-sm transition-all ${
           !disabled && 'focus-within:border-slate-500'
         } ${isOpen ? 'border-slate-500' : ''} ${className}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
