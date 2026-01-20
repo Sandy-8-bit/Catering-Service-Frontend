@@ -11,4 +11,5 @@ export const apiRoutes = {
   users: '/api/admin/users',
   orders: '/api/admin/orders',
   products: '/api/admin/products',
+  recipes: '/api/admin/recipes',
 }

@@ -1,4 +1,3 @@
-
 export const appRoutes = {
   // -------- Public Pages --------
   homePage: '/Home',
@@ -27,6 +26,12 @@ export const appRoutes = {
     path: '/products',
     children: {},
   },
+  recipes: {
+    path: '/recipes',
+    children: {
+      detail: '/recipes/:productId',
+    },
+  },
   additionalItems: {
     path: '/additional-items',
     children: {},
@@ -43,10 +48,10 @@ export const appRoutes = {
     path: '/user-management',
     children: {},
   },
-  driver:{
-    path:'/driver',
-    children:{
-      driverDashboard:'/driver/driver-dashboard/:id'
-    }
-  }
+  driver: {
+    path: '/driver',
+    children: {
+      driverDashboard: '/driver/driver-dashboard/:id',
+    },
+  },
 }

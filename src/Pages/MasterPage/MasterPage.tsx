@@ -34,6 +34,15 @@ const MasterPage: React.FC = () => {
       },
       {
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
+        title: 'Recipes',
+        desc: 'Map raw materials and unit consumption for every product.',
+        label: 'Production',
+        labelColor: 'bg-orange-50 text-orange-700',
+        btnText: 'Configure',
+        navigateUrl: appRoutes.recipes.path,
+      },
+      {
+        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         title: 'Additional Items',
         desc: 'Add complementary services or add-ons to enhance every order.',
         label: 'Upsell',

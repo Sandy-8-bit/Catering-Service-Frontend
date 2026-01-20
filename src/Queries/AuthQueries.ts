@@ -103,12 +103,10 @@ export const useVerifyTotp = () => {
     mutationFn: verifyTotp,
     onSuccess: (data) => {
       if (!data?.token) return
-
-      // ✅ Store JWT in cookie (CATERING prefix)
       Cookies.set('CATERING_TOKEN', data.token, {
-        expires: 1, // 1 day
+        expires: 8,
         secure: true,
-        sameSite: 'strict',
+        sameSite: 'Lax',
       })
 
       // ✅ Store user info in localStorage (CATERING prefix)

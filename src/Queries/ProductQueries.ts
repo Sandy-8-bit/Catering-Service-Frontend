@@ -61,10 +61,10 @@ export const useFetchProducts = (params?: ProductQueryParams) => {
 /**
  * 🔍 Fetch single product by id
  */
-export const useFetchProductById = (id: number) => {
+export const useFetchProductById = (id?: number) => {
   const fetchById = async (): Promise<Product> => {
     try {
-      if (!id && id !== 0) {
+      if (typeof id !== 'number' || Number.isNaN(id)) {
         throw new Error('Product id is required')
       }
 
@@ -83,9 +83,9 @@ export const useFetchProductById = (id: number) => {
   }
 
   return useQuery({
-    queryKey: productKey(id),
+    queryKey: productKey(id ?? 'detail'),
     queryFn: fetchById,
-    enabled: typeof id === 'number',
+    enabled: typeof id === 'number' && Number.isFinite(id),
     staleTime: 1000 * 60 * 5,
     retry: 1,
   })
