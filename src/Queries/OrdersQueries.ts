@@ -106,10 +106,10 @@ export const useCreateOrder = () => {
 export const useUpdateOrder = () => {
   const queryClient = useQueryClient()
 
-  const updateOrder = async ({ id, ...payload }: OrderUpdatePayload) => {
+  const updateOrder = async (editData: OrderUpdatePayload) => {
     try {
       const token = authHandler()
-
+      const { id, ...payload } = editData
       const res = await axiosInstance.patch(
         `${apiRoutes.orders}/${id}`,
         payload,
@@ -133,7 +133,7 @@ export const useUpdateOrder = () => {
     onSuccess: (data, variables) => {
       toast.success('Order updated successfully')
       queryClient.invalidateQueries({ queryKey: ORDERS_KEY })
-      queryClient.invalidateQueries({ queryKey: orderKey(variables.id) })
+      // queryClient.invalidateQueries({ queryKey: orderKey(variables.id) })
     },
   })
 }

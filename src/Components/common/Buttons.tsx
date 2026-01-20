@@ -64,7 +64,7 @@ const ButtonSm: React.FC<ButtonSmProps> = ({
         <Spinner
           size="sm"
           className={
-            state === 'default' ? 'ml-2 text-white!' : 'ml-2 text-gray-800!'
+            state === 'default' ? 'mx-2 text-white!' : 'ml-2 text-gray-800!'
           }
         />
       )}

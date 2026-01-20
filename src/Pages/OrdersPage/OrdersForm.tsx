@@ -14,6 +14,7 @@ import {
   defaultOrderData,
   eventTypeOptions,
   paymentTypeOptions,
+  statusOptions,
 } from '@/constants/constants'
 import DropdownSelect from '@/components/common/DropDown'
 import DateInput from '@/components/common/DateInput'
@@ -30,33 +31,36 @@ export const OrdersForm = () => {
   const isEditMode = searchParams.get('mode') === 'edit'
   const orderIdParam = Number(searchParams.get('orderId'))
   const orderId = Number.isFinite(orderIdParam) ? orderIdParam : undefined
-  const {data:user = []} = useFetchUsers()
+  const { data: user = [] } = useFetchUsers()
   const { data: existingOrder, isLoading: isOrderLoading } =
     useFetchOrderById(orderId)
 
   const { data: additionalItems = [], isLoading: isAdditionalLoading } =
     useFetchAdditionalItems()
 
+  // const { data: driverOptions = [], isLoading: isDriverOptionsLoading } =
+  //   useFetchDriverOptions()
+
   const [editData, setEditData] = useState<Order>(defaultOrderData)
 
   const driverOptions = user!
-  .filter((user) => user.role === 'DRIVER')
-  .map((driver) => ({
-    id: driver.userId,
-    label: driver.name,
-  }))
+    .filter((user) => user.role === 'DRIVER')
+    .map((driver) => ({
+      id: driver.userId,
+      label: driver.name,
+    }))
 
   useEffect(() => {
-  const total = Number(editData.totalAmount) || 0
-  const advance = Number(editData.advanceAmount) || 0
+    const total = Number(editData.totalAmount) || 0
+    const advance = Number(editData.advanceAmount) || 0
 
-  const balance = Math.max(total - advance, 0)
+    const balance = Math.max(total - advance, 0)
 
-  setEditData((prev) => ({
-    ...prev,
-    balanceAmount: balance,
-  }))
-}, [editData.totalAmount, editData.advanceAmount])
+    setEditData((prev) => ({
+      ...prev,
+      balanceAmount: balance,
+    }))
+  }, [editData.totalAmount, editData.advanceAmount])
 
   useEffect(() => {
     if (!existingOrder) return
@@ -73,7 +77,8 @@ export const OrdersForm = () => {
     })
   }
 
-  if (isOrderLoading) return <div>Loading...</div>
+  if (isOrderLoading || isDriverOptionsLoading || isAdditionalLoading)
+    return <div>Loading...</div>
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
@@ -201,23 +206,27 @@ export const OrdersForm = () => {
               }
               label="Delivery Preference"
             />
-{editData.deliveredByUs && (
-            <DropdownSelect
-              title="Assign Driver"
-              options={driverOptions}
-              required
-              selected={
-                driverOptions.find(
-                  (option) => option.id === editData.driver?.driverId
-                ) || { id: 0, label: 'Select Driver' }
-              }
-              onChange={(option) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  driver: { driverId: option.id, driverName: option.label, driverNumber: '' },
-                }))
-              }
-            />             
+            {editData.deliveredByUs && (
+              <DropdownSelect
+                title="Assign Driver"
+                options={driverOptions}
+                required
+                selected={
+                  driverOptions.find(
+                    (option) => option.id === editData.driver?.driverId
+                  ) || { id: 0, label: 'Select Driver' }
+                }
+                onChange={(option) =>
+                  setEditData((prev) => ({
+                    ...prev,
+                    driver: {
+                      driverId: option.id,
+                      driverName: option.label,
+                      driverNumber: '',
+                    },
+                  }))
+                }
+              />
             )}
             <DropdownSelect
               title="Payment Type"
@@ -234,7 +243,7 @@ export const OrdersForm = () => {
                 setEditData((prev) => ({ ...prev, paymentType: option.label }))
               }
             />
-             <Input
+            <Input
               title="Total Amount"
               placeholder="Enter total amount"
               prefixText="₹"
@@ -263,9 +272,9 @@ export const OrdersForm = () => {
               placeholder="Enter balance amount"
               prefixText="₹"
               inputValue={editData.balanceAmount?.toString() || ''}
-              onChange={()=>{}}
-             />
-           
+              onChange={() => {}}
+            />
+
             <Input
               title="Total People"
               prefixText="Count"
@@ -288,6 +297,21 @@ export const OrdersForm = () => {
                 }))
               }
               label="Returnable items "
+            />
+            <DropdownSelect
+              title="Status"
+              options={statusOptions}
+              required
+              selected={
+                statusOptions.find(
+                  (option) =>
+                    option.label.toLocaleLowerCase() ===
+                    editData.status.toLocaleLowerCase()
+                ) || { id: 0, label: 'Select Status' }
+              }
+              onChange={(option) =>
+                setEditData((prev) => ({ ...prev, status: option.label }))
+              }
             />
           </div>
           {/* Menu items */}
@@ -398,7 +422,7 @@ const ActionButtons: React.FC<{
         isPending={isCreatePending || isUpdatePending}
         onClick={() => {
           if (isEditMode) {
-            updateOrder(mapOrderToUpdatePayload(editData))
+            updateOrder(mapOrderToUpdatePayload(editData, existingOrder))
           } else {
             createOrder(mapOrderToPayload(editData))
           }

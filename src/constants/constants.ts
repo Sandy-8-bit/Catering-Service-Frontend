@@ -29,6 +29,14 @@ export const paymentTypeOptions: DropdownOption[] = [
   'Cheque',
 ].map((label, index) => ({ id: index + 1, label }))
 
+export const statusOptions: DropdownOption[] = [
+  ' CONFIRMED',
+  ' IN_PROGRESS',
+  ' DELIVERED',
+  ' COMPLETED',
+  ' CANCELLED',
+].map((label, index) => ({ id: index + 1, label }))
+
 export const defaultOrderData: Order = {
   id: 0,
   customerName: '',

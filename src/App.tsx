@@ -18,7 +18,7 @@ function App() {
   return (
     <Routes>
       {/* Public Route */}
-      <Route path="/signin" element={<SignInPage />} />
+      <Route path={appRoutes.signInPage} element={<SignInPage />} />
 
       {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>

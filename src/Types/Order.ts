@@ -61,14 +61,14 @@ export interface Order {
 
 // Payload fragment for POST / PATCH item entries
 export interface OrderItemPayload {
-  id?: number
+  id?: number | null
   productId: number
   quantity: number
 }
 
 // Payload fragment for POST / PATCH additional items
 export interface OrderAdditionalItemPayload {
-  id?: number
+  id?: number | null
   additionalItemId: number
   quantity: number
   returned: boolean
