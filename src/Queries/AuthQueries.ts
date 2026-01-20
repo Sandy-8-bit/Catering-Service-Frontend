@@ -10,7 +10,7 @@ import type {
   Verify,
   AuthResponse,
   VerifyResponse,
-} from '../types/AuthTypes'
+} from '../types/authTypes'
 
 /**
  * 🔐 LOGIN USER

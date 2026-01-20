@@ -10,7 +10,7 @@ import { appRoutes } from '@/routes/appRoutes'
 import { useFetchProducts } from '@/queries/productQueries'
 import { useCalculateRecipeRequirement } from '@/queries/recipeQueries'
 import type { Product } from '@/types/Product'
-import type { RecipeCalculationRow } from '@/types/Recipe'
+import type { RecipeCalculationRow } from '@/types/recipe'
 
 const RecipesPage = () => {
   const navigate = useNavigate()

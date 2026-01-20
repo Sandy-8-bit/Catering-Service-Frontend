@@ -14,9 +14,9 @@ import { useFetchRawMaterials } from '@/queries/rawMaterialsQueries'
 import {
   useFetchRecipeByProduct,
   useUpdateRecipeForProduct,
-} from '@/queries/RecipeQueries'
+} from '@/queries/recipeQueries'
 import type { RawMaterial } from '@/types/RawMaterial'
-import type { Recipe } from '@/types/Recipe'
+import type { Recipe } from '@/types/recipe'
 
 interface RecipeRow {
   localId: number

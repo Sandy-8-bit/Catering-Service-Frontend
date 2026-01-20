@@ -6,32 +6,32 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import { appRoutes } from './routes/appRoutes'
 
 const AdditionalItemsPage = lazy(
-  () => import('@pages/AdditionalItemsPage/AdditionalItemsPage')
+  () => import('@pages/additionalItemsPage/AdditionalItemsPage')
 )
 const SignInPage = lazy(async () => ({
-  default: (await import('@pages/Auth/Auth')).SignInPage,
+  default: (await import('@pages/auth/Auth')).SignInPage,
 }))
 const CategoriesPage = lazy(
-  () => import('@pages/CatergoriesPage/CatergoriesPage')
+  () => import('@pages/catergoriesPage/CatergoriesPage')
 )
 const Dashboard = lazy(async () => ({
   default: (await import('@pages/Dashboard')).Dashboard,
 }))
 const DriveDashboard = lazy(() => import('@pages/driver/DriveDashboard'))
-const MasterPage = lazy(() => import('@pages/MasterPage/MasterPage'))
-const OrdersForm = lazy(() => import('@pages/OrdersPage/OrdersForm'))
+const MasterPage = lazy(() => import('@pages/masterPage/MasterPage'))
+const OrdersForm = lazy(() => import('@pages/ordersPage/OrdersForm'))
 const OrdersPage = lazy(async () => ({
-  default: (await import('@pages/OrdersPage/OrdersPage')).OrdersPage,
+  default: (await import('@pages/ordersPage/OrdersPage')).OrdersPage,
 }))
-const ProductsPage = lazy(() => import('@pages/ProductsPage/ProductsPage'))
+const ProductsPage = lazy(() => import('@pages/productsPage/ProductsPage'))
 const RawMaterialsPage = lazy(
-  () => import('@pages/RawMaterialsPage/RawMaterialsPage')
+  () => import('@pages/rawMaterialsPage/RawMaterialsPage')
 )
 const RecipeDetailsPage = lazy(
-  () => import('@pages/RecipesPage/RecipeDetailsPage')
+  () => import('@/pages/recipesPage/RecipeDetailsPage')
 )
-const RecipesPage = lazy(() => import('@pages/RecipesPage/RecipesPage'))
-const UsersPage = lazy(() => import('@pages/UsersPage/UsersPage'))
+const RecipesPage = lazy(() => import('@/pages/recipesPage/RecipesPage'))
+const UsersPage = lazy(() => import('@pages/usersPage/UsersPage'))
 
 function App() {
   return (

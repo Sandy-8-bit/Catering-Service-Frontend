@@ -16,7 +16,7 @@ import type {
   RecipeItemPayload,
   RecipeBulkUpdatePayload,
   RecipeCalculationRow,
-} from '@/types/Recipe'
+} from '@/types/recipe'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'
