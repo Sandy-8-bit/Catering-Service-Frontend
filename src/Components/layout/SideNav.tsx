@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'motion/react'
 import { LogOut } from 'lucide-react'
 import { appRoutes } from '@/routes/appRoutes'
+import LogoutConfirmModal from './LogoutConfirmModal'
 
 type NavigationSection = 'main' | 'orders' | 'settings'
 
@@ -23,6 +24,7 @@ const NAVIGATION_SECTIONS: Array<{ title: string; key: NavigationSection }> = [
 const SideNav: React.FC = () => {
   const [activeRoute, setActiveRoute] = useState<string>('')
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   useEffect(() => {
     const currentPath = window.location.pathname
@@ -173,7 +175,7 @@ const SideNav: React.FC = () => {
           </div>
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={() => setShowLogoutModal(true)}
             className={`mt-auto w-full cursor-pointer rounded-[12px] border-2 border-transparent text-red-600 transition-all duration-300 ease-in-out ${isExpanded ? 'flex items-center justify-start gap-3 px-3 py-2 hover:border-[#eeeeee] hover:bg-white' : 'flex flex-col items-center px-1.5 py-2 text-center'}`}
           >
             <div
@@ -187,6 +189,14 @@ const SideNav: React.FC = () => {
               <h4 className="text-sm font-semibold">Logout</h4>
             )}
           </button>
+
+          <LogoutConfirmModal
+          open={showLogoutModal}
+          onCancel={() => setShowLogoutModal(false)}
+          onConfirm={() => {handleLogout(); setShowLogoutModal(false)
+          }}
+          />
+  
         </motion.div>
       </motion.section>
     </div>

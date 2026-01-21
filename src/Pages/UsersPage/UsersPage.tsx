@@ -30,16 +30,7 @@ const createEmptyUser = (id: number): EditableUser => ({
   role: "",
 })
 
-const areRolesEqual = (left: string[], right: string[]) => {
-  if (left.length !== right.length) return false
-  const leftSet = new Set(left.map((role) => role.trim()))
-  const rightSet = new Set(right.map((role) => role.trim()))
-  if (leftSet.size !== rightSet.size) return false
-  for (const value of leftSet) {
-    if (!rightSet.has(value)) return false
-  }
-  return true
-}
+
 
 export const UsersPage = () => {
   const {

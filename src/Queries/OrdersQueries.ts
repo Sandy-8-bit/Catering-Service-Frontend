@@ -130,10 +130,9 @@ export const useUpdateOrder = () => {
 
   return useMutation({
     mutationFn: updateOrder,
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       toast.success('Order updated successfully')
       queryClient.invalidateQueries({ queryKey: ORDERS_KEY })
-      // queryClient.invalidateQueries({ queryKey: orderKey(variables.id) })
     },
   })
 }

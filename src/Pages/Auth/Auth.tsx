@@ -63,7 +63,6 @@ export const SignInPage = () => {
   useEffect(() => {
     const option = getLanguageOptionByCode(i18n.language)
     if (option.id !== selectedLanguage.id) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedLanguage(option)
     }
   }, [i18n.language, selectedLanguage.id])
@@ -98,7 +97,7 @@ export const SignInPage = () => {
               options={LANGUAGE_OPTIONS}
               selected={selectedLanguage}
               onChange={handleLanguageChange}
-              className="w-full max-w-[160px]"
+              className="w-full max-w-40"
             />
           </div>
 
@@ -187,7 +186,7 @@ export const SignInPage = () => {
 
       {/* RIGHT IMAGE SECTION */}
       <div className="relative hidden w-1/2 items-center justify-center lg:flex">
-        <div className="absolute z-50 text-center text-[40px] leading-[45px] text-[#00b3fa] mix-blend-difference xl:text-[80px] xl:leading-[80px]">
+        <div className="absolute z-50 text-center text-[40px] leading-[45px] text-[#00b3fa] mix-blend-difference xl:text-[80px] xl:leading-20">
           Reliable <br /> Fast <br /> Smart.
         </div>
 
