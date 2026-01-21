@@ -12,4 +12,9 @@ export const apiRoutes = {
   orders: '/api/admin/orders',
   products: '/api/admin/products',
   recipes: '/api/admin/recipes',
+
+
+  //driver routes
+  driverdashboard: '/api/driver/dashboard/date',
+  driverorder: '/api/driver/deliveries/order',
 }

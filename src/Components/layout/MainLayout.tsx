@@ -19,7 +19,7 @@ const MainLayout: React.FC = () => {
         {/* Content */}
         <main
           id="layout"
-          className="main-content flex-1 overflow-y-auto py-3 pr-3 pb-24 select-none! md:pb-0 lg:py-4 lg:pr-4"
+          className="main-content flex-1 overflow-y-auto  pb-24 select-none! md:pb-0"
         >
           {/*This is where the nested routes will be rendered which will be given my router dom from app.tsx  */}
           <Outlet />

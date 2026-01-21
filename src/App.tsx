@@ -4,6 +4,8 @@ import { Routes, Route } from 'react-router-dom'
 import MainLayout from '@/components/layout/MainLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import { appRoutes } from './routes/appRoutes'
+import DriverDashboardPage from '@pages/driver/DriveDashboard'
+import DriverOrderPage from './pages/driver/driverOrderPage'
 
 const AdditionalItemsPage = lazy(
   () => import('@pages/additionalItemsPage/AdditionalItemsPage')
@@ -17,7 +19,6 @@ const CategoriesPage = lazy(
 const Dashboard = lazy(async () => ({
   default: (await import('@pages/Dashboard')).Dashboard,
 }))
-const DriveDashboard = lazy(() => import('@pages/driver/DriveDashboard'))
 const MasterPage = lazy(() => import('@pages/masterPage/MasterPage'))
 const OrdersForm = lazy(() => import('@pages/ordersPage/OrdersForm'))
 const OrdersPage = lazy(async () => ({
@@ -77,8 +78,14 @@ function App() {
             <Route path={appRoutes.ordersForm.path} element={<OrdersForm />} />
             <Route
               path={appRoutes.driver.children.driverDashboard}
-              element={<DriveDashboard />}
+              element={<DriverDashboardPage />}
             />
+           
+<Route
+  path={appRoutes.driver.children.driverOrderPage}
+  element={<DriverOrderPage />}
+/>
+
           </Route>
         </Route>
 

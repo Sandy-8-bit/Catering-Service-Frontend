@@ -86,7 +86,7 @@ const SideNav: React.FC = () => {
   return (
     <div
       style={{ zoom: 0.85 }}
-      className="floating-container relative flex min-h-[125vh] bg-[#FAFAFA] transition-all duration-300"
+      className="floating-container border-r  border-gray-200 relative flex min-h-[125vh] bg-[#FAFAFA] transition-all duration-300"
     >
       <motion.section
         className={`flex h-[115vh] flex-col gap-4 overflow-hidden bg-[#FAFAFA] px-2.5 pt-4 transition-all duration-300 select-none ${isExpanded ? 'w-[280px]' : 'w-[100px]'}`}

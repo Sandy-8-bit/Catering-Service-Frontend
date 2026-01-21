@@ -3,8 +3,6 @@ import Cookies from 'js-cookie'
 import { appRoutes } from '../../routes/appRoutes'
 import { isTokenExpired } from '../../utils/isJwtExpired'
 
-const DRIVER_DASHBOARD_PATH = '/driver/driver-dashboard'
-
 const ProtectedRoute = () => {
   const token = Cookies.get('CATERING_TOKEN')
   const role = localStorage.getItem('CATERING_ROLE')
@@ -18,17 +16,25 @@ const ProtectedRoute = () => {
     return <Navigate to={appRoutes.signInPage} replace />
   }
 
-  // 🚫 DRIVER: block EVERYTHING except driver dashboard
+  // 🚫 DRIVER access rules
   if (role === 'DRIVER' && userId) {
-    const allowedPath = `${DRIVER_DASHBOARD_PATH}/${userId}`
+    const allowedDriverDashboard = `/driver/driver-dashboard/${userId}`
 
-    // If driver tries ANY other route → force redirect
-    if (location.pathname !== allowedPath) {
-      return <Navigate to={allowedPath} replace />
+    const allowedDriverPaths = [
+      allowedDriverDashboard,
+      '/driver/order', // prefix match
+    ]
+
+    const isAllowed = allowedDriverPaths.some((path) =>
+      location.pathname.startsWith(path)
+    )
+
+    if (!isAllowed) {
+      return <Navigate to={allowedDriverDashboard} replace />
     }
   }
 
-  // ✅ ADMIN → allow access normally
+  // ✅ ADMIN / others
   return <Outlet />
 }
 

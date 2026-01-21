@@ -52,6 +52,7 @@ export const appRoutes = {
     path: '/driver',
     children: {
       driverDashboard: '/driver/driver-dashboard/:id',
+      driverOrderPage: '/driver/order/:orderId',
     },
   },
 }
