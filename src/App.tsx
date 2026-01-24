@@ -5,7 +5,7 @@ import MainLayout from '@/components/layout/MainLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import { appRoutes } from './routes/appRoutes'
 import DriverDashboardPage from '@pages/driver/DriveDashboard'
-import DriverOrderPage from './pages/driver/driverOrderPage'
+import DriverOrderPage from './pages/driver/DriverOrderPage'
 
 const AdditionalItemsPage = lazy(
   () => import('@pages/additionalItemsPage/AdditionalItemsPage')

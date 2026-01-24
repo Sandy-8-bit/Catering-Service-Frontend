@@ -10,15 +10,6 @@ export interface ApiResponse<T> {
   path: string
 }
 
-/* =========================
-   Event Time (Backend format)
-========================= */
-export interface EventTime {
-  hour: number
-  minute: number
-  second: number
-  nano: number
-}
 
 /* =========================
    Vessel
@@ -46,7 +37,7 @@ export interface DriverOrderDetail {
 
   eventType: string
   eventDate: string // YYYY-MM-DD
-  eventTime: EventTime
+  eventTime: string
 
   totalPeople: number
   orderTotalAmount: number
