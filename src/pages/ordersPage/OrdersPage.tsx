@@ -134,10 +134,10 @@ const getProductDisplayName = (
   product: Order['items'][number]['product']
 ): string => {
   return (
-    product.productPrimaryName ||
-    product.primaryName ||
-    product.productSecondaryName ||
-    product.secondaryName ||
+    product?.productPrimaryName ||
+    product?.primaryName ||
+    product?.productSecondaryName ||
+    product?.secondaryName ||
     ''
   )
 }
@@ -235,7 +235,7 @@ export const OrdersPage = () => {
         sourceOrders,
         (order) => order.additionalItems,
         (item) =>
-          item.additionalItem.additionalItemPrimaryName ||
+          item.additionalItem?.additionalItemPrimaryName ||
           `Additional ${item.id}`,
         (item) => item.quantity
       ),

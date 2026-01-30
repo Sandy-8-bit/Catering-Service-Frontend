@@ -23,6 +23,7 @@ import ProductMenuSelector from '@/components/orders/ProductMenuSelector'
 import AdditionalItemsSelector from '@/components/orders/AdditionalItemsSelector'
 import { mapOrderToUpdatePayload, mapOrderToPayload } from '@/utils/TypeMappers'
 import { ArrowLeft } from 'lucide-react'
+import { appRoutes } from '@/routes/appRoutes'
 import { useFetchUsers } from '@/queries/usersQueries'
 
 export const OrdersForm = () => {
@@ -39,6 +40,21 @@ export const OrdersForm = () => {
     useFetchAdditionalItems()
 
   const [editData, setEditData] = useState<Order>(defaultOrderData)
+
+  const { mutate: createOrder, isPending: isCreatePending } = useCreateOrder({
+    onSuccess: () => {
+      navigate(appRoutes.orders.path)
+    },
+  })
+  const { mutate: updateOrder, isPending: isUpdatePending } = useUpdateOrder()
+
+  const handleCreateOrder = () => {
+    createOrder(mapOrderToPayload(editData))
+  }
+
+  const handleUpdateOrder = () => {
+    updateOrder(mapOrderToUpdatePayload(editData, existingOrder))
+  }
 
   const driverOptions = user!
     .filter((user) => user.role === 'DRIVER')
@@ -95,6 +111,10 @@ export const OrdersForm = () => {
           defaultOrderData={defaultOrderData}
           setEditData={setEditData}
           navigate={navigate}
+          onCreateOrder={handleCreateOrder}
+          onUpdateOrder={handleUpdateOrder}
+          isCreatePending={isCreatePending}
+          isUpdatePending={isUpdatePending}
         />
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
@@ -358,6 +378,10 @@ export const OrdersForm = () => {
             defaultOrderData={defaultOrderData}
             setEditData={setEditData}
             navigate={navigate}
+            onCreateOrder={handleCreateOrder}
+            onUpdateOrder={handleUpdateOrder}
+            isCreatePending={isCreatePending}
+            isUpdatePending={isUpdatePending}
           />
         </form>
       </section>
@@ -365,32 +389,31 @@ export const OrdersForm = () => {
   )
 }
 
-const ActionButtons: React.FC<{
+interface ActionButtonsProps {
   isEditMode: boolean
   editData: Order
   existingOrder?: Order
   defaultOrderData: Order
   setEditData: React.Dispatch<React.SetStateAction<Order>>
   navigate: ReturnType<typeof useNavigate>
-}> = ({
+  onCreateOrder: () => void
+  onUpdateOrder: () => void
+  isCreatePending: boolean
+  isUpdatePending: boolean
+}
+
+const ActionButtons: React.FC<ActionButtonsProps> = ({
   isEditMode,
   editData,
   existingOrder,
   defaultOrderData,
   setEditData,
   navigate,
-}: {
-  isEditMode: boolean
-  editData: Order
-  existingOrder?: Order
-  defaultOrderData: Order
-  setEditData: React.Dispatch<React.SetStateAction<Order>>
-  navigate: ReturnType<typeof useNavigate>
+  onCreateOrder,
+  onUpdateOrder,
+  isCreatePending,
+  isUpdatePending,
 }) => {
-  const { mutateAsync: createOrder, isPending: isCreatePending } =
-    useCreateOrder()
-  const { mutateAsync: updateOrder, isPending: isUpdatePending } =
-    useUpdateOrder()
   return (
     <div className="flex flex-wrap justify-end gap-3">
       <ButtonSm
@@ -417,9 +440,9 @@ const ActionButtons: React.FC<{
         isPending={isCreatePending || isUpdatePending}
         onClick={() => {
           if (isEditMode) {
-            updateOrder(mapOrderToUpdatePayload(editData, existingOrder))
+            onUpdateOrder()
           } else {
-            createOrder(mapOrderToPayload(editData))
+            onCreateOrder()
           }
         }}
       >
