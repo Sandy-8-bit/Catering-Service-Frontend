@@ -17,6 +17,4 @@ export type ProductPayload = Omit<Product, 'id' | 'category'> & {
   categoryId: number
 }
 
-
-
 export type ProductQueryParams = Record<string, string | number | boolean>

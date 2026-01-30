@@ -4,35 +4,35 @@ import { Routes, Route } from 'react-router-dom'
 import MainLayout from '@/components/layout/MainLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import { appRoutes } from './routes/appRoutes'
-import DriverDashboardPage from '@pages/driver/DriveDashboard'
+import DriverDashboardPage from '@/pages/driver/DriveDashboard'
 import DriverOrderPage from './pages/driver/DriverOrderPage'
 
 const AdditionalItemsPage = lazy(
-  () => import('@pages/additionalItemsPage/AdditionalItemsPage')
+  () => import('@/pages/additionalItemsPage/AdditionalItemsPage')
 )
 const SignInPage = lazy(async () => ({
-  default: (await import('@pages/auth/Auth')).SignInPage,
+  default: (await import('@/pages/auth/Auth')).SignInPage,
 }))
 const CategoriesPage = lazy(
-  () => import('@pages/catergoriesPage/CatergoriesPage')
+  () => import('@/pages/catergoriesPage/CatergoriesPage')
 )
 const Dashboard = lazy(async () => ({
-  default: (await import('@pages/Dashboard')).Dashboard,
+  default: (await import('@/pages/Dashboard')).Dashboard,
 }))
-const MasterPage = lazy(() => import('@pages/masterPage/MasterPage'))
-const OrdersForm = lazy(() => import('@pages/ordersPage/OrdersForm'))
+const MasterPage = lazy(() => import('@/pages/masterPage/MasterPage'))
+const OrdersForm = lazy(() => import('@/pages/ordersPage/OrdersForm'))
 const OrdersPage = lazy(async () => ({
-  default: (await import('@pages/ordersPage/OrdersPage')).OrdersPage,
+  default: (await import('@/pages/ordersPage/OrdersPage')).OrdersPage,
 }))
-const ProductsPage = lazy(() => import('@pages/productsPage/ProductsPage'))
+const ProductsPage = lazy(() => import('@/pages/productsPage/ProductsPage'))
 const RawMaterialsPage = lazy(
-  () => import('@pages/rawMaterialsPage/RawMaterialsPage')
+  () => import('@/pages/rawMaterialsPage/RawMaterialsPage')
 )
 const RecipeDetailsPage = lazy(
   () => import('@/pages/recipesPage/RecipeDetailsPage')
 )
 const RecipesPage = lazy(() => import('@/pages/recipesPage/RecipesPage'))
-const UsersPage = lazy(() => import('@pages/usersPage/UsersPage'))
+const UsersPage = lazy(() => import('@/pages/usersPage/UsersPage'))
 
 function App() {
   return (
