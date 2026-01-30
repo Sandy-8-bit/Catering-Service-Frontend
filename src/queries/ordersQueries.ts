@@ -4,7 +4,6 @@ import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
-import type { UseMutationOptions } from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
 
 const ORDERS_KEY = ['orders'] as const
@@ -71,9 +70,7 @@ export const useFetchOrderById = (id?: number) => {
   })
 }
 
-export const useCreateOrder = (
-  options?: UseMutationOptions<Order | undefined, unknown, OrderPayload>
-) => {
+export const useCreateOrder = () => {
   const queryClient = useQueryClient()
 
   const createOrder = async (payload: OrderPayload) => {
@@ -94,16 +91,14 @@ export const useCreateOrder = (
     }
   }
 
-  return useMutation<Order | undefined, unknown, OrderPayload>({
+  return useMutation({
     mutationFn: createOrder,
-    ...options,
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data) => {
       toast.success('Order created successfully')
       queryClient.invalidateQueries({ queryKey: ORDERS_KEY })
       if (data?.id) {
         queryClient.invalidateQueries({ queryKey: orderKey(data.id) })
       }
-      options?.onSuccess?.(data, variables, context)
     },
   })
 }

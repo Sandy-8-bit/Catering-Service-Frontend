@@ -41,15 +41,15 @@ export const OrdersForm = () => {
 
   const [editData, setEditData] = useState<Order>(defaultOrderData)
 
-  const { mutate: createOrder, isPending: isCreatePending } = useCreateOrder({
-    onSuccess: () => {
-      navigate(appRoutes.orders.path)
-    },
-  })
+  const { mutate: createOrder, isPending: isCreatePending } = useCreateOrder()
   const { mutate: updateOrder, isPending: isUpdatePending } = useUpdateOrder()
 
   const handleCreateOrder = () => {
-    createOrder(mapOrderToPayload(editData))
+    createOrder(mapOrderToPayload(editData), {
+      onSuccess: () => {
+        navigate(appRoutes.orders.path)
+      },
+    })
   }
 
   const handleUpdateOrder = () => {
