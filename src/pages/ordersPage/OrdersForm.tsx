@@ -14,7 +14,6 @@ import {
   defaultOrderData,
   eventTypeOptions,
   paymentTypeOptions,
-  statusOptions,
 } from '@/constants/constants'
 import DropdownSelect from '@/components/common/DropDown'
 import DateInput from '@/components/common/DateInput'
@@ -86,6 +85,7 @@ export const OrdersForm = () => {
       customerPhone: editData.customerPhone,
       customerAddress: editData.customerAddress,
     })
+
   }
 
   if (isOrderLoading || isUserOptionLoading || isAdditionalLoading)
@@ -313,7 +313,7 @@ export const OrdersForm = () => {
               }
               label="Returnable items "
             />
-            <DropdownSelect
+            {/* <DropdownSelect
               title="Status"
               options={statusOptions}
               required
@@ -327,7 +327,7 @@ export const OrdersForm = () => {
               onChange={(option) =>
                 setEditData((prev) => ({ ...prev, status: option.label }))
               }
-            />
+            /> */}
           </div>
           {/* Menu items */}
           <header className="mt-6 space-y-1">

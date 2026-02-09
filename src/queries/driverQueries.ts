@@ -5,6 +5,7 @@ import { authHandler } from "@/utils/authHandler"
 import axiosInstance from "@/utils/axios"
 import { handleApiError } from "@/utils/handleApiError"
 import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 
 export const useFetchDriverDashboard = ({
@@ -81,5 +82,55 @@ export const useFetchDriverOrderDelivery = ({
     enabled: !!orderId,
     staleTime: 1000 * 60 * 5,
     retry: 1,
+  })
+}
+
+
+type VesselPayload = {
+  name: string
+  quantityGiven: number
+}
+
+export const useUpdateDeliveryVessels = () => {
+  const queryClient = useQueryClient()
+
+  const updateVessels = async ({
+    deliveryId,
+    vessels,
+  }: {
+    deliveryId: number
+    vessels: VesselPayload[]
+  }) => {
+    try {
+      const token = authHandler()
+
+      const res = await axiosInstance.put(
+        `${apiRoutes.driverDeliveries}/${deliveryId}`,
+        { vessels }, // 👈 vessel only
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      return res.data
+    } catch (error: unknown) {
+      handleApiError(error, 'Update Delivery Vessels')
+      throw error
+    }
+  }
+
+  return useMutation({
+    mutationFn: updateVessels,
+    onSuccess: (_,) => {
+      // 🔄 refetch delivery + dashboard
+      queryClient.invalidateQueries({
+        queryKey: ['DRIVER_ORDER_DELIVERY'],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['DRIVER_DASHBOARD'],
+      })
+    },
   })
 }
