@@ -62,15 +62,6 @@ export const OrdersForm = () => {
       label: driver.name,
     }))
 
-  useEffect(() => {
-    const total = Number(editData.totalAmount) || 0
-    const advance = Number(editData.advanceAmount) || 0
-    const balance = Math.max(total - advance, 0)
-    setEditData((prev) => ({
-      ...prev,
-      balanceAmount: balance,
-    }))
-  }, [editData.totalAmount, editData.advanceAmount])
 
   useEffect(() => {
     if (!existingOrder) return
@@ -131,7 +122,7 @@ export const OrdersForm = () => {
             </p>
           </header>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-4">
             <Input
               title="Customer Name"
               name="customerName"
@@ -194,12 +185,28 @@ export const OrdersForm = () => {
                 setEditData((prev) => ({ ...prev, eventDate: value }))
               }
             />
-            <TimeInput
-              title="Event Time"
-              name="time"
-              value={editData.eventTime}
+         <TimeInput
+  title="Event Time"
+  name="time"
+  value={editData.eventTime}
+  onChange={(value) =>
+    setEditData((prev) => ({
+      ...prev,
+      eventTime: value.length === 5 ? `${value}:00` : value,
+    }))
+  }
+/>
+
+             <Input
+              title="Location Url"
+              name="Location Url"
+              placeholder="Delivery or event Location Url"
+              inputValue={editData.locationUrl}
               onChange={(value) =>
-                setEditData((prev) => ({ ...prev, eventTime: value }))
+                setEditData((prev) => ({
+                  ...prev,
+                  locationUrl: value,
+                }))
               }
             />
           </div>
@@ -243,22 +250,8 @@ export const OrdersForm = () => {
                 }
               />
             )}
-            <DropdownSelect
-              title="Payment Type"
-              options={paymentTypeOptions}
-              required
-              selected={
-                paymentTypeOptions.find(
-                  (option) =>
-                    option.label.toLocaleLowerCase() ===
-                    editData.paymentType.toLocaleLowerCase()
-                ) || { id: 0, label: 'Select Payment Type' }
-              }
-              onChange={(option) =>
-                setEditData((prev) => ({ ...prev, paymentType: option.label }))
-              }
-            />
-            <Input
+         
+            {/* <Input
               title="Total Amount"
               placeholder="Enter total amount"
               prefixText="₹"
@@ -269,26 +262,15 @@ export const OrdersForm = () => {
                   totalAmount: Number(value),
                 }))
               }
-            />
-            <Input
-              title="Advance Amount"
-              placeholder="Enter advance amount"
-              prefixText="₹"
-              inputValue={editData.advanceAmount?.toString() || ''}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  advanceAmount: Number(value),
-                }))
-              }
-            />
+            /> */}
+{/*     
             <Input
               title="Balance Amount"
               placeholder="Enter balance amount"
               prefixText="₹"
               inputValue={editData.balanceAmount?.toString() || ''}
               onChange={() => {}}
-            />
+            /> */}
 
             <Input
               title="Total People"
@@ -302,17 +284,7 @@ export const OrdersForm = () => {
                 }))
               }
             />
-            <InputCheckbox
-              title="Returnable Items Checked "
-              checked={editData.returnableItemsChecked}
-              onChange={(checked) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  returnableItemsChecked: checked,
-                }))
-              }
-              label="Returnable items "
-            />
+        
             {/* <DropdownSelect
               title="Status"
               options={statusOptions}
@@ -353,7 +325,43 @@ export const OrdersForm = () => {
               }))
             }
           />
-
+  <header className="mt-6 space-y-1">
+            <h2 className="text-base font-semibold text-zinc-800">
+               Payment
+            </h2>
+            <p className="text-sm text-zinc-500">
+              Decides how the order will be paid for.
+            </p>
+          </header>
+            <div className="grid gap-4 md:grid-cols-3">
+                  <Input
+              title="Advance Amount"
+              placeholder="Enter advance amount"
+              prefixText="₹"
+              inputValue={editData.advanceAmount?.toString() || ''}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  advanceAmount: Number(value),
+                }))
+              }
+            />
+               <DropdownSelect
+              title="Payment Type"
+              options={paymentTypeOptions}
+              required
+              selected={
+                paymentTypeOptions.find(
+                  (option) =>
+                    option.label.toLocaleLowerCase() ===
+                    editData.paymentType.toLocaleLowerCase()
+                ) || { id: 0, label: 'Select Payment Type' }
+              }
+              onChange={(option) =>
+                setEditData((prev) => ({ ...prev, paymentType: option.label }))
+              }
+            />
+            </div>
           <ActionButtons
             isEditMode={isEditMode}
             editData={editData}
@@ -366,7 +374,10 @@ export const OrdersForm = () => {
             isCreatePending={isCreatePending}
             isUpdatePending={isUpdatePending}
           />
+          
         </form>
+
+        
       </section>
     </main>
   )

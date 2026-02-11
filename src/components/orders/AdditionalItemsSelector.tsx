@@ -66,7 +66,6 @@ const AdditionalItemsSelector = ({
     quantity: 1,
     priceAtOrder: item.pricePerUnit ?? 0,
     lineTotal: item.pricePerUnit ?? 0,
-    returned: false,
   })
 
   const handleAddItem = (additionalItemId: number) => {

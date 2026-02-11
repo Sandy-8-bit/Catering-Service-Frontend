@@ -114,7 +114,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
           </dd>
           <p className="text-sm text-zinc-500">
             Advance ₹{order.advanceAmount.toLocaleString()} / Balance ₹
-            {order.balanceAmount.toLocaleString()}
+            {/* {order.balanceAmount.toLocaleString()} */}
           </p>
         </div>
       </dl>
