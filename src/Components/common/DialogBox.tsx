@@ -94,7 +94,7 @@ const DialogBox: React.FC<DialogBoxProps> = ({
         // ref={containerRef}
         className={`flex flex-col bg-white outline-1 outline-gray-300 backdrop-blur-sm ${
           isSideDrawer
-            ? `h-screen p-6 shadow-xl ${width ? '' : 'w-[350px]'}`
+            ? `h-screen p-6 shadow-xl ${width ? `${width === '100vw' ? 'px-4! py-3!' : width}` : 'w-[350px]'}`
             : 'w-[350px] items-center gap-4 rounded-[20px] p-8 md:w-[400px] lg:w-[500px]'
         }`}
         style={width ? { width: componentWidth } : {}}

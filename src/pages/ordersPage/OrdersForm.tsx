@@ -329,16 +329,8 @@ export const OrdersForm = () => {
               }
             />
           </div>
-          {/* Menu items */}
-          <header className="mt-6 space-y-1">
-            <h2 className="text-base font-semibold text-zinc-800">
-              Menu Items
-            </h2>
-            <p className="text-sm text-zinc-500">
-              Pick the dishes and specific product quantities for the event.
-            </p>
-          </header>
 
+          {/* Menu items */}
           <ProductMenuSelector
             selectedItems={editData.items}
             onChange={(items) =>
@@ -350,15 +342,6 @@ export const OrdersForm = () => {
           />
 
           {/* Menu items */}
-          <header className="mt-6 space-y-1">
-            <h2 className="text-base font-semibold text-zinc-800">
-              Additional Items
-            </h2>
-            <p className="text-sm text-zinc-500">
-              Pick the additional items & quantities for the event.
-            </p>
-          </header>
-
           <AdditionalItemsSelector
             availableItems={additionalItems}
             selectedItems={editData.additionalItems ?? []}
