@@ -349,7 +349,7 @@ export const OrdersForm = () => {
                <DropdownSelect
               title="Payment Type"
               options={paymentTypeOptions}
-              required
+              
               selected={
                 paymentTypeOptions.find(
                   (option) =>
