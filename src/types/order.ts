@@ -21,6 +21,8 @@ export interface OrderAdditionalItemRef {
 export interface OrderItem {
   id: number
   product: OrderProductRef
+  productPrimaryName: string
+  productSecondaryName: string
   quantity: number
   unitPrice: number
   totalPrice: number
@@ -28,11 +30,13 @@ export interface OrderItem {
 
 export interface OrderAdditionalItem {
   id: number
-  additionalItem: OrderAdditionalItemRef
+  additionalItemId: number
+  itemPrimaryName: string
+  itemSecondaryName: string
   quantity: number
   priceAtOrder: number
   lineTotal: number
-  
+  returned?: boolean
 }
 
 // Full order shape returned by GET endpoints (list/detail)
@@ -49,6 +53,7 @@ export interface Order {
   driver?: OrderDriver
   totalAmount?: number
   advanceAmount: number
+  balanceAmount: number
   paymentType: string
   status?: string
   items: OrderItem[]

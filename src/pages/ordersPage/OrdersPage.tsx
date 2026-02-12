@@ -16,7 +16,7 @@ interface SummaryListProps {
 const SummaryList = ({ title, items, emptyLabel }: SummaryListProps) => {
   return (
     <article className="">
-      <header className="mb-4 flex items-center justify-between">
+      <header className="mb-4 flex flex-row items-center justify-between">
         <h3 className="text-lg font-semibold text-zinc-900">{title}</h3>
         {items.length > 0 && (
           <span className="text-sm font-medium text-zinc-400">
@@ -29,11 +29,11 @@ const SummaryList = ({ title, items, emptyLabel }: SummaryListProps) => {
           <Archive className="mr-2" size={18} /> {emptyLabel}
         </p>
       ) : (
-        <section className="max-h-80 min-w-[100px] flex-wrap divide-slate-100 overflow-y-auto text-base text-zinc-700">
+        <section className="max-h-80  flex min-w-[100px] flex-wrap divide-slate-100 overflow-y-auto text-base text-zinc-700">
           {items.map((item) => (
             <div
               key={`${title}-${item.label}`}
-              className="mr-2 mb-2 flex w-max items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
+              className="mr-2 mb-2 flex-row flex w-max items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
             >
               <span className="text-sm font-medium text-zinc-900 md:text-base">
                 {item.label}
@@ -114,7 +114,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
           </dd>
           <p className="text-sm text-zinc-500">
             Advance ₹{order.advanceAmount.toLocaleString()} / Balance ₹
-            {/* {order.balanceAmount.toLocaleString()} */}
+            {order.balanceAmount.toLocaleString()}
           </p>
         </div>
       </dl>
@@ -130,14 +130,14 @@ const isSameDay = (first: Date, second: Date) => {
   )
 }
 
-const getProductDisplayName = (
-  product: Order['items'][number]['product']
-): string => {
+const getProductDisplayName = (item: Order['items'][number]): string => {
   return (
-    product?.productPrimaryName ||
-    product?.primaryName ||
-    product?.productSecondaryName ||
-    product?.secondaryName ||
+    item?.productPrimaryName ||
+    item?.product?.productPrimaryName ||
+    item?.product?.primaryName ||
+    item?.productSecondaryName ||
+    item?.product?.productSecondaryName ||
+    item?.product?.secondaryName ||
     ''
   )
 }
@@ -223,7 +223,7 @@ export const OrdersPage = () => {
       buildQuantitySummary(
         sourceOrders,
         (order) => order.items,
-        (item) => getProductDisplayName(item.product) || `Item ${item.id}`,
+        (item) => getProductDisplayName(item),
         (item) => item.quantity
       ),
     [sourceOrders]
@@ -235,8 +235,9 @@ export const OrdersPage = () => {
         sourceOrders,
         (order) => order.additionalItems,
         (item) =>
-          item.additionalItem?.additionalItemPrimaryName ||
-          `Additional ${item.id}`,
+          item?.itemPrimaryName ||
+          item?.itemSecondaryName ||
+          `Additional ${item?.id}`,
         (item) => item.quantity
       ),
     [sourceOrders]
