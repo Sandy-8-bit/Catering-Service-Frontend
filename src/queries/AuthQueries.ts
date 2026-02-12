@@ -34,8 +34,8 @@ export const useLogin = () => {
       // ✅ Store JWT in cookie (CATERING prefix)
       Cookies.set('CATERING_TOKEN', data.token, {
         expires: 1, // 1 day
-        secure: true,
-        sameSite: 'strict',
+        secure: import.meta.env.PROD, // Only secure in production
+        sameSite: import.meta.env.PROD ? 'strict' : 'lax', // Relaxed in dev
       })
 
       // ✅ Store user info in localStorage (CATERING prefix)
@@ -105,8 +105,8 @@ export const useVerifyTotp = () => {
       if (!data?.token) return
       Cookies.set('CATERING_TOKEN', data.token, {
         expires: 8,
-        secure: true,
-        sameSite: 'Lax',
+        secure: import.meta.env.PROD, // Only secure in production
+        sameSite: import.meta.env.PROD ? 'strict' : 'lax', // Relaxed in dev
       })
 
       // ✅ Store user info in localStorage (CATERING prefix)

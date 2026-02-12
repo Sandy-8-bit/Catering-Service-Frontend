@@ -7,7 +7,7 @@ import './index.css'
 import './i18n'
 import { Toaster } from 'react-hot-toast'
 // Optional: Include React Scan only in development
-if (import.meta.env.VITE_MODE === 'development') {
+if (!import.meta.env.PROD) {
   const script = document.createElement('script')
   script.src = 'https://unpkg.com/react-scan/dist/auto.global.js'
   script.async = true
