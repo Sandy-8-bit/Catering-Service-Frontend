@@ -15,25 +15,25 @@ export const appRoutes = {
     children: {},
   },
   rawMaterials: {
-    path: '/raw-materials',
+    path: '/master/raw-materials',
     children: {},
   },
-  catergories: {
-    path: '/categories',
+  categories: {
+    path: '/master/categories',
     children: {},
   },
   products: {
-    path: '/products',
+    path: '/master/products',
     children: {},
   },
   recipes: {
-    path: '/recipes',
+    path: '/master/recipes',
     children: {
-      detail: '/recipes/:productId',
+      detail: '/master/recipes/:productId',
     },
   },
   additionalItems: {
-    path: '/additional-items',
+    path: '/master/additional-items',
     children: {},
   },
   orders: {

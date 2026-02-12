@@ -18,13 +18,16 @@ import {
 import type { RawMaterial } from '@/types/rawMaterial'
 import type { Recipe } from '@/types/recipe'
 
-interface RecipeRow {
+interface RecipeItem {
+  rawMaterialId: number
+  qtyPerUnit: number
+  unit: string
+}
+
+interface RecipeRow extends RecipeItem {
   localId: number
   id?: number
-  rawMaterialId?: number
   rawMaterialPrimaryName: string
-  qtyPerUnit: string | number
-  unit: string
   unitPrice: number
 }
 
@@ -43,18 +46,19 @@ const mapRecipeToRow = (
   return {
     localId: typeof recipe.id === 'number' ? recipe.id : nextTempId(),
     id: recipe.id,
-    rawMaterialId: recipe.rawMaterial?.rawMaterialId,
+    rawMaterialId: recipe.rawMaterial?.rawMaterialId ?? 0,
     rawMaterialPrimaryName: recipe.rawMaterial?.rawMaterialPrimaryName ?? '',
     qtyPerUnit: recipe.qtyPerUnit ?? 0,
-    unit: material?.consumptionUnit ?? recipe.unit ?? '',
+    unit: material?.purchaseUnit ?? recipe.unit ?? '',
     unitPrice: material?.purchasePrice ?? 0,
   }
 }
 
-const createEmptyRecipeRow = (): RecipeRow => ({
+const createEmptyRow = (): RecipeRow => ({
   localId: nextTempId(),
+  rawMaterialId: 0,
   rawMaterialPrimaryName: '',
-  qtyPerUnit: '',
+  qtyPerUnit: 0,
   unit: '',
   unitPrice: 0,
 })
@@ -62,47 +66,24 @@ const createEmptyRecipeRow = (): RecipeRow => ({
 const isDraftRow = (row: RecipeRow) => row.localId < 0
 
 const isRowEmpty = (row: RecipeRow) =>
-  ['rawMaterialPrimaryName', 'qtyPerUnit', 'unit', 'unitPrice'].every(
-    (field) => {
-      const value = row[field as keyof RecipeRow]
-      if (typeof value === 'number') {
-        return !value
-      }
-      return (value ?? '').toString().trim().length === 0
-    }
-  ) && !row.rawMaterialId
-
-const isRowPopulated = (row: RecipeRow) => !isRowEmpty(row)
+  !row.rawMaterialId && !row.qtyPerUnit && !row.unit.trim()
 
 const isRowValid = (row: RecipeRow) =>
-  Boolean(row.rawMaterialId) &&
-  Number(row.qtyPerUnit) >= 0 &&
-  row.unit.trim().length >= 0
+  Boolean(row.rawMaterialId) && row.qtyPerUnit > 0 && row.unit.trim()
 
-const normalizeRecipeApiRows = (rows: Recipe[]) =>
+const normalizeRows = (rows: RecipeRow[]): RecipeItem[] =>
   rows
+    .filter((row) => row.rawMaterialId && row.qtyPerUnit > 0)
     .map((row) => ({
-      rawMaterialId: row.rawMaterial?.rawMaterialId ?? 0,
-      qtyPerUnit: Number(row.qtyPerUnit) || 0,
-      unit: (row.unit ?? '').trim().toLowerCase(),
-    }))
-    .filter((row) => row.rawMaterialId)
-    .sort((a, b) => a.rawMaterialId - b.rawMaterialId)
-
-const normalizeRows = (rows: RecipeRow[]) =>
-  rows
-    .filter((row) => row.rawMaterialId)
-    .map((row) => ({
-      rawMaterialId: row.rawMaterialId ?? 0,
-      qtyPerUnit: Number(row.qtyPerUnit) || 0,
+      rawMaterialId: row.rawMaterialId,
+      qtyPerUnit: row.qtyPerUnit,
       unit: row.unit.trim().toLowerCase(),
     }))
     .sort((a, b) => a.rawMaterialId - b.rawMaterialId)
 
 const ensureDraftRow = (rows: RecipeRow[]): RecipeRow[] => {
   const hasBlankDraft = rows.some((row) => isDraftRow(row) && isRowEmpty(row))
-  if (hasBlankDraft) return rows
-  return [...rows, createEmptyRecipeRow()]
+  return hasBlankDraft ? rows : [...rows, createEmptyRow()]
 }
 
 const RecipeDetailsPage = () => {
@@ -126,9 +107,10 @@ const RecipeDetailsPage = () => {
     useUpdateRecipeForProduct()
   const [editData, setEditData] = useState<RecipeRow[]>([])
 
-  const rawMaterialMap = useMemo(() => {
-    return new Map(rawMaterials.map((item) => [item.id, item]))
-  }, [rawMaterials])
+  const rawMaterialMap = useMemo(
+    () => new Map(rawMaterials.map((item) => [item.id, item])),
+    [rawMaterials]
+  )
 
   const rawMaterialOptions = useMemo(
     () =>
@@ -152,62 +134,46 @@ const RecipeDetailsPage = () => {
         if (!row.rawMaterialId) return row
         const material = rawMaterialMap.get(row.rawMaterialId)
         if (!material) return row
-
-        const nextUnit = material.consumptionUnit ?? row.unit
-        const nextPrice = material.purchasePrice ?? row.unitPrice
-
-        if (nextUnit === row.unit && nextPrice === row.unitPrice) {
-          return row
-        }
-
         return {
           ...row,
-          unit: nextUnit,
-          unitPrice: nextPrice,
+          unit: material.purchaseUnit ?? row.unit,
+          unitPrice: material.purchasePrice ?? row.unitPrice,
         }
       })
     )
   }, [rawMaterials, rawMaterialMap])
 
   const normalizedServerRows = useMemo(
-    () => normalizeRecipeApiRows(recipeRows),
-    [recipeRows]
+    () =>
+      normalizeRows(
+        recipeRows.map((row) => mapRecipeToRow(row, rawMaterialMap))
+      ),
+    [recipeRows, rawMaterialMap]
   )
 
   const normalizedDraftRows = useMemo(() => normalizeRows(editData), [editData])
 
   const hasChanges = useMemo(() => {
-    if (!recipeRows.length && !editData.some(isRowPopulated)) return false
+    if (!recipeRows.length && !editData.some((row) => !isRowEmpty(row)))
+      return false
     return !isEqual(normalizedServerRows, normalizedDraftRows)
   }, [normalizedServerRows, normalizedDraftRows, recipeRows, editData])
 
-  const hasInvalidRows = useMemo(
-    () => editData.some((row) => isRowPopulated(row) && !isRowValid(row)),
-    [editData]
-  )
-
-  const validRows = useMemo(
-    () => editData.filter((row) => isRowValid(row)),
-    [editData]
+  const hasInvalidRows = editData.some(
+    (row) => !isRowEmpty(row) && !isRowValid(row)
   )
 
   const updateRow = (localId: number, patch: Partial<RecipeRow>) => {
     setEditData((prev) => {
-      let needsNewDraft = false
+      let needsDraft = false
       const next = prev.map((row) => {
         if (row.localId !== localId) return row
-        const wasEmptyDraft = isDraftRow(row) && isRowEmpty(row)
-        const updated = {
-          ...row,
-          ...patch,
-        }
-        if (wasEmptyDraft && !isRowEmpty(updated)) {
-          needsNewDraft = true
-        }
+        const wasEmpty = isDraftRow(row) && isRowEmpty(row)
+        const updated = { ...row, ...patch }
+        if (wasEmpty && !isRowEmpty(updated)) needsDraft = true
         return updated
       })
-
-      return needsNewDraft ? ensureDraftRow(next) : next
+      return needsDraft ? ensureDraftRow(next) : next
     })
   }
 
@@ -217,17 +183,9 @@ const RecipeDetailsPage = () => {
     )
   }
 
-  const handleDiscardChanges = () => {
-    setEditData(
-      ensureDraftRow(
-        recipeRows.map((row) => mapRecipeToRow(row, rawMaterialMap))
-      )
-    )
-  }
-
   const handleSaveChanges = async () => {
     if (!isProductIdValid) {
-      toast.error('Invalid product selected')
+      toast.error('Invalid product')
       return
     }
 
@@ -236,44 +194,40 @@ const RecipeDetailsPage = () => {
       return
     }
 
+    const validRows = normalizeRows(editData)
     if (!validRows.length) {
-      toast.error('Add at least one recipe row before saving')
+      toast.error('Add at least one recipe item')
       return
     }
 
     try {
       await updateRecipe({
         productId,
-        items: validRows.map((row) => ({
-          rawMaterialId: row.rawMaterialId!,
-          qtyPerUnit: Number(row.qtyPerUnit),
-          unit: row.unit.trim(),
-        })),
+        recipeItems: validRows,
       })
     } catch (error) {
       console.error(error)
     }
   }
 
-  const recipeTableColumns: DataCell[] = [
+  const columns: DataCell[] = [
     {
       headingTitle: 'Raw Material',
       className: 'min-w-[240px]',
-      render: (_value, row: RecipeRow) => {
-        const selectedOption = rawMaterialOptions.find(
-          (option) => option.id === row.rawMaterialId
+      render: (_, row: RecipeRow) => {
+        const selected = rawMaterialOptions.find(
+          (opt) => opt.id === row.rawMaterialId
         ) ?? {
-          id: row.rawMaterialId ?? 0,
-          label: row.rawMaterialPrimaryName ?? '',
+          id: row.rawMaterialId,
+          label: row.rawMaterialPrimaryName,
         }
-        const isDraft = isDraftRow(row)
 
         return (
           <div className="relative">
             <TableDropDown
               title=""
               options={rawMaterialOptions}
-              selected={selectedOption.id ? selectedOption : null}
+              selected={selected.id ? selected : null}
               placeholder="Select raw material"
               isEditMode
               onChange={(option) => {
@@ -281,20 +235,17 @@ const RecipeDetailsPage = () => {
                 updateRow(row.localId, {
                   rawMaterialId: Number(option.id),
                   rawMaterialPrimaryName: option.label,
-                  unit: material?.consumptionUnit ?? '',
+                  unit: material?.purchaseUnit ?? '',
                   unitPrice: material?.purchasePrice ?? 0,
                 })
               }}
             />
-            {isDraft && !isRowEmpty(row) && (
+            {isDraftRow(row) && !isRowEmpty(row) && (
               <button
                 type="button"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  handleRemoveRow(row.localId)
-                }}
+                onClick={() => handleRemoveRow(row.localId)}
                 className="absolute top-1/2 -left-6 flex h-6 w-6 -translate-y-1/2 items-center justify-center"
-                aria-label="Remove draft row"
+                aria-label="Remove row"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
@@ -306,24 +257,24 @@ const RecipeDetailsPage = () => {
     {
       headingTitle: 'Unit Price (₹)',
       className: 'min-w-[140px] text-right',
-      render: (_value, row: RecipeRow) => (
+      render: (_, row: RecipeRow) => (
         <span className="text-sm font-semibold text-zinc-800">
-          {row.unitPrice ? row.unitPrice.toFixed(2) : '—'}
+          {row.unitPrice > 0 ? row.unitPrice.toFixed(2) : '—'}
         </span>
       ),
     },
     {
       headingTitle: 'Qty / Unit',
       className: 'min-w-[140px]',
-      render: (_value, row: RecipeRow) => (
+      render: (_, row: RecipeRow) => (
         <TableInput
           title=""
           type="num"
-          inputValue={row.qtyPerUnit === '' ? '' : row.qtyPerUnit}
+          inputValue={row.qtyPerUnit === 0 ? '' : String(row.qtyPerUnit)}
           isEditMode
           onChange={(val) =>
             updateRow(row.localId, {
-              qtyPerUnit: val === '' ? '' : val,
+              qtyPerUnit: val === '' ? 0 : Number(val),
             })
           }
         />
@@ -332,7 +283,7 @@ const RecipeDetailsPage = () => {
     {
       headingTitle: 'Unit',
       className: 'min-w-[140px]',
-      render: (_value, row: RecipeRow) => (
+      render: (_, row: RecipeRow) => (
         <span className="text-sm font-medium text-zinc-700">
           {row.unit || '—'}
         </span>
@@ -341,8 +292,8 @@ const RecipeDetailsPage = () => {
     {
       headingTitle: 'Total Cost (₹)',
       className: 'min-w-[140px] text-right',
-      render: (_value, row: RecipeRow) => {
-        const total = row.unitPrice * (Number(row.qtyPerUnit) || 0)
+      render: (_, row: RecipeRow) => {
+        const total = row.unitPrice * row.qtyPerUnit
         return (
           <span className="text-sm font-semibold text-zinc-800">
             {total > 0 ? total.toFixed(2) : '—'}
@@ -353,7 +304,7 @@ const RecipeDetailsPage = () => {
     {
       headingTitle: 'Actions',
       className: 'w-28 text-center',
-      render: (_value, row: RecipeRow) => (
+      render: (_, row: RecipeRow) => (
         <button
           type="button"
           onClick={() => handleRemoveRow(row.localId)}
@@ -370,7 +321,6 @@ const RecipeDetailsPage = () => {
     isProductLoading ||
     isRawMaterialsLoading ||
     isRecipeLoading
-  const isTableLoading = isRecipeLoading || isRecipeFetching
 
   if (!isProductIdValid) {
     return (
@@ -400,23 +350,27 @@ const RecipeDetailsPage = () => {
             onClick={() => navigate(-1)}
           />
           <div>
-            <p className="text-xs tracking-wide text-zinc-500 uppercase">
-              Recipe Detail
-            </p>
-            <h1 className="text-xl font-semibold text-zinc-800">
-              {product?.primaryName ?? 'Loading product...'}
-            </h1>
             {product?.category?.primaryName && (
-              <p className="text-sm text-zinc-500">
+              <p className="text-xs text-zinc-500">
                 {product.category.primaryName}
               </p>
             )}
+            <h1 className="text-xl font-semibold text-zinc-800">
+              {product?.primaryName ||
+                (isProductLoading ? 'Loading...' : product?.primaryName)}
+            </h1>
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <ButtonSm
             state="outline"
-            onClick={handleDiscardChanges}
+            onClick={() =>
+              setEditData(
+                ensureDraftRow(
+                  recipeRows.map((row) => mapRecipeToRow(row, rawMaterialMap))
+                )
+              )
+            }
             disabled={!hasChanges || isUpdatePending}
           >
             Discard Changes
@@ -432,12 +386,11 @@ const RecipeDetailsPage = () => {
         </div>
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
-
       <section className="flex flex-col gap-6 p-6">
         <GenericTable
           data={editData}
-          dataCell={recipeTableColumns}
-          isLoading={isTableLoading || isPageLoading}
+          dataCell={columns}
+          isLoading={isRecipeLoading || isRecipeFetching || isPageLoading}
           rowKey={(row: RecipeRow) => row.localId}
           className="overflow-hidden rounded-[12px] border border-[#F1F1F1]"
           messageWhenNoData="Start by typing into the blank row to add recipe items."

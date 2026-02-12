@@ -63,7 +63,7 @@ export const useFetchRecipeByProduct = (productId?: number) => {
 
 interface UpdateRecipeArgs {
   productId: number
-  items: RecipeItemPayload[]
+  recipeItems: RecipeItemPayload[]
 }
 
 /**
@@ -74,14 +74,14 @@ export const useUpdateRecipeForProduct = () => {
 
   const updateRecipe = async ({
     productId,
-    items,
+    recipeItems,
   }: UpdateRecipeArgs): Promise<Recipe[]> => {
     try {
       const token = authHandler()
 
       const res = await axiosInstance.put(
         `${apiRoutes.recipes}/product/${productId}`,
-        items,
+        recipeItems,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

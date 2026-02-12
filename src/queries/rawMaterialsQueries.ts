@@ -142,10 +142,10 @@ export const useCreateRawMaterial = () => {
       if (!payloads.length) {
         return []
       }
-
+      // #soundhar // this is bulk modified into single
       const res = await axiosInstance.post(
-        `${apiRoutes.rawMaterials}/bulk/create`,
-        payloads,
+        `${apiRoutes.rawMaterials}`,
+        payloads[0],
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -195,8 +195,9 @@ export const useEditRawMaterial = () => {
       })
 
       const res = await axiosInstance.put(
-        apiRoutes.rawMaterials + '/bulk/update',
-        updatePayload,
+        // #soundhar // this is bulk modified into single
+        apiRoutes.rawMaterials + `/1`,
+        updatePayload[0],
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -207,7 +208,6 @@ export const useEditRawMaterial = () => {
       return (res.data?.data ?? []) as RawMaterial[]
     } catch (error: unknown) {
       handleApiError(error, 'Raw material')
-      return []
     }
   }
 

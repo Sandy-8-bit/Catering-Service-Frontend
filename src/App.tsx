@@ -57,7 +57,7 @@ function App() {
               element={<RawMaterialsPage />}
             />
             <Route
-              path={appRoutes.catergories.path}
+              path={appRoutes.categories.path}
               element={<CategoriesPage />}
             />
             <Route path={appRoutes.products.path} element={<ProductsPage />} />
@@ -80,12 +80,11 @@ function App() {
               path={appRoutes.driver.children.driverDashboard}
               element={<DriverDashboardPage />}
             />
-           
-<Route
-  path={appRoutes.driver.children.driverOrderPage}
-  element={<DriverOrderPage />}
-/>
 
+            <Route
+              path={appRoutes.driver.children.driverOrderPage}
+              element={<DriverOrderPage />}
+            />
           </Route>
         </Route>
 

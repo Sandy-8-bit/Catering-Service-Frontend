@@ -16,7 +16,7 @@ import {
 import { DeleteRawMaterialsDialog } from './DeleteRawMaterialsDialog'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 import DropdownSelect from '@/components/common/DropDown'
-import type { RawMaterial, RawMaterialPayload } from '@/types/tawMaterial'
+import type { RawMaterial, RawMaterialPayload } from '@/types/rawMaterial'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 
@@ -25,7 +25,7 @@ const createEmptyRawMaterial = (id: number): RawMaterial => ({
   primaryName: '',
   secondaryName: '',
   purchaseUnit: '',
-  consumptionUnit: '',
+  purchaseQuantity: '',
   purchasePrice: 0,
 })
 
@@ -74,7 +74,7 @@ export const RawMaterialsPage = () => {
         original.primaryName !== row.primaryName ||
         (original.secondaryName ?? '') !== (row.secondaryName ?? '') ||
         original.purchaseUnit !== row.purchaseUnit ||
-        original.consumptionUnit !== row.consumptionUnit ||
+        original.purchaseQuantity !== row.purchaseQuantity ||
         original.purchasePrice !== row.purchasePrice
       )
     })
@@ -85,7 +85,7 @@ export const RawMaterialsPage = () => {
   const isDraftRow = (row: RawMaterial) => row.id < 0
 
   const isRowEmpty = (row: RawMaterial) =>
-    ['primaryName', 'secondaryName', 'purchaseUnit', 'consumptionUnit'].every(
+    ['primaryName', 'secondaryName', 'purchaseUnit', 'purchaseQuantity'].every(
       (key) => (row[key as keyof RawMaterial]?.toString().trim() ?? '') === ''
     ) && Number(row.purchasePrice ?? 0) === 0
 
@@ -93,14 +93,14 @@ export const RawMaterialsPage = () => {
     const trimmed = {
       primaryName: row.primaryName?.trim() ?? '',
       purchaseUnit: row.purchaseUnit?.trim() ?? '',
-      consumptionUnit: row.consumptionUnit?.trim() ?? '',
+      purchaseQuantity: row.purchaseQuantity?.trim() ?? '',
       purchasePrice: Number(row.purchasePrice ?? 0),
     }
 
     return (
       trimmed.primaryName &&
       trimmed.purchaseUnit &&
-      trimmed.consumptionUnit &&
+      trimmed.purchaseQuantity &&
       trimmed.purchasePrice > 0
     )
   }
@@ -169,7 +169,7 @@ export const RawMaterialsPage = () => {
     primaryName: row.primaryName.trim(),
     secondaryName: row.secondaryName?.trim() ?? '',
     purchaseUnit: row.purchaseUnit,
-    consumptionUnit: row.consumptionUnit,
+    purchaseQuantity: row.purchaseQuantity,
     purchasePrice: Number(row.purchasePrice) || 0,
   })
 
@@ -347,8 +347,8 @@ export const RawMaterialsPage = () => {
       },
     },
     {
-      headingTitle: 'Consumption Unit',
-      accessVar: 'consumptionUnit',
+      headingTitle: 'Purchase Quantity',
+      accessVar: 'purchaseQuantity',
       className: 'w-42',
       render: (value, row) => {
         const normalizedValue = String(value ?? '').trim()
@@ -359,15 +359,23 @@ export const RawMaterialsPage = () => {
           label: normalizedValue,
         }
         return (
-          <TableDropDown
+          // <TableDropDown
+          //   isEditMode={canEditRow(row.id)}
+          //   title=""
+          //   options={units}
+          //   selected={selectedOption}
+          //   placeholder="Select Unit"
+          //   onChange={(e) => {
+          //     updateRowField(row.id, 'purchaseQuantity', e.label)
+          //   }}
+          // />
+          <TableInput
             isEditMode={canEditRow(row.id)}
             title=""
-            options={units}
-            selected={selectedOption}
-            placeholder="Select Unit"
-            onChange={(e) => {
-              updateRowField(row.id, 'consumptionUnit', e.label)
-            }}
+            inputValue={value ?? ''}
+            onChange={(val) =>
+              updateRowField(row.id, 'purchaseQuantity', String(val ?? ''))
+            }
           />
         )
       },

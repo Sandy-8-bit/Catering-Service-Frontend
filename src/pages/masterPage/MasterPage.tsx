@@ -21,7 +21,7 @@ const MasterPage: React.FC = () => {
         label: 'Catalog',
         labelColor: 'bg-purple-50 text-purple-700',
         btnText: 'Configure',
-        navigateUrl: appRoutes.catergories.path,
+        navigateUrl: appRoutes.categories.path,
       },
       {
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',

@@ -7,7 +7,7 @@ export interface RawMaterial {
   primaryName: string
   secondaryName: string
   purchaseUnit: string
-  consumptionUnit: string
+  purchaseQuantity: string
   purchasePrice: number
 }
 

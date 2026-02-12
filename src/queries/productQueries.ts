@@ -76,7 +76,7 @@ export const useFetchProductById = (id?: number) => {
         },
       })
 
-      return res.data as Product
+      return (res.data?.data ?? {}) as Product
     } catch (error: unknown) {
       handleApiError(error, 'Product')
     }
