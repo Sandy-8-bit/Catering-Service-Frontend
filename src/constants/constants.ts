@@ -22,10 +22,10 @@ export const eventTypeOptions: DropdownOption[] = [
 ].map((label, index) => ({ id: index + 1, label }))
 
 export const paymentTypeOptions: DropdownOption[] = [
-  'Cash',
+  'CASH',
   'UPI',
   'Bank Transfer',
-  'Card',
+  'CARD',
   'Cheque',
 ].map((label, index) => ({ id: index + 1, label }))
 
@@ -47,14 +47,11 @@ export const defaultOrderData: Order = {
   eventTime: '',
   totalPeople: 0,
   deliveredByUs: false,
-  totalAmount: 0,
   advanceAmount: 0,
-  balanceAmount: 0,
   paymentType: '',
-  status: '',
-  returnableItemsChecked: false,
   items: [],
   additionalItems: [],
   createdAt: '',
   updatedAt: '',
+  locationUrl:"",
 }

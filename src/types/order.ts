@@ -32,7 +32,7 @@ export interface OrderAdditionalItem {
   quantity: number
   priceAtOrder: number
   lineTotal: number
-  returned: boolean
+  
 }
 
 // Full order shape returned by GET endpoints (list/detail)
@@ -47,16 +47,15 @@ export interface Order {
   totalPeople: number
   deliveredByUs: boolean
   driver?: OrderDriver
-  totalAmount: number
+  totalAmount?: number
   advanceAmount: number
-  balanceAmount: number
   paymentType: string
-  status: string
-  returnableItemsChecked: boolean
+  status?: string
   items: OrderItem[]
   additionalItems: OrderAdditionalItem[]
   createdAt: string
   updatedAt: string
+  locationUrl:string
 }
 
 // Payload fragment for POST / PATCH item entries
@@ -69,9 +68,9 @@ export interface OrderItemPayload {
 // Payload fragment for POST / PATCH additional items
 export interface OrderAdditionalItemPayload {
   id?: number | null
-  additionalItemId: number
+ 
   quantity: number
-  returned: boolean
+  returned?: boolean
 }
 
 // Body for POST /api/admin/orders
@@ -84,7 +83,6 @@ export interface OrderPayload {
   eventTime: string
   totalPeople: number
   totalAmount?: number
-  balanceAmount?: number
   status?: string
   returnableItemsChecked?: boolean
   deliveredByUs: boolean
