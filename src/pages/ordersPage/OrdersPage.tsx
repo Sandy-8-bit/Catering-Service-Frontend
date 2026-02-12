@@ -330,7 +330,7 @@ export const OrdersPage = () => {
               )}
             </header>
 
-            <div className="mt-4 flex flex-col gap-3">
+            <div className="mt-4 flex  max-h-[300px] overflow-y-auto flex-col gap-3">
               {infoMessage ? (
                 <p className="rounded-md border-2 border-dashed border-[#f1f1f1] p-3 text-base text-zinc-500">
                   {infoMessage}
