@@ -60,7 +60,7 @@ export interface Order {
   additionalItems: OrderAdditionalItem[]
   createdAt: string
   updatedAt: string
-  locationUrl:string
+  locationUrl: string
 }
 
 // Payload fragment for POST / PATCH item entries
@@ -73,7 +73,7 @@ export interface OrderItemPayload {
 // Payload fragment for POST / PATCH additional items
 export interface OrderAdditionalItemPayload {
   id?: number | null
- 
+  additionalItemId: number
   quantity: number
   returned?: boolean
 }

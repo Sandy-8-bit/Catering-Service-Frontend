@@ -55,7 +55,55 @@ export const useFetchOrderById = (id?: number) => {
         headers: { Authorization: `Bearer ${token}` },
       })
 
-      return (res.data?.data ?? res.data) as Order
+      const order = (res.data?.data ?? res.data) as Partial<Order> & {
+        driverId?: number
+        driverName?: string
+      }
+
+      // Transform flat driver properties to nested structure for UI compatibility
+      if (order.driverId) {
+        order.driver = {
+          driverId: order.driverId,
+          driverName: order.driverName ?? '',
+          driverNumber: '',
+        }
+      }
+
+      // Transform flat item structure to nested product structure for UI compatibility
+      if (order.items && Array.isArray(order.items)) {
+        order.items = order.items.map(
+          (
+            item: Partial<(typeof order.items)[number]> & {
+              productId?: number
+              productPrimaryName?: string
+              productSecondaryName?: string
+            }
+          ) => {
+            // If item already has nested product, return as is
+            if (item.product) {
+              return item as Order['items'][number]
+            }
+            // If item has flat structure, nest it
+            return {
+              id: item.id ?? 0,
+              product: {
+                productId: item.productId ?? 0,
+                productPrimaryName: item.productPrimaryName ?? '',
+                productSecondaryName: item.productSecondaryName ?? '',
+                primaryName: item.productPrimaryName ?? '',
+                secondaryName: item.productSecondaryName ?? '',
+              },
+              productPrimaryName: item.productPrimaryName ?? '',
+              productSecondaryName: item.productSecondaryName ?? '',
+              quantity: item.quantity ?? 0,
+              unitPrice: item.unitPrice ?? 0,
+              totalPrice: item.totalPrice ?? 0,
+            }
+          }
+        )
+      }
+
+      return order as Order
     } catch (error: unknown) {
       handleApiError(error, 'Fetch Order')
     }

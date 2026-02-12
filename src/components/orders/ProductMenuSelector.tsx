@@ -41,10 +41,14 @@ const buildOrderItem = (product: Product): OrderItem => ({
   quantity: 1,
   unitPrice: product.price ?? 0,
   totalPrice: product.price ?? 0,
+  productPrimaryName: product.primaryName,
+  productSecondaryName: product.secondaryName,
 })
 
-const getOrderItemProductId = (item: OrderItem): number | undefined =>
-  item.product.productId ?? (item.product as Partial<{ id?: number }>).id
+const getOrderItemProductId = (item: OrderItem): number | undefined => {
+  if (!item.product) return undefined
+  return item.product.productId ?? (item.product as Partial<{ id?: number }>).id
+}
 
 const ProductMenuSelector = ({
   selectedItems,
@@ -186,68 +190,70 @@ const ProductMenuSelector = ({
     return sum + lineValue
   }, 0)
 
-  const summaryCards = safeItems.map((line) => {
-    const productRef = line.product
-    const lineProductId =
-      productRef.productId ?? (productRef as Partial<{ id?: number }>).id
-    const fallbackProduct = lineProductId
-      ? productsById.get(lineProductId)
-      : undefined
-    const displayName =
-      productRef.productPrimaryName ||
-      productRef.primaryName ||
-      fallbackProduct?.primaryName ||
-      'Product'
-    const unitPrice = line.unitPrice ?? fallbackProduct?.price ?? 0
+  const summaryCards = safeItems
+    .filter((line) => line.product)
+    .map((line) => {
+      const productRef = line.product!
+      const lineProductId =
+        productRef.productId ?? (productRef as Partial<{ id?: number }>).id
+      const fallbackProduct = lineProductId
+        ? productsById.get(lineProductId)
+        : undefined
+      const displayName =
+        productRef.productPrimaryName ||
+        productRef.primaryName ||
+        fallbackProduct?.primaryName ||
+        'Product'
+      const unitPrice = line.unitPrice ?? fallbackProduct?.price ?? 0
 
-    return (
-      <article
-        key={`${displayName}-${lineProductId ?? displayName}`}
-        className="flex flex-col gap-4 rounded-md border border-[#E4E4E7] bg-[#F9F9F9] p-4 text-zinc-900"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-zinc-900">
-              {displayName}
-            </p>
-            <p className="text-xs text-zinc-500">
-              {line.quantity} x {formatCurrency(unitPrice)}
-            </p>
-          </div>
-          <span className="text-sm font-semibold text-zinc-900">
-            {formatCurrency(unitPrice * line.quantity)}
-          </span>
-        </div>
-        <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white p-2">
-          <div className="flex w-full items-center justify-between gap-3">
-            <button
-              type="button"
-              aria-label="Decrease quantity"
-              onClick={() =>
-                lineProductId && handleQuantityChange(lineProductId, -1)
-              }
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-            >
-              <Minus size={12} />
-            </button>
-            <span className="min-w-[28px] text-center text-sm font-semibold">
-              {line.quantity}
+      return (
+        <article
+          key={`${displayName}-${lineProductId ?? displayName}`}
+          className="flex flex-col gap-4 rounded-md border border-[#E4E4E7] bg-[#F9F9F9] p-4 text-zinc-900"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-zinc-900">
+                {displayName}
+              </p>
+              <p className="text-xs text-zinc-500">
+                {line.quantity} x {formatCurrency(unitPrice)}
+              </p>
+            </div>
+            <span className="text-sm font-semibold text-zinc-900">
+              {formatCurrency(unitPrice * line.quantity)}
             </span>
-            <button
-              type="button"
-              aria-label="Increase quantity"
-              onClick={() =>
-                lineProductId && handleQuantityChange(lineProductId, 1)
-              }
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-            >
-              <Plus size={12} />
-            </button>
           </div>
-        </div>
-      </article>
-    )
-  })
+          <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white p-2">
+            <div className="flex w-full items-center justify-between gap-3">
+              <button
+                type="button"
+                aria-label="Decrease quantity"
+                onClick={() =>
+                  lineProductId && handleQuantityChange(lineProductId, -1)
+                }
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
+              >
+                <Minus size={12} />
+              </button>
+              <span className="min-w-7 text-center text-sm font-semibold">
+                {line.quantity}
+              </span>
+              <button
+                type="button"
+                aria-label="Increase quantity"
+                onClick={() =>
+                  lineProductId && handleQuantityChange(lineProductId, 1)
+                }
+                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
+              >
+                <Plus size={12} />
+              </button>
+            </div>
+          </div>
+        </article>
+      )
+    })
 
   const drawerContent = (
     <div className="flex h-full w-full flex-col bg-white">

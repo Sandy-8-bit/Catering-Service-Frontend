@@ -62,7 +62,6 @@ export const OrdersForm = () => {
       label: driver.name,
     }))
 
-
   useEffect(() => {
     if (!existingOrder) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -71,12 +70,6 @@ export const OrdersForm = () => {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    console.log('Customer info payload ready:', {
-      customerName: editData.customerName,
-      customerPhone: editData.customerPhone,
-      customerAddress: editData.customerAddress,
-    })
-
   }
 
   if (isOrderLoading || isUserOptionLoading || isAdditionalLoading)
@@ -185,19 +178,19 @@ export const OrdersForm = () => {
                 setEditData((prev) => ({ ...prev, eventDate: value }))
               }
             />
-         <TimeInput
-  title="Event Time"
-  name="time"
-  value={editData.eventTime}
-  onChange={(value) =>
-    setEditData((prev) => ({
-      ...prev,
-      eventTime: value.length === 5 ? `${value}:00` : value,
-    }))
-  }
-/>
+            <TimeInput
+              title="Event Time"
+              name="time"
+              value={editData.eventTime}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  eventTime: value.length === 5 ? `${value}:00` : value,
+                }))
+              }
+            />
 
-             <Input
+            <Input
               title="Location Url"
               name="Location Url"
               placeholder="Delivery or event Location Url"
@@ -250,27 +243,6 @@ export const OrdersForm = () => {
                 }
               />
             )}
-         
-            {/* <Input
-              title="Total Amount"
-              placeholder="Enter total amount"
-              prefixText="₹"
-              inputValue={editData.totalAmount?.toString() || ''}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  totalAmount: Number(value),
-                }))
-              }
-            /> */}
-{/*     
-            <Input
-              title="Balance Amount"
-              placeholder="Enter balance amount"
-              prefixText="₹"
-              inputValue={editData.balanceAmount?.toString() || ''}
-              onChange={() => {}}
-            /> */}
 
             <Input
               title="Total People"
@@ -284,22 +256,6 @@ export const OrdersForm = () => {
                 }))
               }
             />
-        
-            {/* <DropdownSelect
-              title="Status"
-              options={statusOptions}
-              required
-              selected={
-                statusOptions.find(
-                  (option) =>
-                    option.label.toLocaleLowerCase() ===
-                    editData.status.toLocaleLowerCase()
-                ) || { id: 0, label: 'Select Status' }
-              }
-              onChange={(option) =>
-                setEditData((prev) => ({ ...prev, status: option.label }))
-              }
-            /> */}
           </div>
 
           {/* Menu items */}
@@ -325,16 +281,14 @@ export const OrdersForm = () => {
               }))
             }
           />
-  <header className="mt-6 space-y-1">
-            <h2 className="text-base font-semibold text-zinc-800">
-               Payment
-            </h2>
+          <header className="mt-6 space-y-1">
+            <h2 className="text-base font-semibold text-zinc-800">Payment</h2>
             <p className="text-sm text-zinc-500">
               Decides how the order will be paid for.
             </p>
           </header>
-            <div className="grid gap-4 md:grid-cols-3">
-                  <Input
+          <div className="grid gap-4 md:grid-cols-3">
+            <Input
               title="Advance Amount"
               placeholder="Enter advance amount"
               prefixText="₹"
@@ -346,10 +300,9 @@ export const OrdersForm = () => {
                 }))
               }
             />
-               <DropdownSelect
+            <DropdownSelect
               title="Payment Type"
               options={paymentTypeOptions}
-              
               selected={
                 paymentTypeOptions.find(
                   (option) =>
@@ -361,7 +314,7 @@ export const OrdersForm = () => {
                 setEditData((prev) => ({ ...prev, paymentType: option.label }))
               }
             />
-            </div>
+          </div>
           <ActionButtons
             isEditMode={isEditMode}
             editData={editData}
@@ -374,10 +327,7 @@ export const OrdersForm = () => {
             isCreatePending={isCreatePending}
             isUpdatePending={isUpdatePending}
           />
-          
         </form>
-
-        
       </section>
     </main>
   )

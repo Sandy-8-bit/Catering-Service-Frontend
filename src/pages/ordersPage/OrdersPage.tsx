@@ -29,16 +29,16 @@ const SummaryList = ({ title, items, emptyLabel }: SummaryListProps) => {
           <Archive className="mr-2" size={18} /> {emptyLabel}
         </p>
       ) : (
-        <section className="max-h-80  flex min-w-[100px] flex-wrap divide-slate-100 overflow-y-auto text-base text-zinc-700">
+        <section className="flex max-h-80 min-w-[100px] flex-wrap divide-slate-100 overflow-y-auto text-base text-zinc-700">
           {items.map((item) => (
             <div
               key={`${title}-${item.label}`}
-              className="mr-2 mb-2 flex-row flex w-max items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
+              className="mr-2 mb-2 flex w-max flex-row items-center justify-between rounded-lg border border-slate-600 bg-black px-3 py-2 text-white shadow-sm"
             >
-              <span className="text-sm font-medium text-zinc-900 md:text-base">
+              <span className="text-sm font-medium text-white md:text-base">
                 {item.label}
               </span>
-              <span className="ml-4 text-base font-medium text-zinc-900">
+              <span className="ml-4 text-base font-medium text-white">
                 {item.quantity}
               </span>
             </div>
@@ -330,7 +330,7 @@ export const OrdersPage = () => {
               )}
             </header>
 
-            <div className="mt-4 flex  max-h-[300px] overflow-y-auto flex-col gap-3">
+            <div className="mt-4 flex max-h-[300px] flex-col gap-3 overflow-y-auto">
               {infoMessage ? (
                 <p className="rounded-md border-2 border-dashed border-[#f1f1f1] p-3 text-base text-zinc-500">
                   {infoMessage}

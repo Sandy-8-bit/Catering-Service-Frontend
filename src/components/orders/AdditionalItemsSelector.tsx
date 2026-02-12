@@ -58,11 +58,9 @@ const AdditionalItemsSelector = ({
     item: AdditionalItem
   ): OrderAdditionalItem => ({
     id: 0,
-    additionalItem: {
-      additionalItemId: item.id,
-      additionalItemPrimaryName: item.primaryName,
-      additionalItemSecondaryName: item.secondaryName,
-    },
+    additionalItemId: item.id,
+    itemPrimaryName: item.primaryName,
+    itemSecondaryName: item.secondaryName ?? '',
     quantity: 1,
     priceAtOrder: item.pricePerUnit ?? 0,
     lineTotal: item.pricePerUnit ?? 0,
@@ -73,13 +71,13 @@ const AdditionalItemsSelector = ({
     if (!catalogItem) return
 
     const existing = safeItems.find(
-      (item) => item.additionalItem.additionalItemId === additionalItemId
+      (item) => item.additionalItemId === additionalItemId
     )
 
     if (existing) {
       onChange(
         safeItems.map((item) =>
-          item.additionalItem.additionalItemId === additionalItemId
+          item.additionalItemId === additionalItemId
             ? {
                 ...item,
                 quantity: item.quantity + 1,
@@ -98,7 +96,7 @@ const AdditionalItemsSelector = ({
 
   const handleQuantityChange = (additionalItemId: number, delta: number) => {
     const nextItems = safeItems.reduce<OrderAdditionalItem[]>((acc, item) => {
-      if (item.additionalItem.additionalItemId !== additionalItemId) {
+      if (item.additionalItemId !== additionalItemId) {
         acc.push(item)
         return acc
       }
@@ -121,7 +119,7 @@ const AdditionalItemsSelector = ({
 
   const selectedDetails = safeItems.map((item) => ({
     record: item,
-    catalog: additionalItemMap.get(item.additionalItem.additionalItemId),
+    catalog: additionalItemMap.get(item.additionalItemId),
   }))
 
   const totalExtrasCount = safeItems.reduce(
@@ -137,19 +135,18 @@ const AdditionalItemsSelector = ({
   }, 0)
 
   const summaryCards = selectedDetails.map(({ record, catalog }) => {
-    const info = record.additionalItem
     const displayName =
-      info.additionalItemPrimaryName || catalog?.primaryName || 'Extra'
+      record.itemPrimaryName || catalog?.primaryName || 'Extra'
     const description =
       catalog?.secondaryName ||
       catalog?.description ||
-      info.additionalItemSecondaryName ||
+      record.itemSecondaryName ||
       'Perfect add-on'
     const unitPrice = record.priceAtOrder ?? catalog?.pricePerUnit ?? 0
 
     return (
       <article
-        key={info.additionalItemId}
+        key={record.additionalItemId}
         className="flex flex-col gap-4 rounded-md border border-[#E4E4E7] bg-[#F9F9F9] p-4 text-zinc-900"
       >
         <div className="flex items-start justify-between gap-3">
@@ -168,18 +165,18 @@ const AdditionalItemsSelector = ({
             <button
               type="button"
               aria-label="Decrease quantity"
-              onClick={() => handleQuantityChange(info.additionalItemId, -1)}
+              onClick={() => handleQuantityChange(record.additionalItemId, -1)}
               className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
             >
               <Minus size={12} />
             </button>
-            <span className="min-w-[28px] text-center text-sm font-semibold">
+            <span className="min-w-7 text-center text-sm font-semibold">
               {record.quantity}
             </span>
             <button
               type="button"
               aria-label="Increase quantity"
-              onClick={() => handleQuantityChange(info.additionalItemId, 1)}
+              onClick={() => handleQuantityChange(record.additionalItemId, 1)}
               className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
             >
               <Plus size={12} />
@@ -238,7 +235,7 @@ const AdditionalItemsSelector = ({
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredItems.map((item) => {
                 const existing = safeItems.find(
-                  (line) => line.additionalItem.additionalItemId === item.id
+                  (line) => line.additionalItemId === item.id
                 )
                 const isSelected = Boolean(existing)
                 return (
@@ -329,14 +326,14 @@ const AdditionalItemsSelector = ({
   return (
     <section className="">
       <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <header className="mt-6 space-y-1">
+        <div className="mt-6 space-y-1">
           <h2 className="text-base font-semibold text-zinc-800">
             Additional Items
           </h2>
           <p className="text-sm text-zinc-500">
             Added extras · {totalExtrasCount} items
           </p>
-        </header>
+        </div>
 
         <ButtonSm
           type="button"

@@ -105,19 +105,26 @@ export const toOrderItemPayload = (
   items?: Order['items'],
   includeIds = false
 ): OrderItemPayload[] =>
-  items?.map((item) => ({
-    ...(includeIds ? { id: item.id > 0 ? item.id : null } : {}),
-    productId: item.product.productId,
-    quantity: item.quantity,
-  })) ?? []
+  items?.map((item) => {
+    // Handle both nested (item.product.productId) and flat (item.productId) structures
+    const productId =
+      (item.product as Partial<{ productId?: number }>)?.productId ??
+      (item as Partial<{ productId?: number }>).productId
+
+    return {
+      ...(includeIds && item.id > 0 ? { id: item.id } : {}),
+      productId: productId ?? 0,
+      quantity: item.quantity,
+    }
+  }) ?? []
 
 export const toAdditionalItemPayload = (
   items?: Order['additionalItems'],
   includeIds = false
 ): OrderAdditionalItemPayload[] =>
   items?.map((item) => ({
-    ...(includeIds ? { id: item.id > 0 ? item.id : null } : {}),
-    additionalItemId: item.additionalItem.additionalItemId,
+    ...(includeIds && item.id > 0 ? { id: item.id } : {}),
+    additionalItemId: item.additionalItemId,
     quantity: item.quantity,
     returned: item.returned,
   })) ?? []
