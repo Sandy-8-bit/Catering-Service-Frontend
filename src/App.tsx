@@ -50,6 +50,7 @@ function App() {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
+            <Route path="*" element={<Dashboard />} />
             <Route path={appRoutes.dashboard.path} element={<Dashboard />} />
             <Route path={appRoutes.master.path} element={<MasterPage />} />
             <Route
@@ -87,8 +88,6 @@ function App() {
             />
           </Route>
         </Route>
-
-        <Route path="*" element={<SignInPage />} />
       </Routes>
     </Suspense>
   )

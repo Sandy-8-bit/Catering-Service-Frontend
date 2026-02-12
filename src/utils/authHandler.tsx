@@ -19,7 +19,7 @@ export function authHandler() {
 export function HandleUnauthorized() {
   const navigate = useNavigate()
   const location = useLocation()
-
+  console.log('Unauthorized from handle unauthroized')
   return () => {
     toast.error('Unauthorized. Please login again.')
 

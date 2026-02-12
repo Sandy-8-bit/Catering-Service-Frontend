@@ -8,7 +8,7 @@ const ProtectedRoute = () => {
   const role = localStorage.getItem('CATERING_ROLE')
   const userId = localStorage.getItem('CATERING_USER_ID')
   const location = useLocation()
-
+  console.log('Unauthorized from handle unauthroized')
   // ❌ No token or expired token → logout
   if (!token || isTokenExpired(token)) {
     Cookies.remove('CATERING_TOKEN')
