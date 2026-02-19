@@ -1,9 +1,21 @@
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { useFetchDriverOrderDelivery } from '@/queries/driverQueries'
-import { useUpdateDeliveryVessels } from '@/queries/driverQueries'
+import { useFetchDriverOrderDelivery, useCompleteReturnDelivery, useUpdateReturnPickupDate, useUpdateDeliveryVessels } from '@/queries/driverQueries'
 import type { DriverOrderDetail } from '@/types/driverOrderDetail'
-import { MapPin, Phone, Calendar, Clock, Users, Package, AlertCircle, CheckCircle } from 'lucide-react'
+import {
+  MapPin,
+  Phone,
+  Calendar,
+  Clock,
+  Users,
+  Package,
+  AlertCircle,
+  CheckCircle,
+  Truck,
+  Plus,
+} from 'lucide-react'
+
+// Removed - vessel options are now loaded from API
 
 const DriverOrderPage = () => {
   const { orderId } = useParams<{ orderId: string }>()
@@ -16,150 +28,254 @@ const DriverOrderPage = () => {
   const order: DriverOrderDetail | undefined = data?.[0]
 
   const [vessels, setVessels] = useState<
-    {
-      id?: number
-      name: string
-      quantityGiven: number
-     
-    }[]
+    { id?: number; name: string; quantityGiven: number }[]
   >([])
 
-  const [newVesselName, setNewVesselName] = useState('')
-const [newVesselQty, setNewVesselQty] = useState<number>(0)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-const handleAddVessel = () => {
-  setError('')
-  setSuccess('')
+  // Vessel return tracking (for close order)
+  const [vesselReturns, setVesselReturns] = useState<
+    { id: number; quantityReturned: number }[]
+  >([])
 
-  if (!newVesselName.trim()) {
-    setError('Vessel name is required')
-    return
-  }
+  // Payment details for close order
+  const [amountCollected, setAmountCollected] = useState<number>(0)
+  const [paymentMode, setPaymentMode] = useState<string>('CASH')
+  const [isCloseOrderLoading, setIsCloseOrderLoading] = useState(false)
 
-  if (newVesselQty <= 0) {
-    setError('Quantity must be greater than 0')
-    return
-  }
+  // Return pickup date for delivery
+  const [returnPickupDate, setReturnPickupDate] = useState<string>('')
+  const [isDeliveryLoading, setIsDeliveryLoading] = useState(false)
 
-  setVessels(prev => [
-    ...prev,
-    {
-      name: newVesselName.trim(),
-      quantityGiven: newVesselQty,
-    },
-  ])
+  // Add vessel form
+  const [newVesselName, setNewVesselName] = useState<string>('')
+  const [newVesselQuantity, setNewVesselQuantity] = useState<number>(0)
+  const [isAddingVessel, setIsAddingVessel] = useState(false)
 
-  // reset inputs
-  setNewVesselName('')
-  setNewVesselQty(0)
-}
+  const { mutate: completeReturn } = useCompleteReturnDelivery()
+  const { mutate: updateReturnDate } = useUpdateReturnPickupDate()
+  const { mutate: updateVessels } = useUpdateDeliveryVessels()
 
-  const [error, setError] = useState<string>('')
-  const [success, setSuccess] = useState<string>('')
-
-  const { mutate: updateVessels, isPending: isUpdating } =
-    useUpdateDeliveryVessels()
+  const isDelivered = order?.orderStatus === 'DELIVERED'
+  const isOrderDelivered = order?.orderStatus === 'ORDER_DELIVERED'
+  const isPending = order?.orderStatus === 'PENDING'
+  const isOutForDelivery = order?.orderStatus === 'OUT_FOR_DELIVERY'
 
   useEffect(() => {
     if (order?.vessels) {
       setVessels(order.vessels)
-      setError('')
-      setSuccess('')
+      // Initialize vessel returns
+      const initialReturns = order.vessels.map(v => ({
+        id: v.id,
+        quantityReturned: 0,
+      }))
+      setVesselReturns(initialReturns)
+      // Initialize amount collected with balance amount
+      setAmountCollected(order.orderBalanceAmount)
     }
   }, [order])
 
+  // Vessel data is loaded from API response
 
-  
-const validateVessels = () => {
-  if (vessels.length === 0) {
-    setError('Please add at least one vessel')
-    return false
-  }
-  return true
-}
-
-const isEditingVessels = vessels.length > 0
-
-  const handleSave = () => {
+  // 🚚 Mark as Delivered
+  const handleMarkAsDelivered = () => {
+    // Clear previous messages
     setError('')
     setSuccess('')
 
-    if (!validateVessels()) {
+    // Validation checks
+    if (!returnPickupDate) {
+      setError('Please select return pickup date')
       return
     }
 
-    updateVessels(
+    console.log('Marking as delivered with payload:', {
+      deliveryId: order!.id,
+      returnPickupDate,
+    })
+
+    setIsDeliveryLoading(true)
+
+    updateReturnDate(
       {
-        driverId: order!.driverId,
-        orderId: order!.orderId,
-        vessels: vessels.map(v => ({
-          name: v.name,
-          quantityGiven: v.quantityGiven,
-        })),
+        deliveryId: order!.id,
+        returnPickupDate,
       },
       {
-        onSuccess: () => {
-          setSuccess('Vessel information saved successfully! Starting delivery...')
-          setTimeout(() => {
-            setSuccess('')
-          }, 3000)
+        onSuccess: (data) => {
+          console.log('Order marked as delivered:', data)
+          setSuccess('Order marked as delivered successfully!')
+          setReturnPickupDate('')
+          setIsDeliveryLoading(false)
         },
-        onError: (err: any) => {
-          const errorMessage =
-            err?.response?.data?.message ||
-            err?.message ||
-            'Failed to save vessel information. Please try again.'
-          setError(errorMessage)
+        onError: (error: any) => {
+          console.error('Delivery error:', error?.response?.data || error)
+          setError(error?.response?.data?.message || 'Failed to mark delivery. Please try again.')
+          setIsDeliveryLoading(false)
         },
       }
     )
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading order details...</p>
-        </div>
-      </div>
+  // 📦 Add Vessel
+  const handleAddVessel = () => {
+    // Clear previous messages
+    setError('')
+    setSuccess('')
+
+    // Validation checks
+    if (!newVesselName.trim()) {
+      setError('Please select a vessel type')
+      return
+    }
+
+    if (newVesselQuantity <= 0) {
+      setError('Please enter valid quantity')
+      return
+    }
+
+    console.log('Adding vessel with payload:', {
+      driverId: order!.driverId,
+      orderId: order!.orderId,
+      vessels: [
+        {
+          name: newVesselName,
+          quantityGiven: newVesselQuantity,
+        },
+      ],
+    })
+
+    setIsAddingVessel(true)
+
+    updateVessels(
+      {
+        driverId: order!.driverId,
+        orderId: order!.orderId,
+        vessels: [
+          {
+            name: newVesselName,
+            quantityGiven: newVesselQuantity,
+          },
+        ],
+      },
+      {
+        onSuccess: (data) => {
+          console.log('Vessel added successfully:', data)
+          setSuccess('Vessel added successfully!')
+          setNewVesselName('')
+          setNewVesselQuantity(0)
+          setIsAddingVessel(false)
+          // Reset vessels from updated data
+          if (data?.data && Array.isArray(data.data)) {
+            const updatedVessels = data.data[0]?.vessels || []
+            setVessels(updatedVessels)
+          }
+        },
+        onError: (error: any) => {
+          console.error('Add vessel error:', error?.response?.data || error)
+          setError(error?.response?.data?.message || 'Failed to add vessel. Please try again.')
+          setIsAddingVessel(false)
+        },
+      }
     )
   }
 
-  if (isError || !order) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-600 font-medium">Failed to load order details</p>
-        </div>
-      </div>
+  //  Close Order
+  const handleCloseOrder = async () => {
+    // Clear previous messages
+    setError('')
+    setSuccess('')
+
+    // Validation checks
+    if (amountCollected <= 0) {
+      setError('Please enter valid amount collected')
+      return
+    }
+
+    if (!paymentMode) {
+      setError('Please select payment mode')
+      return
+    }
+
+    console.log('Closing order with payload:', {
+      deliveryId: order!.id,
+      vessels: vesselReturns,
+      amountCollected,
+      paymentMode,
+    })
+
+    setIsCloseOrderLoading(true)
+
+    completeReturn(
+      {
+        deliveryId: order!.id,
+        vessels: vesselReturns,
+        amountCollected,
+        paymentMode,
+      },
+      {
+        onSuccess: (data) => {
+          console.log('Order closed successfully:', data)
+          setSuccess('Order closed successfully!')
+          setVesselReturns(
+            order!.vessels.map(v => ({
+              id: v.id,
+              quantityReturned: 0,
+            }))
+          )
+          setAmountCollected(0)
+          setPaymentMode('CASH')
+          setIsCloseOrderLoading(false)
+        },
+        onError: (error: any) => {
+          console.error('Close order error:', error?.response?.data || error)
+          setError(error?.response?.data?.message || 'Failed to close order. Please try again.')
+          setIsCloseOrderLoading(false)
+        },
+      }
     )
   }
+
+  const handleVesselReturnChange = (vesselId: number, quantity: number) => {
+    setVesselReturns(prev =>
+      prev.map(v => (v.id === vesselId ? { ...v, quantityReturned: quantity } : v))
+    )
+  }
+
+  if (isLoading)
+    return <div className="p-6 text-center">Loading order...</div>
+
+  if (isError || !order)
+    return <div className="p-6 text-center">Failed to load order</div>
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING':
+      case 'ORDER_PLACED':
         return 'bg-yellow-100 text-yellow-800'
+      case 'OUT_FOR_DELIVERY':
+        return 'bg-blue-100 text-blue-800'
       case 'DELIVERED':
         return 'bg-green-100 text-green-800'
-      case 'COMPLETED':
-        return 'bg-blue-100 text-blue-800'
       default:
         return 'bg-gray-100 text-gray-800'
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Header */}
-      <div className="bg-linear-to-r from-blue-600 to-blue-700 text-white p-4 sticky top-0 z-10 shadow-md">
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">Order #{order.orderId}</h1>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-              {order.status}
-            </span>
-          </div>
+    <div className="min-h-screen bg-gray-50 pb-6">
+
+      {/* HEADER */}
+      <div className="bg-blue-600 text-white p-4 sticky top-0 shadow-md">
+        <div className="flex justify-between">
+          <h1 className="font-bold text-lg">Order #{order.orderId}</h1>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+              order.orderStatus
+            )}`}
+          >
+            {order.orderStatus}
+          </span>
         </div>
       </div>
 
@@ -276,78 +392,305 @@ const isEditingVessels = vessels.length > 0
             </div>
           </div>
         </div>
-{/* Add Vessel Card */}
-<div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col gap-4">
-<h2 className="font-semibold text-gray-900 text-lg">
-  {isEditingVessels ? 'Edit Vessels' : 'Add Vessels'}
-</h2>
 
-
-  {/* Input Row */}
-  <div className="flex gap-3">
-    <input
-      type="text"
-      placeholder="Vessel name"
-      value={newVesselName}
-      onChange={e => setNewVesselName(e.target.value)}
-      className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-    />
-
-    <input
-      type="number"
-      min={1}
-      placeholder="Qty"
-      value={newVesselQty || ''}
-      onChange={e => setNewVesselQty(Number(e.target.value))}
-      className="w-24 border border-gray-300 rounded-md px-3 py-2 text-center focus:ring-2 focus:ring-blue-500"
-    />
-
-   <button
-  onClick={handleAddVessel}
-  className="bg-blue-600 text-white px-4 rounded-md font-medium hover:bg-blue-700"
->
-  {isEditingVessels ? 'Add More' : 'Add'}
-  </button>
-  </div>
-
-  {/* Vessel List */}
-  {vessels.length > 0 && (
-    <div className="flex flex-col gap-2">
-      {vessels.map((v, i) => (
-        <div
-          key={i}
-          className="flex items-center justify-between border border-gray-100 rounded-md p-3"
-        >
-          <p className="font-medium text-gray-900">{v.name}</p>
-          <span className="font-semibold text-blue-600">
-            Qty: {v.quantityGiven}
-          </span>
-        </div>
-      ))}
-    </div>
-  )}
-    </div> 
       </div>
-        <div className=" bg-white border-t border-gray-200 p-4 shadow-lg">
+
+      {/* VESSEL SECTION */}
+      <div className="p-4">
+        <div className="bg-white rounded-lg shadow border p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-lg">Vessels Information</h2>
+            {vessels.length > 0 && (
+              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
+                {vessels.length} vessel{vessels.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+
+          {/* VESSEL LIST */}
+          {vessels.length > 0 ? (
+            <div className="space-y-3">
+              {vessels.map((v, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center border rounded-md p-3 bg-gray-50"
+                >
+                  <div className="flex-1">
+                    <span className="font-medium block">{v.name}</span>
+                    <span className="text-sm text-gray-600">
+                      Quantity Given: {v.quantityGiven}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-gray-600 text-center py-4">No vessels added yet</p>
+
+              {/* Add Vessel Form */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2 pb-3 border-b border-blue-200">
+                  <Plus className="w-5 h-5 text-blue-600" />
+                  <h3 className="font-semibold text-blue-900">Add Vessel</h3>
+                </div>
+
+                {/* Vessel Type Selection */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Vessel Type *
+                  </label>
+                  <select
+                    value={newVesselName}
+                    onChange={e => setNewVesselName(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base bg-white"
+                  >
+                    <option value="">Select Vessel Type</option>
+                    <option value="Vessel A">Vessel A</option>
+                    <option value="Vessel B">Vessel B</option>
+                    <option value="Vessel C">Vessel C</option>
+                    <option value="Vessel D">Vessel D</option>
+                    <option value="Vessel E">Vessel E</option>
+                    <option value="Vessel F">Vessel F</option>
+                  </select>
+                </div>
+
+                {/* Quantity Input */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700">
+                    Quantity *
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={newVesselQuantity || ''}
+                    onChange={e => setNewVesselQuantity(Number(e.target.value))}
+                    placeholder="Enter quantity"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+                  />
+                </div>
+
+                {/* Add Button */}
+                <button
+                  onClick={handleAddVessel}
+                  disabled={
+                    isAddingVessel ||
+                    !newVesselName ||
+                    newVesselQuantity <= 0
+                  }
+                  className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg font-semibold text-sm md:text-base hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all flex items-center justify-center gap-2"
+                  type="button"
+                >
+                  <Plus className="w-4 h-4" />
+                  {isAddingVessel ? 'Adding Vessel...' : 'Add Vessel'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* DELIVERY SECTION - OUT FOR DELIVERY */}
+      {isOutForDelivery && (
+        <div className="p-4 md:p-6">
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 md:p-6 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                <Truck className="w-6 h-6 text-green-600" />
+              </div>
+              <h2 className="font-bold text-lg md:text-xl text-gray-900">Mark as Delivered</h2>
+            </div>
+
+            {/* Return Pickup Date */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-600" />
+                <label className="block font-semibold text-gray-800 text-base md:text-lg">
+                  Return Pickup Date
+                </label>
+              </div>
+              <input
+                type="date"
+                value={returnPickupDate}
+                onChange={e => setReturnPickupDate(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
+              />
+              <p className="text-xs md:text-sm text-gray-600">
+                Select the date when items will be returned or picked up
+              </p>
+            </div>
+
+            {/* Delivery Info */}
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
+              <div className="flex items-start gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-green-900 text-sm">Order Details</p>
+                  <p className="text-xs text-green-800 mt-1">Customer: <span className="font-medium">{order?.customerName}</span></p>
+                  <p className="text-xs text-green-800">Location: <span className="font-medium">{order?.customerAddress}</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Deliver Button */}
+          <div className="mt-6 p-4 md:p-0">
+            <button
+              onClick={handleMarkAsDelivered}
+              disabled={
+                isDeliveryLoading ||
+                !returnPickupDate
+              }
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold text-base md:text-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all shadow-md hover:shadow-lg"
+              type="button"
+            >
+              {isDeliveryLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">⏳</span> 
+                  <span>Marking Delivered...</span>
+                </span>
+              ) : (
+                'Mark as Delivered'
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CLOSE ORDER SECTION */}
+      {(isDelivered || isOrderDelivered || isPending) && (
+        <div className="p-4 md:p-6">
+          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 md:p-6 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-purple-600" />
+              </div>
+              <h2 className="font-bold text-lg md:text-xl text-gray-900">Complete Order</h2>
+            </div>
+
+            {/* Vessel Returns */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-blue-600" />
+                <h3 className="font-semibold text-gray-800 text-base md:text-lg">Vessel Returns</h3>
+              </div>
+              {order?.vessels && order.vessels.length > 0 ? (
+                <div className="space-y-3">
+                  {order.vessels.map(vessel => (
+                    <div
+                      key={vessel.id}
+                      className="bg-white rounded-lg border border-gray-200 p-4 hover:border-purple-300 hover:shadow-sm transition-all"
+                    >
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900 text-sm md:text-base">{vessel.name}</p>
+                          <p className="text-xs md:text-sm text-gray-600 mt-1">
+                            Quantity Given: <span className="font-medium">{vessel.quantityGiven}</span>
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-1 w-full md:w-auto">
+                          <label className="text-xs text-gray-600 font-medium">Quantity Returned</label>
+                          <input
+                            type="number"
+                            min={0}
+                            max={vessel.quantityGiven}
+                            placeholder="0"
+                            value={
+                              vesselReturns.find(v => v.id === vessel.id)
+                                ?.quantityReturned || ''
+                            }
+                            onChange={e =>
+                              handleVesselReturnChange(
+                                vessel.id,
+                                Number(e.target.value)
+                              )
+                            }
+                            className="w-full md:w-28 border border-gray-300 rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-600 text-sm text-center py-4">No vessels in this order</p>
+              )}
+            </div>
+
+            {/* Amount Collected */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-amber-600" />
+                <label className="block font-semibold text-gray-800 text-base md:text-lg">
+                  Amount Collected
+                </label>
+              </div>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-700 font-semibold text-base md:text-lg">₹</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  value={amountCollected || ''}
+                  onChange={e => setAmountCollected(Number(e.target.value))}
+                  className="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base"
+                  placeholder="0.00"
+                />
+              </div>
+              <p className="text-xs md:text-sm text-gray-600 flex justify-between">
+                <span>Balance to collect:</span>
+                <span className={`font-semibold ${order?.orderBalanceAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  ₹{order?.orderBalanceAmount.toFixed(2)}
+                </span>
+              </p>
+            </div>
+
+            {/* Payment Mode */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Phone className="w-5 h-5 text-blue-600" />
+                <label className="block font-semibold text-gray-800 text-base md:text-lg">
+                  Payment Mode
+                </label>
+              </div>
+              <select
+                value={paymentMode}
+                onChange={e => setPaymentMode(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-sm md:text-base font-medium"
+              >
+                <option value="CASH">💵 Cash</option>
+                <option value="CARD">💳 Card</option>
+                <option value="UPI">📱 UPI</option>
+                <option value="ONLINE_TRANSFER">🏦 Online Transfer</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CLOSE ORDER BUTTON */}
+      {(isDelivered || isOrderDelivered || isPending) && (
+        <div className="p-4 mt-6 border-t">
           <button
-            onClick={handleSave}
-            disabled={isUpdating || vessels.every(v => v.quantityGiven === 0)}
-            className={`w-full font-semibold py-4 rounded-lg text-lg transition-colors shadow-md flex items-center justify-center gap-2 ${
-              isUpdating || vessels.every(v => v.quantityGiven === 0)
-                ? 'bg-gray-400 text-white cursor-not-allowed'
-                : 'bg-blue-600 text-white active:bg-blue-700 hover:bg-blue-700'
-            }`}
+            onClick={handleCloseOrder}
+            disabled={
+              isCloseOrderLoading ||
+              amountCollected <= 0
+            }
+            className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-semibold text-base md:text-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all shadow-md hover:shadow-lg"
+            type="button"
           >
-            {isUpdating ? (
-              <>
-                <span className="inline-block animate-spin">⟳</span>
-                Saving...
-              </>
+            {isCloseOrderLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="animate-spin">⏳</span> 
+                <span>Closing Order...</span>
+              </span>
             ) : (
-              'Confirm & Start Delivery'
+              'Close Order'
             )}
           </button>
         </div>
+      )}
     </div>
   )
 }

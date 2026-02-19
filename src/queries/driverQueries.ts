@@ -22,14 +22,11 @@ export const useFetchDriverDashboard = ({
       const token = authHandler()
 
       const res = await axiosInstance.get<DriverDashboardResponse>(
-        `${apiRoutes.driverdashboard}/${driverId}`,
+        `${apiRoutes.driverdashboard}/${driverId}/date/${date}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          // params: {
-          //   driverId, // query param
-          // },
         }
       )
 
@@ -140,3 +137,109 @@ export const useUpdateDeliveryVessels = () => {
   })
 }
 
+type CompleteReturnVesselPayload = {
+  id: number
+  quantityReturned: number
+}
+
+type CompleteReturnPayload = {
+  deliveryId: number
+  vessels: CompleteReturnVesselPayload[]
+  amountCollected: number
+  paymentMode: string
+}
+
+
+export const useCompleteReturnDelivery = () => {
+  const queryClient = useQueryClient()
+
+  const completeReturn = async ({
+    deliveryId,
+    vessels,
+    amountCollected,
+    paymentMode,
+  }: CompleteReturnPayload) => {
+    try {
+      const token = authHandler()
+
+      const res = await axiosInstance.put(
+        `${apiRoutes.driverDeliveries}/${deliveryId}/complete-return`,
+        {
+          vessels,
+          amountCollected,
+          paymentMode,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      return res.data
+    } catch (error: unknown) {
+      handleApiError(error, 'Complete Return Delivery')
+      throw error
+    }
+  }
+
+  return useMutation({
+    mutationFn: completeReturn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['DRIVER_ORDER_DELIVERY'],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['DRIVER_DASHBOARD'],
+      })
+    },
+  })
+}
+
+type UpdateReturnDatePayload = {
+  deliveryId: number
+  returnPickupDate: string // format: YYYY-MM-DD
+}
+
+
+export const useUpdateReturnPickupDate = () => {
+  const queryClient = useQueryClient()
+
+  const updateReturnDate = async ({
+    deliveryId,
+    returnPickupDate,
+  }: UpdateReturnDatePayload) => {
+    try {
+      const token = authHandler()
+
+      const res = await axiosInstance.put(
+        `${apiRoutes.driverDeliveries}/${deliveryId}/return-date`,
+        {
+          returnPickupDate,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      return res.data
+    } catch (error: unknown) {
+      handleApiError(error, 'Update Return Pickup Date')
+      throw error
+    }
+  }
+
+  return useMutation({
+    mutationFn: updateReturnDate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['DRIVER_ORDER_DELIVERY'],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ['DRIVER_DASHBOARD'],
+      })
+    },
+  })
+}

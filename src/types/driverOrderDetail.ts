@@ -46,7 +46,7 @@ export interface DriverOrderDetail {
 
   vessels: Vessel[]
 
-  status: string
+  orderStatus: string
   amountReceived: number
   paymentMode: string
   amountNote: string

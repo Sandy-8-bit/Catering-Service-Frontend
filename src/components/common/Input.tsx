@@ -1,74 +1,26 @@
 /* eslint-disable react-hooks/purity */
 import { motion } from 'framer-motion'
-import { Check } from 'lucide-react'
-import React, { useRef } from 'react'
+import { Check, Mic } from 'lucide-react'
+import React, { useRef, useState, useEffect } from 'react'
 
 type InputType = 'str' | 'num'
 
-/**
- * Generic Input component for handling both string and number values.
- * Can be used in reusable forms with strict type control and validation.
- *
- * @template T - Input value type (string | number)
- */
 interface InputProps<T extends string | number> {
-  /** Label title above the input field */
   title: string
-  /** Placeholder text for the input */
   placeholder?: string
-  /** Current input value */
   inputValue: T
-  /**
-   * Callback triggered on value change
-   * @param value - New value of input
-   */
   onChange: (value: T) => void
-  /** Input type - "str" for text, "num" for number */
   type?: InputType
-  /** Optional input `name` attribute */
   name?: string
-  /** Prefix label shown before the input (e.g., ₹ or +91) */
   prefixText?: string
-  /** Maximum character length (applies to string input only) */
-  maxLength?: number
-  /** Minimum numeric value allowed (for type="num") */
-  min?: number
-  /** Maximum numeric value allowed (for type="num") */
-  max?: number
-  /** Whether the input is required for form submission */
   disabled?: boolean
-  /** Whether the input is required for form submission */
   required?: boolean
-  /** Minimum string length allowed (for type="str") */
-  minLength?: number
-  /**
-   * @deprecated Use a separate <ReadonlyField /> instead.
-   */
   viewMode?: boolean
-  /** Extra custom CSS classes */
   className?: string
-  /** Optional ref forwarded to the underlying input element */
   inputRef?: React.Ref<HTMLInputElement>
 }
 
-/**
- * Reusable Input component with strict typing and smart constraints.
- * Supports both text and number fields, with prefix, length limits, and min/max validation.
- *
- * @example
- * ```tsx
- * <Input
- *   title="Phone Number"
- *   inputValue={phone}
- *   onChange={(val) => setPhone(val)}
- *   type="num"
- *   prefixText="+91"
- *   max={9999999999}
- * />
- * ```
- */
 const Input = <T extends string | number>({
-  required = false,
   title,
   placeholder = '',
   inputValue,
@@ -76,98 +28,172 @@ const Input = <T extends string | number>({
   type = 'str',
   name = '',
   prefixText = '',
-  maxLength = 36,
-  min,
-  max,
-  className = '',
   disabled = false,
-  minLength = 0,
-  viewMode = false, //depriciate dont-use
+  required = false,
+  viewMode = false,
+  className = '',
   inputRef,
 }: InputProps<T>) => {
   const inputType = type === 'num' ? 'number' : 'text'
 
-  /**
-   * Handles input changes with type-aware validation.
-   */
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value
+  const [isListening, setIsListening] = useState(false)
+  const recognitionRef = useRef<any>(null)
+  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isHoldingRef = useRef(false)
 
-    if (type === 'num') {
-      if (raw === '') {
-        onChange('' as T)
-        return
-      }
+  /* 🎤 Setup Tamil Speech Recognition */
+  useEffect(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition
 
-      // Allow intermediate decimal input like "12." or "0."
-      if (/^\d*\.?\d*$/.test(raw)) {
-        const num = parseFloat(raw)
+    if (!SpeechRecognition) return
 
-        // Skip NaN for incomplete input like "."
-        if (!isNaN(num)) {
-          if (
-            (min !== undefined && num < min) ||
-            (max !== undefined && num > max)
-          )
-            return
-          onChange(num as T)
-        } else {
-          // Still call onChange for partial decimals like "12."
-          onChange(raw as T)
+    const recognition = new SpeechRecognition()
+    recognition.continuous = false
+    recognition.interimResults = false
+    recognition.lang = 'ta-IN' // 🔥 Tamil only
+
+    recognition.onresult = (event: any) => {
+      const transcript =
+        event.results[event.results.length - 1][0].transcript.trim()
+
+      if (!transcript) return
+
+      if (type === 'num') {
+        // Extract digits only
+        const digits = transcript.replace(/[^\d]/g, '')
+
+        if (digits) {
+          const oldValue = String(inputValue ?? '')
+          const newValue = oldValue + digits
+          onChange(Number(newValue) as T)
         }
+      } else {
+        const oldValue = String(inputValue ?? '')
+        const newText =
+          oldValue.length > 0
+            ? oldValue + ' ' + transcript
+            : transcript
+
+        onChange(newText as T)
       }
-    } else {
-      // For non-numeric input, just pass the string
-      onChange(raw as T)
     }
+
+    recognition.onend = () => {
+      setIsListening(false)
+    }
+
+    recognitionRef.current = recognition
+  }, [inputValue, onChange, type])
+
+  /* 🎤 Start Listening */
+  const startListening = () => {
+    if (!recognitionRef.current || isListening) return
+    recognitionRef.current.start()
+    setIsListening(true)
+  }
+
+  /* 🎤 Stop Listening */
+  const stopListening = () => {
+    if (!recognitionRef.current || !isListening) return
+    recognitionRef.current.stop()
+    setIsListening(false)
+  }
+
+  /* 👆 Long Press */
+  const handleMouseDown = () => {
+    isHoldingRef.current = false
+
+    holdTimeoutRef.current = setTimeout(() => {
+      isHoldingRef.current = true
+      startListening()
+    }, 250)
+  }
+
+  const handleMouseUp = () => {
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current)
+    }
+
+    if (isHoldingRef.current) {
+      stopListening()
+    }
+  }
+
+  /* 👆 Single Click */
+  const handleClick = () => {
+    if (isHoldingRef.current) return
+
+    if (isListening) {
+      stopListening()
+    } else {
+      startListening()
+    }
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value as T)
   }
 
   return (
     <motion.div
       initial={{ y: -10 }}
       animate={{ y: 0 }}
-      transition={{ duration: 0.3, delay: 0.2 }}
-      className="relative w-full min-w-[180px] self-stretch"
+      transition={{ duration: 0.3 }}
+      className="relative w-full"
     >
-      <h3
-        className={`mb-0.5 w-full justify-start ${viewMode ? 'text-base font-medium text-slate-600' : 'text-xs leading-loose font-semibold text-slate-700'}`}
-      >
-        {title} {required && <span className="text-red-500"> *</span>}
+      <h3 className="mb-1 text-xs font-semibold text-slate-700">
+        {title} {required && <span className="text-red-500">*</span>}
       </h3>
-      <div
-        className={`input-container flex cursor-text flex-row items-center justify-center gap-0 overflow-clip rounded-xl ${viewMode ? '' : 'border-2 border-[#F1F1F1] bg-white shadow-sm transition-all focus-within:border-slate-500'} `}
-      >
+
+      <div className="flex items-center rounded-xl border-2 border-[#F1F1F1] bg-white shadow-sm focus-within:border-slate-500">
         {prefixText && (
-          <div className="flex h-full min-w-[35px] items-center justify-center bg-slate-100 px-3 py-2 text-center align-middle text-sm leading-loose font-medium text-slate-700 lg:min-w-[45px]">
+          <div className="bg-slate-100 px-3 py-3 text-sm font-medium text-slate-700">
             {prefixText}
           </div>
         )}
+
         <input
           ref={inputRef}
-          required={required}
-          readOnly={disabled}
-          onWheel={(e) => (e.target as HTMLInputElement).blur()}
-          disabled={disabled}
           type={inputType}
           name={name}
-          step={type === 'num' ? '.1' : undefined}
           placeholder={placeholder}
           onChange={handleChange}
           value={inputValue}
-          className={`custom-disabled-cursor hover:cursor[text]:color-black min-h-max w-full ${
+          disabled={disabled}
+                          className={`custom-disabled-cursor hover:cursor[text]:color-black min-h-max w-full ${
             disabled ? 'bg-slate-200' : 'cursor-text'
           } ${className} text-start ${viewMode ? 'text-base font-medium text-slate-900' : 'px-3 py-3 text-sm font-medium text-slate-600 autofill:text-black focus:outline-none'} shadow-sm read-only:cursor-default read-only:bg-white`}
-          maxLength={type === 'str' ? maxLength : undefined}
-          min={type === 'num' ? min : undefined}
-          max={type === 'num' ? max : undefined}
-          minLength={type === 'str' ? minLength : undefined}
         />
+
+        {!viewMode && !disabled && (
+          <button
+            type="button"
+            onMouseDown={handleMouseDown}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            onTouchStart={handleMouseDown}
+            onTouchEnd={handleMouseUp}
+            onClick={handleClick}
+            className={`mr-3 transition ${
+              isListening
+                ? 'text-red-500 scale-110'
+                : 'text-slate-500'
+            }`}
+          >
+            <Mic size={20} />
+          </button>
+        )}
       </div>
     </motion.div>
   )
 }
 
 export default Input
+
+
+
 
 interface CheckBoxProps {
   checked: boolean

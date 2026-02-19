@@ -25,6 +25,7 @@ import { mapOrderToUpdatePayload, mapOrderToPayload } from '@/utils/TypeMappers'
 import { ArrowLeft } from 'lucide-react'
 import { appRoutes } from '@/routes/appRoutes'
 import { useFetchUsers } from '@/queries/usersQueries'
+import VoiceInput from '@/components/common/VoiceInput'
 
 export const OrdersForm = () => {
   const { t } = useTranslation()
@@ -118,7 +119,7 @@ export const OrdersForm = () => {
           </header>
 
           <div className="grid gap-4 md:grid-cols-4">
-            <Input
+            <VoiceInput
               title={t('customer_name')}
               name="customerName"
               placeholder={t('eg_name')}
