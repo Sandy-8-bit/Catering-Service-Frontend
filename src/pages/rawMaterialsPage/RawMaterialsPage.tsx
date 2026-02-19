@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'framer-motion'
 
 import ButtonSm from '@/components/common/Buttons'
@@ -30,6 +31,7 @@ const createEmptyRawMaterial = (id: number): RawMaterial => ({
 })
 
 export const RawMaterialsPage = () => {
+  const { t } = useTranslation()
   // queries
   const {
     data: rawMaterials = [],
@@ -271,7 +273,7 @@ export const RawMaterialsPage = () => {
   // Data cells layout
   const rawMaterialTableColumns: DataCell[] = [
     {
-      headingTitle: 'Primary Name',
+      headingTitle: t('product_name_primary'),
       accessVar: 'primaryName',
       className: 'max-w-32',
       render: (value, row) => {
@@ -306,7 +308,7 @@ export const RawMaterialsPage = () => {
       },
     },
     {
-      headingTitle: 'Secondary Name',
+      headingTitle: t('product_name_secondary'),
       accessVar: 'secondaryName',
       className: 'w-42',
       render: (value, row) => (
@@ -321,7 +323,7 @@ export const RawMaterialsPage = () => {
       ),
     },
     {
-      headingTitle: 'Purchase Unit',
+      headingTitle: t('purchase_unit'),
       accessVar: 'purchaseUnit',
       className: 'w-32',
       render: (value, row) => {
@@ -338,7 +340,7 @@ export const RawMaterialsPage = () => {
             title=""
             options={units}
             selected={selectedOption}
-            placeholder="Select Unit"
+            placeholder={t('select_unit')}
             onChange={(e) => {
               updateRowField(row.id, 'purchaseUnit', e.label)
             }}
@@ -347,7 +349,7 @@ export const RawMaterialsPage = () => {
       },
     },
     {
-      headingTitle: 'Purchase Quantity',
+      headingTitle: t('purchase_quantity'),
       accessVar: 'purchaseQuantity',
       className: 'w-42',
       render: (value, row) => {
@@ -381,7 +383,7 @@ export const RawMaterialsPage = () => {
       },
     },
     {
-      headingTitle: 'Purchase Price (₹)',
+      headingTitle: t('purchase_price'),
       accessVar: 'purchasePrice',
       className: 'w-48',
       render: (value, row) => (
@@ -423,7 +425,7 @@ export const RawMaterialsPage = () => {
             disabled={isEditRawMaterialsPending}
           >
             <Filter className="h-4 w-4 text-black" />
-            Filter
+            {t('filter')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           <DropdownSelect
@@ -443,7 +445,7 @@ export const RawMaterialsPage = () => {
             disabled={isEditRawMaterialsPending}
           >
             <UploadCloud className="h-5 w-5 text-black" />
-            Export Data
+            {t('export_data')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           {isAddMode ? (
@@ -453,7 +455,7 @@ export const RawMaterialsPage = () => {
                 onClick={handleDiscardChanges}
                 disabled={isCreateRawMaterialPending}
               >
-                <X className="h-4 w-4 text-black" /> Cancel Add
+                <X className="h-4 w-4 text-black" /> {t('cancel')}
               </ButtonSm>
               <ButtonSm
                 className={
@@ -464,7 +466,7 @@ export const RawMaterialsPage = () => {
                 disabled={!hasValidDraft || isCreateRawMaterialPending}
                 isPending={isCreateRawMaterialPending}
               >
-                <SaveIcon className="mr-2 h-4 w-4 text-white" /> Save Material
+                <SaveIcon className="mr-2 h-4 w-4 text-white" /> {t('save_material')}
               </ButtonSm>
             </>
           ) : (
@@ -476,7 +478,7 @@ export const RawMaterialsPage = () => {
                   disabled={isEditRawMaterialsPending}
                 >
                   <X className="h-4 w-4 text-black" />{' '}
-                  {hasChanges ? 'Discard Changes' : 'Cancel'}
+                  {hasChanges ? t('discard_changes') : t('cancel')}
                 </ButtonSm>
               )}
               <ButtonSm
@@ -506,13 +508,13 @@ export const RawMaterialsPage = () => {
                 {isEditMode
                   ? isEditRawMaterialsPending
                     ? 'Saving…'
-                    : 'Save Changes'
-                  : 'Edit Table'}
+                    : t('save_changes')
+                  : t('edit')}
               </ButtonSm>
               {!isEditMode && (
                 <ButtonSm state="default" onClick={handleAddRawMaterialRow}>
                   <Plus className="mr-2 h-4 w-4 text-white" />
-                  Add Raw Material
+                  {t('add_raw_material')}
                 </ButtonSm>
               )}
             </>
@@ -525,7 +527,7 @@ export const RawMaterialsPage = () => {
         className="mx-3"
         dataCell={rawMaterialTableColumns}
         isLoading={isRawMaterialsLoading || isFetching}
-        messageWhenNoData="No raw materials available."
+        messageWhenNoData={t('no_raw_materials')}
         isSelectable={formState !== 'add'}
         selectedRowIndices={selectedRowIndices}
         onSelectionChange={handleSelectionChange}

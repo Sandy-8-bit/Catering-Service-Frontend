@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 type TimeRange = 'today' | 'week' | 'month'
 
@@ -182,6 +183,7 @@ const CARD = 'rounded-md border border-[#F1F1F1] bg-white p-4'
 const SLIM_CARD = 'rounded-md border border-[#F1F1F1] bg-white p-3'
 
 export const Dashboard = () => {
+  const { t } = useTranslation()
   const [selectedRange, setSelectedRange] = useState<TimeRange>('today')
   const todayLabel = new Intl.DateTimeFormat('en-IN', {
     weekday: 'long',
@@ -189,15 +191,56 @@ export const Dashboard = () => {
     day: 'numeric',
   }).format(new Date())
 
+  const timeFilters = [
+    { id: 'today' as TimeRange, label: t('today') },
+    { id: 'week' as TimeRange, label: t('this_week') },
+    { id: 'month' as TimeRange, label: t('this_month') },
+  ]
+
+  const metricHighlights = [
+    {
+      id: 'orders',
+      title: t('open_orders'),
+      value: '48',
+      subtitle: t('serving_guests').replace('{{count}}', '3120'),
+      delta: '+12%',
+      trend: 'up',
+    },
+    {
+      id: 'prep',
+      title: t('kitchen_prep_progress'),
+      value: '76%',
+      subtitle: t('menus_underway').replace('{{count}}', '12'),
+      delta: '+6%',
+      trend: 'up',
+    },
+    {
+      id: 'inventory',
+      title: t('critical_inventory_alerts'),
+      value: '5 items',
+      subtitle: t('needs_attention'),
+      delta: '-2',
+      trend: 'down',
+    },
+    {
+      id: 'feedback',
+      title: t('client_feedback_score'),
+      value: '4.8 / 5',
+      subtitle: t('last_services'),
+      delta: '+0.2',
+      trend: 'up',
+    },
+  ]
+
   return (
     <main   className="layout-container flex min-h-[95vh] w-full flex-col gap-6 rounded-md border border-[#F1F1F1] bg-white p-6">
       <section className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900">
-            Central Dashboard
+            {t('central_dashboard')}
           </h1>
           <p className="text-sm text-slate-500">
-            {todayLabel} · Chennai kitchens
+            {todayLabel} · {t('chennai_kitchens')}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -245,17 +288,17 @@ export const Dashboard = () => {
           <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold text-slate-900">
-                Orders in progress
+                {t('orders_in_progress')}
               </h2>
               <p className="text-sm text-slate-500">
-                Live kitchen & dispatch status
+                {t('live_status')}
               </p>
             </div>
             <button
               className="text-sm font-semibold text-orange-600"
               type="button"
             >
-              View routes →
+              {t('view_routes')}
             </button>
           </header>
 
@@ -263,12 +306,12 @@ export const Dashboard = () => {
             <table className="min-w-full table-fixed text-left text-sm">
               <thead className="text-xs tracking-wide text-slate-500 uppercase">
                 <tr>
-                  <th className="py-2">Order</th>
-                  <th className="py-2">Client</th>
-                  <th className="py-2">Guests</th>
-                  <th className="py-2">Schedule</th>
-                  <th className="py-2">Crew</th>
-                  <th className="py-2">Status</th>
+                  <th className="py-2">{t('order')}</th>
+                  <th className="py-2">{t('client')}</th>
+                  <th className="py-2">{t('guests')}</th>
+                  <th className="py-2">{t('schedule')}</th>
+                  <th className="py-2">{t('crew')}</th>
+                  <th className="py-2">{t('status')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -309,7 +352,7 @@ export const Dashboard = () => {
         <article className={CARD}>
           <header className="mb-5">
             <h2 className="text-lg font-semibold text-slate-900">
-              Service mix
+              {t('service_breakdown')}
             </h2>
             <p className="text-sm text-slate-500">
               Distribution for selected range
@@ -342,7 +385,7 @@ export const Dashboard = () => {
             <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900">
-                  Kitchen timeline
+                  {t('kitchen_timeline')}
                 </h2>
                 <p className="text-sm text-slate-500">
                   Prep, QA and dispatch schedule
@@ -385,7 +428,7 @@ export const Dashboard = () => {
           <article className={`${CARD} p-4`}>
             <header className="mb-3">
               <h3 className="text-base font-semibold text-slate-900">
-                Team on duty
+                {t('team_roster')}
               </h3>
               <p className="text-sm text-slate-500">Shift board</p>
             </header>
@@ -413,7 +456,7 @@ export const Dashboard = () => {
         <article className={`${CARD} flex flex-col gap-5`}>
           <div className="space-y-1">
             <h2 className="text-lg font-semibold text-slate-900">
-              Inventory alerts
+              {t('inventory_alerts')}
             </h2>
             <p className="text-sm text-slate-500">
               Auto-generated from raw materials module

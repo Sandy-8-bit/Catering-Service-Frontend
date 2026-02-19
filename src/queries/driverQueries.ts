@@ -22,14 +22,14 @@ export const useFetchDriverDashboard = ({
       const token = authHandler()
 
       const res = await axiosInstance.get<DriverDashboardResponse>(
-        `${apiRoutes.driverdashboard}/${date}`,
+        `${apiRoutes.driverdashboard}/${driverId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          params: {
-            driverId, // query param
-          },
+          // params: {
+          //   driverId, // query param
+          // },
         }
       )
 
@@ -95,18 +95,24 @@ export const useUpdateDeliveryVessels = () => {
   const queryClient = useQueryClient()
 
   const updateVessels = async ({
-    deliveryId,
+    driverId,
+    orderId,
     vessels,
   }: {
-    deliveryId: number
+    driverId: number
+    orderId: number
     vessels: VesselPayload[]
   }) => {
     try {
       const token = authHandler()
 
-      const res = await axiosInstance.put(
-        `${apiRoutes.driverDeliveries}/${deliveryId}`,
-        { vessels }, // 👈 vessel only
+      const res = await axiosInstance.post(
+        `${apiRoutes.driverDeliveries}`,
+        {
+          driverId,
+          orderId,
+          vessels,
+        }, // ✅ correct request body
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -123,8 +129,7 @@ export const useUpdateDeliveryVessels = () => {
 
   return useMutation({
     mutationFn: updateVessels,
-    onSuccess: (_,) => {
-      // 🔄 refetch delivery + dashboard
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['DRIVER_ORDER_DELIVERY'],
       })
@@ -134,3 +139,4 @@ export const useUpdateDeliveryVessels = () => {
     },
   })
 }
+

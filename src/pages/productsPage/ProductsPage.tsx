@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'framer-motion'
 
 import ButtonSm from '@/components/common/Buttons'
@@ -21,22 +22,23 @@ import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 
-const availabilityOptions = [
-  { id: 1, label: 'Available' },
-  { id: 2, label: 'Unavailable' },
-]
-
-const createEmptyProduct = (id: number): Product => ({
-  id,
-  primaryName: '',
-  secondaryName: '',
-  description: '',
-  price: 0,
-  category: { id: 0, primaryName: '', secondaryName: '' },
-  available: false,
-})
-
 export const ProductsPage = () => {
+  const { t } = useTranslation()
+  const availabilityOptions = [
+    { id: 1, label: t('product_available') },
+    { id: 2, label: t('product_unavailable') },
+  ]
+
+  const createEmptyProduct = (id: number): Product => ({
+    id,
+    primaryName: '',
+    secondaryName: '',
+    description: '',
+    price: 0,
+    category: { id: 0, primaryName: '', secondaryName: '' },
+    available: false,
+  })
+
   const {
     data: products = [],
     isLoading: isProductsLoading,
@@ -284,7 +286,7 @@ export const ProductsPage = () => {
 
   const productTableColumns: DataCell[] = [
     {
-      headingTitle: 'Primary Name',
+      headingTitle: t('product_name_primary'),
       accessVar: 'primaryName',
       className: 'max-w-32',
       render: (value, row) => {
@@ -319,7 +321,7 @@ export const ProductsPage = () => {
       },
     },
     {
-      headingTitle: 'Secondary Name',
+      headingTitle: t('product_name_secondary'),
       accessVar: 'secondaryName',
       className: 'w-42',
       render: (value, row) => (
@@ -336,7 +338,7 @@ export const ProductsPage = () => {
       ),
     },
     {
-      headingTitle: 'Description',
+      headingTitle: t('product_description'),
       accessVar: 'description',
       className: 'w-64',
       render: (value, row) => (
@@ -353,7 +355,7 @@ export const ProductsPage = () => {
       ),
     },
     {
-      headingTitle: 'Category',
+      headingTitle: t('product_category'),
       accessVar: 'category',
       className: 'w-38',
       render: (_value, row: Product) => {
@@ -387,7 +389,7 @@ export const ProductsPage = () => {
       },
     },
     {
-      headingTitle: 'Price (₹)',
+      headingTitle: t('product_price'),
       accessVar: 'price',
       className: 'w-32',
       render: (value, row) => (
@@ -408,7 +410,7 @@ export const ProductsPage = () => {
       ),
     },
     {
-      headingTitle: 'Availability',
+      headingTitle: t('product_category'),
       accessVar: 'available',
       className: 'w-32',
       render: (_value, row) => (
@@ -439,7 +441,7 @@ export const ProductsPage = () => {
     <main className="layout-container flex min-h-[95vh] w-full flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
       <header className="flex flex-row gap-4 p-4">
         <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
-          Products
+          {t('products')}
         </h1>
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
@@ -453,7 +455,7 @@ export const ProductsPage = () => {
             isPending={isEditProductsPending}
           >
             <Filter className="h-4 w-4 text-black" />
-            Filter
+            {t('filter')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           <DropdownSelect
@@ -474,7 +476,7 @@ export const ProductsPage = () => {
             isPending={isEditProductsPending}
           >
             <UploadCloud className="h-5 w-5 text-black" />
-            Export Data
+            {t('upload')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           {isAddMode ? (
@@ -484,7 +486,7 @@ export const ProductsPage = () => {
                 onClick={handleDiscardChanges}
                 disabled={isCreateProductPending}
               >
-                <X className="h-4 w-4 text-black" /> Cancel Add
+                <X className="h-4 w-4 text-black" /> {t('cancel')}
               </ButtonSm>
               <ButtonSm
                 className={
@@ -495,7 +497,7 @@ export const ProductsPage = () => {
                 disabled={!hasValidDraft || isCreateProductPending}
                 isPending={isCreateProductPending}
               >
-                <SaveIcon className="mr-2 h-4 w-4 text-white" /> Save Product
+                <SaveIcon className="mr-2 h-4 w-4 text-white" /> {t('save')}
               </ButtonSm>
             </>
           ) : (
@@ -507,7 +509,7 @@ export const ProductsPage = () => {
                   disabled={isEditProductsPending}
                 >
                   <X className="h-4 w-4 text-black" />{' '}
-                  {hasChanges ? 'Discard Changes' : 'Cancel'}
+                  {hasChanges ? t('discard_changes') : t('cancel')}
                 </ButtonSm>
               )}
               <ButtonSm
@@ -535,13 +537,13 @@ export const ProductsPage = () => {
                 {isEditMode
                   ? isEditProductsPending
                     ? 'Saving…'
-                    : 'Save Changes'
-                  : 'Edit Table'}
+                    : t('save_changes')
+                  : t('edit')}
               </ButtonSm>
               {!isEditMode && (
                 <ButtonSm state="default" onClick={handleAddProductRow}>
                   <Plus className="mr-2 h-4 w-4 text-white" />
-                  Add Product
+                  {t('add_product')}
                 </ButtonSm>
               )}
             </>
@@ -554,7 +556,7 @@ export const ProductsPage = () => {
         className="mx-3"
         dataCell={productTableColumns}
         isLoading={isProductsLoading || isCreateProductPending || isFetching}
-        messageWhenNoData="No products available."
+        messageWhenNoData={t('no_data')}
         isSelectable={formState !== 'add'}
         selectedRowIndices={selectedRowIndices}
         onSelectionChange={handleSelectionChange}

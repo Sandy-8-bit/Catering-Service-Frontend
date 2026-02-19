@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'framer-motion'
 
 import ButtonSm from '@/components/common/Buttons'
@@ -21,18 +22,18 @@ import { DeleteUsersDialog } from './DeleteUsersDialog'
 
 type EditableUser = User & { password?: string }
 
-const createEmptyUser = (id: number): EditableUser => ({
-  userId: id,
-  name: '',
-  email: '',
-  phone: '',
-  password: '',
-  role: "",
-})
-
-
-
 export const UsersPage = () => {
+  const { t } = useTranslation()
+  
+  const createEmptyUser = (id: number): EditableUser => ({
+    userId: id,
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: "",
+  })
+
   const {
     data: users = [],
     isLoading: isUsersLoading,
@@ -312,7 +313,7 @@ export const UsersPage = () => {
 
   const userTableColumns: DataCell[] = [
     {
-      headingTitle: 'Name',
+      headingTitle: t('name'),
       accessVar: 'name',
       className: 'w-48',
       render: (value, row: EditableUser) => {
@@ -346,7 +347,7 @@ export const UsersPage = () => {
       },
     },
     {
-      headingTitle: 'Email',
+      headingTitle: t('email'),
       accessVar: 'email',
       className: 'w-52',
       render: (value, row: EditableUser) => (
@@ -361,7 +362,7 @@ export const UsersPage = () => {
       ),
     },
     {
-      headingTitle: 'Phone',
+      headingTitle: t('phone'),
       accessVar: 'phone',
       className: 'w-40',
       render: (value, row: EditableUser) => (
@@ -376,7 +377,7 @@ export const UsersPage = () => {
       ),
     },
     {
-      headingTitle: 'Password',
+      headingTitle: t('password'),
       accessVar: 'password',
       className: 'w-48',
       render: (value, row: EditableUser) => (
@@ -391,7 +392,7 @@ export const UsersPage = () => {
       ),
     },
     {
-      headingTitle: 'Roles',
+      headingTitle: t('user_role'),
       accessVar: 'roles',
       className: 'w-64',
       render: (_value, row: EditableUser) => (
@@ -424,7 +425,7 @@ export const UsersPage = () => {
     <main className="layout-container flex min-h-[95vh] w-full flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
       <header className="flex flex-row gap-4 p-4">
         <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
-          Users
+          {t('users')}
         </h1>
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
@@ -437,7 +438,7 @@ export const UsersPage = () => {
             disabled={isEditUsersPending}
           >
             <Filter className="h-4 w-4 text-black" />
-            Filter
+            {t('filter')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           <DropdownSelect
@@ -457,7 +458,7 @@ export const UsersPage = () => {
             disabled={isEditUsersPending}
           >
             <UploadCloud className="h-5 w-5 text-black" />
-            Export Data
+            {t('upload')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           {isAddMode ? (
@@ -467,7 +468,7 @@ export const UsersPage = () => {
                 onClick={handleDiscardChanges}
                 disabled={isCreateUsersPending}
               >
-                <X className="h-4 w-4 text-black" /> Cancel Add
+                <X className="h-4 w-4 text-black" /> {t('cancel')}
               </ButtonSm>
               <ButtonSm
                 className={
@@ -478,7 +479,7 @@ export const UsersPage = () => {
                 disabled={!hasValidDraft || isCreateUsersPending}
                 isPending={isCreateUsersPending}
               >
-                <SaveIcon className="mr-2 h-4 w-4 text-white" /> Save User
+                <SaveIcon className="mr-2 h-4 w-4 text-white" /> {t('save')}
               </ButtonSm>
             </>
           ) : (
@@ -490,7 +491,7 @@ export const UsersPage = () => {
                   disabled={isEditUsersPending}
                 >
                   <X className="h-4 w-4 text-black" />{' '}
-                  {hasChanges ? 'Discard Changes' : 'Cancel'}
+                  {hasChanges ? t('discard_changes') : t('cancel')}
                 </ButtonSm>
               )}
               <ButtonSm
@@ -518,13 +519,13 @@ export const UsersPage = () => {
                 {isEditMode
                   ? isEditUsersPending
                     ? 'Saving…'
-                    : 'Save Changes'
-                  : 'Edit Table'}
+                    : t('save_changes')
+                  : t('edit')}
               </ButtonSm>
               {!isEditMode && (
                 <ButtonSm state="default" onClick={handleAddUserRow}>
                   <Plus className="mr-2 h-4 w-4 text-white" />
-                  Add User
+                  {t('add_user')}
                 </ButtonSm>
               )}
             </>
@@ -537,7 +538,7 @@ export const UsersPage = () => {
         className="mx-3"
         dataCell={userTableColumns}
         isLoading={isUsersLoading || isFetching}
-        messageWhenNoData="No users found."
+        messageWhenNoData={t('no_data')}
         isSelectable={formState !== 'add'}
         selectedRowIndices={selectedRowIndices}
         onSelectionChange={handleSelectionChange}

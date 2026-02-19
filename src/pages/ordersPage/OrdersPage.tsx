@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Archive, ArrowLeft, Edit3, Plus } from 'lucide-react'
 import InlineCalendar from '@/components/common/InlineCalendar'
 import ButtonSm from '@/components/common/Buttons'
@@ -53,6 +54,8 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
   if (!order) {
     return <></>
   }
+    const { t } = useTranslation()
+    
 
   const eventDate = new Date(order.eventDate)
 
@@ -60,7 +63,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
     <article className="">
       <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-medium tracking-wide text-orange-500 uppercase">
-          Order Details
+          {t('order_details')}
         </p>
 
         <span className="roundezinc-100 fo uppercasent-semibold px-4 py-1 text-sm text-zinc-600">
@@ -70,7 +73,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
       <dl className="grid grid-cols-1 gap-6 text-sm text-zinc-600 md:grid-cols-2">
         <div className="space-y-1 border-t border-slate-100 pt-4">
           <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            Customer
+            {t('customer')}
           </dt>
           <dd className="text-base font-semibold text-zinc-900">
             {order.customerName}
@@ -79,7 +82,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
         </div>
         <div className="space-y-1 border-t border-slate-100 pt-4">
           <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            Event
+            {t('event')}
           </dt>
           <dd className="text-base font-semibold text-zinc-900">
             {order.eventType}
@@ -99,21 +102,21 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
         </div>
         <div className="space-y-1 border-t border-slate-100 pt-4">
           <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            Headcount
+            {t('headcount')}
           </dt>
           <dd className="text-base font-semibold text-zinc-900">
-            {order.totalPeople} guests
+            {order.totalPeople} {t('guests')}
           </dd>
         </div>
         <div className="space-y-1 border-t border-slate-100 pt-4">
           <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            Payment
+            {t('payment')}
           </dt>
           <dd className="text-base font-semibold text-zinc-900">
             {order.paymentType}
           </dd>
           <p className="text-sm text-zinc-500">
-            Advance ₹{order.advanceAmount.toLocaleString()} / Balance ₹
+            {t('advance')} ₹{order.advanceAmount.toLocaleString()} / {t('balance')} ₹
             {order.balanceAmount.toLocaleString()}
           </p>
         </div>
@@ -166,6 +169,7 @@ const detailSectionTitleClass =
   'text-md font-semibold uppercase tracking-[0.2em] text-orange-500'
 
 export const OrdersPage = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const [selectedDate, setSelectedDate] = useState(new Date())
@@ -244,9 +248,9 @@ export const OrdersPage = () => {
   )
 
   const infoMessage = isLoading
-    ? 'Loading orders…'
+    ? t('loading_orders')
     : ordersForDate.length === 0
-      ? 'No orders scheduled for this date.'
+      ? t('no_orders_scheduled')
       : null
 
   const formattedDateLabel = selectedDate.toLocaleDateString(undefined, {
@@ -272,7 +276,7 @@ export const OrdersPage = () => {
       <header className="flex flex-col items-center gap-2 px-4 py-2 sm:flex-row sm:justify-between">
         <div>
           <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
-            Orders
+            {t('orders')}
           </h1>
         </div>
         <div className="flex flex-row items-center gap-3">
@@ -283,7 +287,7 @@ export const OrdersPage = () => {
               onClick={() => handleNavigateToForm('edit', selectedOrderId)}
               className="font-medium"
             >
-              <Edit3 className="mr-2 h-4 w-4 text-black" /> Edit Order
+              <Edit3 className="mr-2 h-4 w-4 text-black" /> {t('edit_order')}
             </ButtonSm>
           )}
           <ButtonSm
@@ -291,7 +295,7 @@ export const OrdersPage = () => {
             onClick={() => handleNavigateToForm('create')}
             className="font-medium"
           >
-            <Plus className="mr-2 h-4 w-4 text-white" /> Add New Order
+            <Plus className="mr-2 h-4 w-4 text-white" /> {t('add_new_order')}
           </ButtonSm>
         </div>
       </header>
@@ -317,7 +321,7 @@ export const OrdersPage = () => {
             <header className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-                  Orders on
+                  {t('orders_on')}
                 </p>
                 <h3 className="text-lg font-semibold text-zinc-900">
                   {formattedDateLabel}
@@ -325,7 +329,7 @@ export const OrdersPage = () => {
               </div>
               {ordersForDate.length > 0 && (
                 <span className="rounded-full bg-zinc-50 px-3 py-1 text-sm font-medium text-zinc-600">
-                  {ordersForDate.length} total
+                  {ordersForDate.length} {t('total')}
                 </span>
               )}
             </header>
@@ -378,7 +382,7 @@ export const OrdersPage = () => {
                 size={14}
               />
             )}
-            <p className={detailSectionTitleClass}> Summary</p>
+            <p className={detailSectionTitleClass}> {t('summary')}</p>
             <p className="text-lg font-semibold text-zinc-900">
               {selectedOrder
                 ? selectedOrder.customerName
@@ -387,26 +391,26 @@ export const OrdersPage = () => {
           </div>
 
           <SummaryList
-            title={selectedOrder ? 'Items in this order' : 'Items required'}
+            title={selectedOrder ? t('items_in_order') : t('items_required')}
             items={itemsSummary}
             emptyLabel={
               selectedOrder
-                ? 'No menu items added to this order.'
-                : 'No items planned for this date.'
+                ? t('no_menu_items_order')
+                : t('no_items_planned')
             }
           />
 
           <SummaryList
             title={
               selectedOrder
-                ? 'Additional items in this order'
-                : 'Additional items required'
+                ? t('additional_items_in_order')
+                : t('additional_items_required')
             }
             items={additionalItemsSummary}
             emptyLabel={
               selectedOrder
-                ? 'No additional items attached to this order.'
-                : 'No additional items planned for this date.'
+                ? t('no_additional_items_order')
+                : t('no_additional_items_planned')
             }
           />
 

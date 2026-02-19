@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import ButtonSm from '@/components/common/Buttons'
 import Input, { InputCheckbox } from '@/components/common/Input'
 import lodash from 'lodash'
@@ -26,6 +27,7 @@ import { appRoutes } from '@/routes/appRoutes'
 import { useFetchUsers } from '@/queries/usersQueries'
 
 export const OrdersForm = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isEditMode = searchParams.get('mode') === 'edit'
@@ -86,7 +88,7 @@ export const OrdersForm = () => {
             size={24}
             className="cursor-pointer hover:scale-105 active:scale-110"
           />
-          {isEditMode ? 'Edit Order' : 'Create Order'}
+          {isEditMode ? t('edit_order') : t('create_order')}
         </h1>
         <ActionButtons
           isEditMode={isEditMode}
@@ -108,18 +110,18 @@ export const OrdersForm = () => {
           {/* Customer Information */}
           <header className="space-y-1">
             <h2 className="text-base font-semibold text-zinc-800">
-              Customer Information
+              {t('customer_information')}
             </h2>
             <p className="text-sm text-zinc-500">
-              Start with the basics. We will extend the form step by step.
+              {t('form_intro_text')}
             </p>
           </header>
 
           <div className="grid gap-4 md:grid-cols-4">
             <Input
-              title="Customer Name"
+              title={t('customer_name')}
               name="customerName"
-              placeholder="Eg. Priya Chandran"
+              placeholder={t('eg_name')}
               inputValue={editData.customerName}
               onChange={(value) =>
                 setEditData((prev) => ({
@@ -131,10 +133,10 @@ export const OrdersForm = () => {
             />
 
             <Input
-              title="Phone Number"
+              title={t('phone_number')}
               name="phoneNumber"
               prefixText="+91"
-              placeholder="10-digit contact"
+              placeholder={t('phone_placeholder')}
               inputValue={editData.customerPhone}
               onChange={(value) =>
                 setEditData((prev) => ({
@@ -145,9 +147,9 @@ export const OrdersForm = () => {
             />
 
             <Input
-              title="Address"
+              title={t('address')}
               name="address"
-              placeholder="Delivery or event address"
+              placeholder={t('address_placeholder')}
               inputValue={editData.customerAddress}
               onChange={(value) =>
                 setEditData((prev) => ({
@@ -158,13 +160,13 @@ export const OrdersForm = () => {
             />
 
             <DropdownSelect
-              title="Event Type"
+              title={t('event_type')}
               options={eventTypeOptions}
               required
               selected={
                 eventTypeOptions.find(
                   (option) => option.label === editData.eventType
-                ) || { id: 0, label: 'Select Event Type' }
+                ) || { id: 0, label: t('select_event_type') }
               }
               onChange={(option) =>
                 setEditData((prev) => ({ ...prev, eventType: option.label }))
@@ -172,14 +174,14 @@ export const OrdersForm = () => {
             />
 
             <DateInput
-              title="Event Date"
+              title={t('event_date')}
               value={editData.eventDate}
               onChange={(value) =>
                 setEditData((prev) => ({ ...prev, eventDate: value }))
               }
             />
             <TimeInput
-              title="Event Time"
+              title={t('event_time')}
               name="time"
               value={editData.eventTime}
               onChange={(value) =>
@@ -191,9 +193,9 @@ export const OrdersForm = () => {
             />
 
             <Input
-              title="Location Url"
+              title={t('location_url')}
               name="Location Url"
-              placeholder="Delivery or event Location Url"
+              placeholder={t('location_url_placeholder')}
               inputValue={editData.locationUrl}
               onChange={(value) =>
                 setEditData((prev) => ({
@@ -206,30 +208,30 @@ export const OrdersForm = () => {
           {/* Delivery & Payment */}
           <header className="mt-6 space-y-1">
             <h2 className="text-base font-semibold text-zinc-800">
-              Delivery & Payment
+              {t('delivery_payment')}
             </h2>
             <p className="text-sm text-zinc-500">
-              Decides how the order will be delivered and paid for.
+              {t('delivery_payment_text')}
             </p>
           </header>
           <div className="grid gap-4 md:grid-cols-3">
             <InputCheckbox
-              title="Delivery by us "
+              title={t('delivery_by_us')}
               checked={editData.deliveredByUs}
               onChange={(checked) =>
                 setEditData((prev) => ({ ...prev, deliveredByUs: checked }))
               }
-              label="Delivery Preference"
+              label={t('delivery_preference')}
             />
             {editData.deliveredByUs && (
               <DropdownSelect
-                title="Assign Driver"
+                title={t('assign_driver')}
                 options={driverOptions}
                 required
                 selected={
                   driverOptions.find(
                     (option) => option.id === editData.driver?.driverId
-                  ) || { id: 0, label: 'Select Driver' }
+                  ) || { id: 0, label: t('select_driver') }
                 }
                 onChange={(option) =>
                   setEditData((prev) => ({
@@ -245,9 +247,9 @@ export const OrdersForm = () => {
             )}
 
             <Input
-              title="Total People"
-              prefixText="Count"
-              placeholder="Enter total people count"
+              title={t('total_people')}
+              prefixText={t('count')}
+              placeholder={t('total_people_placeholder')}
               inputValue={editData.totalPeople?.toString() || ''}
               onChange={(value) =>
                 setEditData((prev) => ({
@@ -282,15 +284,15 @@ export const OrdersForm = () => {
             }
           />
           <header className="mt-6 space-y-1">
-            <h2 className="text-base font-semibold text-zinc-800">Payment</h2>
+            <h2 className="text-base font-semibold text-zinc-800">{t('payment')}</h2>
             <p className="text-sm text-zinc-500">
-              Decides how the order will be paid for.
+              {t('payment_text')}
             </p>
           </header>
           <div className="grid gap-4 md:grid-cols-3">
             <Input
-              title="Advance Amount"
-              placeholder="Enter advance amount"
+              title={t('advance_amount')}
+              placeholder={t('advance_amount_placeholder')}
               prefixText="₹"
               inputValue={editData.advanceAmount?.toString() || ''}
               onChange={(value) =>
@@ -301,14 +303,14 @@ export const OrdersForm = () => {
               }
             />
             <DropdownSelect
-              title="Payment Type"
+              title={t('payment_type')}
               options={paymentTypeOptions}
               selected={
                 paymentTypeOptions.find(
                   (option) =>
                     option.label.toLocaleLowerCase() ===
                     editData.paymentType.toLocaleLowerCase()
-                ) || { id: 0, label: 'Select Payment Type' }
+                ) || { id: 0, label: t('select_payment_type') }
               }
               onChange={(option) =>
                 setEditData((prev) => ({ ...prev, paymentType: option.label }))
@@ -358,6 +360,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   isCreatePending,
   isUpdatePending,
 }) => {
+    const { t } = useTranslation()
+    
   return (
     <div className="flex flex-wrap justify-end gap-3">
       <ButtonSm
@@ -370,7 +374,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           else navigate(-1)
         }}
       >
-        {isEditMode ? 'Discard Changes' : 'Cancel'}
+        {isEditMode ? t('discard_changes') : t('cancel')}
       </ButtonSm>
       <ButtonSm
         className="disabled:cursor-not-allowed disabled:opacity-80!"
@@ -390,7 +394,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
           }
         }}
       >
-        {isEditMode ? 'Save Changes' : 'Create New Order'}
+        {isEditMode ? t('save_changes') : t('create_new_order')}
       </ButtonSm>
     </div>
   )

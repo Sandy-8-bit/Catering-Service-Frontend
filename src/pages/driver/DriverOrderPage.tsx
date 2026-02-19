@@ -90,12 +90,12 @@ const isEditingVessels = vessels.length > 0
 
     updateVessels(
       {
-        deliveryId: order!.id,
-        vessels: vessels.map(v => ({               // undefined is OK
-      name: v.name,             // ✅ REQUIRED
-      quantityGiven: v.quantityGiven,
-    
-    })),
+        driverId: order!.driverId,
+        orderId: order!.orderId,
+        vessels: vessels.map(v => ({
+          name: v.name,
+          quantityGiven: v.quantityGiven,
+        })),
       },
       {
         onSuccess: () => {

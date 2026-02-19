@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'framer-motion'
 
 import ButtonSm from '@/components/common/Buttons'
@@ -18,13 +19,14 @@ import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 import { DeleteCategoriesDialog } from './DeleteCatergoriesDialog'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 
-const createEmptyCategory = (id: number): Category => ({
-  id,
-  primaryName: '',
-  secondaryName: '',
-})
-
 export const CategoriesPage = () => {
+  const { t } = useTranslation()
+  
+  const createEmptyCategory = (id: number): Category => ({
+    id,
+    primaryName: '',
+    secondaryName: '',
+  })
   const {
     data: categories = [],
     isLoading: isCategoriesLoading,
@@ -190,7 +192,7 @@ export const CategoriesPage = () => {
   useHandleCancelHook(formState, handleDiscardChanges)
   useHandleSaveHook(formState, handleSaveChanges)
 
-  const handleSelectionChange = (indices: number[], rows: Category[]) => {
+  const handleSelectionChange = (rows: Category[]) => {
     setSelectedRows(rows)
   }
 
@@ -235,7 +237,7 @@ export const CategoriesPage = () => {
 
   const categoryTableColumns: DataCell[] = [
     {
-      headingTitle: 'Primary Name',
+      headingTitle: t('category_primary'),
       accessVar: 'primaryName',
       className: 'max-w-32',
       render: (value, row) => {
@@ -270,7 +272,7 @@ export const CategoriesPage = () => {
       },
     },
     {
-      headingTitle: 'Secondary Name',
+      headingTitle: t('category_secondary'),
       accessVar: 'secondaryName',
       className: 'w-42',
       render: (value, row) => (
@@ -297,7 +299,7 @@ export const CategoriesPage = () => {
     <main className="layout-container flex min-h-[95vh] w-full flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
       <header className="flex flex-row gap-4 p-4">
         <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
-          Categories
+          {t('categories')}
         </h1>
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
@@ -310,7 +312,7 @@ export const CategoriesPage = () => {
             disabled={isEditCategoriesPending}
           >
             <Filter className="h-4 w-4 text-black" />
-            Filter
+            {t('filter')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           <DropdownSelect
@@ -330,7 +332,7 @@ export const CategoriesPage = () => {
             disabled={isEditCategoriesPending}
           >
             <UploadCloud className="h-5 w-5 text-black" />
-            Export Data
+            {t('upload')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           {isAddMode ? (
@@ -340,7 +342,7 @@ export const CategoriesPage = () => {
                 onClick={handleDiscardChanges}
                 disabled={isCreateCategoryPending}
               >
-                <X className="h-4 w-4 text-black" /> Cancel Add
+                <X className="h-4 w-4 text-black" /> {t('cancel')}
               </ButtonSm>
               <ButtonSm
                 className={
@@ -351,7 +353,7 @@ export const CategoriesPage = () => {
                 disabled={!hasValidDraft || isCreateCategoryPending}
                 isPending={isCreateCategoryPending}
               >
-                <SaveIcon className="mr-2 h-4 w-4 text-white" /> Save Category
+                <SaveIcon className="mr-2 h-4 w-4 text-white" /> {t('save')}
               </ButtonSm>
             </>
           ) : (
@@ -363,7 +365,7 @@ export const CategoriesPage = () => {
                   disabled={isEditCategoriesPending}
                 >
                   <X className="h-4 w-4 text-black" />{' '}
-                  {hasChanges ? 'Discard Changes' : 'Cancel'}
+                  {hasChanges ? t('discard_changes') : t('cancel')}
                 </ButtonSm>
               )}
               <ButtonSm
@@ -393,13 +395,13 @@ export const CategoriesPage = () => {
                 {isEditMode
                   ? isEditCategoriesPending
                     ? 'Saving'
-                    : 'Save Changes'
-                  : 'Edit Table'}
+                    : t('save_changes')
+                  : t('edit')}
               </ButtonSm>
               {!isEditMode && (
                 <ButtonSm state="default" onClick={handleAddCategoryRow}>
                   <Plus className="mr-2 h-4 w-4 text-white" />
-                  Add Category
+                  {t('add_category')}
                 </ButtonSm>
               )}
             </>
@@ -412,7 +414,7 @@ export const CategoriesPage = () => {
         className="mx-3"
         dataCell={categoryTableColumns}
         isLoading={isCategoriesLoading || isFetching}
-        messageWhenNoData="No categories available."
+        messageWhenNoData={t('no_data')}
         isSelectable={formState !== 'add'}
         selectedRowIndices={selectedRowIndices}
         onSelectionChange={handleSelectionChange}

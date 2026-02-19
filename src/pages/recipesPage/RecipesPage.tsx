@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'react-hot-toast'
 
 import ButtonSm from '@/components/common/Buttons'
@@ -13,6 +14,7 @@ import type { Product } from '@/types/product'
 import type { RecipeCalculationRow } from '@/types/recipe'
 
 const RecipesPage = () => {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { data: products = [], isLoading: isProductsLoading } =
     useFetchProducts()
@@ -98,7 +100,7 @@ const RecipesPage = () => {
       ),
     },
     {
-      headingTitle: 'Category',
+      headingTitle: t('product_category'),
       className: 'min-w-[160px]',
       render: (_value, row: Product) => (
         <span className="text-sm font-medium text-zinc-700">
@@ -107,7 +109,7 @@ const RecipesPage = () => {
       ),
     },
     {
-      headingTitle: 'Price (₹)',
+      headingTitle: t('product_price'),
       className: 'min-w-[120px] text-right',
       render: (_value, row: Product) => (
         <span className="text-sm font-semibold text-zinc-800">
@@ -118,13 +120,13 @@ const RecipesPage = () => {
       ),
     },
     {
-      headingTitle: 'Availability',
+      headingTitle: t('availability'),
       className: 'min-w-[140px]',
       render: (_value, row: Product) => (
         <span
           className={`text-xs font-semibold uppercase ${row.available ? 'text-emerald-600' : 'text-rose-600'}`}
         >
-          {row.available ? 'Available' : 'Unavailable'}
+          {row.available ? t('available') : t('unavailable')}
         </span>
       ),
     },
@@ -134,10 +136,9 @@ const RecipesPage = () => {
     <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
       <header className="flex flex-wrap items-center justify-between gap-4 p-4">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-800">Recipes</h1>
+          <h1 className="text-xl font-semibold text-zinc-800">{t('recipes')}</h1>
           <p className="text-sm text-zinc-500">
-            Review every product and jump into detailed recipe editing when
-            needed.
+            {t('review_products')}
           </p>
         </div>
       </header>
@@ -199,10 +200,10 @@ const RecipesPage = () => {
               <table className="min-w-full text-left text-sm text-zinc-700">
                 <thead>
                   <tr className="border-b border-zinc-200 text-xs tracking-wide text-zinc-500 uppercase">
-                    <th className="py-2 pr-3">Raw Material</th>
-                    <th className="py-2 pr-3">Unit</th>
-                    <th className="py-2 pr-3 text-right">Qty / Unit</th>
-                    <th className="py-2 text-right">Total Qty</th>
+                    <th className="py-2 pr-3">{t('raw_material_column')}</th>
+                    <th className="py-2 pr-3">{t('unit')}</th>
+                    <th className="py-2 pr-3 text-right">{t('qty_per_unit')}</th>
+                    <th className="py-2 text-right">{t('total_qty')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -227,8 +228,7 @@ const RecipesPage = () => {
               </table>
             ) : (
               <p className="text-sm text-zinc-500">
-                Run a calculation to see raw material requirements for a given
-                quantity.
+                {t('calculation_help')}
               </p>
             )}
           </div>

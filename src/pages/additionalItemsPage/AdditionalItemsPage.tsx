@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'framer-motion'
 
 import ButtonSm from '@/components/common/Buttons'
@@ -21,11 +22,6 @@ import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
 
 import { DeleteAdditionalItemsDialog } from './DeleteAdditionalItemsDialog'
-
-const BOOLEAN_OPTIONS = [
-  { id: 1, label: 'Yes' },
-  { id: 0, label: 'No' },
-]
 
 const createEmptyAdditionalItem = (id: number): AdditionalItem => ({
   id,
@@ -53,6 +49,13 @@ const BOOLEAN_FIELDS: ReadonlyArray<keyof AdditionalItem> = [
 ]
 
 export const AdditionalItemsPage = () => {
+  const { t } = useTranslation()
+
+  const BOOLEAN_OPTIONS = [
+    { id: 1, label: t('yes') },
+    { id: 0, label: t('no') },
+  ]
+
   const {
     data: additionalItems = [],
     isLoading: isAdditionalItemsLoading,
@@ -306,7 +309,7 @@ export const AdditionalItemsPage = () => {
 
   const additionalItemTableColumns: DataCell[] = [
     {
-      headingTitle: 'Primary Name',
+      headingTitle: t('product_name_primary'),
       accessVar: 'primaryName',
       className: 'max-w-32',
       render: (value, row) => {
@@ -341,7 +344,7 @@ export const AdditionalItemsPage = () => {
       },
     },
     {
-      headingTitle: 'Secondary Name',
+      headingTitle: t('product_name_secondary'),
       accessVar: 'secondaryName',
       className: 'w-42',
       render: (value, row) => (
@@ -356,7 +359,7 @@ export const AdditionalItemsPage = () => {
       ),
     },
     {
-      headingTitle: 'Description',
+      headingTitle: t('product_description'),
       accessVar: 'description',
       className: 'w-52',
       render: (value, row) => (
@@ -371,7 +374,7 @@ export const AdditionalItemsPage = () => {
       ),
     },
     {
-      headingTitle: 'Track Stock',
+      headingTitle: t('track_stock'),
       accessVar: 'trackStock',
       className: 'w-32',
       render: (_value, row) => (
@@ -388,7 +391,7 @@ export const AdditionalItemsPage = () => {
       ),
     },
     {
-      headingTitle: 'Available Qty',
+      headingTitle: t('available_qty'),
       accessVar: 'availableQty',
       className: 'w-32',
       render: (value, row) => (
@@ -408,7 +411,7 @@ export const AdditionalItemsPage = () => {
       ),
     },
     {
-      headingTitle: 'Chargeable',
+      headingTitle: t('chargeable'),
       accessVar: 'chargeable',
       className: 'w-32',
       render: (_value, row) => (
@@ -425,7 +428,7 @@ export const AdditionalItemsPage = () => {
       ),
     },
     {
-      headingTitle: 'Price / Unit (₹)',
+      headingTitle: t('price_per_unit'),
       accessVar: 'pricePerUnit',
       className: 'w-40',
       render: (value, row) => (
@@ -445,7 +448,7 @@ export const AdditionalItemsPage = () => {
       ),
     },
     {
-      headingTitle: 'Active',
+      headingTitle: t('active'),
       accessVar: 'active',
       className: 'w-28',
       render: (_value, row) => (
@@ -462,7 +465,7 @@ export const AdditionalItemsPage = () => {
       ),
     },
     {
-      headingTitle: 'Returnable',
+      headingTitle: t('returnable'),
       accessVar: 'returnable',
       className: 'w-32',
       render: (_value, row) => (
@@ -488,7 +491,7 @@ export const AdditionalItemsPage = () => {
     <main className="layout-container flex min-h-[95vh] w-full flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
       <header className="flex flex-row gap-4 p-4">
         <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
-          Additional Items
+          {t('additional_items')}
         </h1>
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
@@ -501,7 +504,7 @@ export const AdditionalItemsPage = () => {
             disabled={isEditAdditionalItemsPending}
           >
             <Filter className="h-4 w-4 text-black" />
-            Filter
+            {t('filter')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           <DropdownSelect
@@ -521,7 +524,7 @@ export const AdditionalItemsPage = () => {
             disabled={isEditAdditionalItemsPending}
           >
             <UploadCloud className="h-5 w-5 text-black" />
-            Export Data
+            {t('export_data')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
           {isAddMode ? (
@@ -531,7 +534,7 @@ export const AdditionalItemsPage = () => {
                 onClick={handleDiscardChanges}
                 disabled={isCreateAdditionalItemsPending}
               >
-                <X className="h-4 w-4 text-black" /> Cancel Add
+                <X className="h-4 w-4 text-black" /> {t('cancel')}
               </ButtonSm>
               <ButtonSm
                 className={
@@ -542,7 +545,7 @@ export const AdditionalItemsPage = () => {
                 disabled={!hasValidDraft || isCreateAdditionalItemsPending}
                 isPending={isCreateAdditionalItemsPending}
               >
-                <SaveIcon className="mr-2 h-4 w-4 text-white" /> Save Item
+                <SaveIcon className="mr-2 h-4 w-4 text-white" /> {t('save_item')}
               </ButtonSm>
             </>
           ) : (
@@ -554,7 +557,7 @@ export const AdditionalItemsPage = () => {
                   disabled={isEditAdditionalItemsPending}
                 >
                   <X className="h-4 w-4 text-black" />{' '}
-                  {hasChanges ? 'Discard Changes' : 'Cancel'}
+                  {hasChanges ? t('discard_changes') : t('cancel')}
                 </ButtonSm>
               )}
               <ButtonSm
@@ -584,13 +587,13 @@ export const AdditionalItemsPage = () => {
                 {isEditMode
                   ? isEditAdditionalItemsPending
                     ? 'Saving…'
-                    : 'Save Changes'
-                  : 'Edit Table'}
+                    : t('save_changes')
+                  : t('edit')}
               </ButtonSm>
               {!isEditMode && (
                 <ButtonSm state="default" onClick={handleAddAdditionalItemRow}>
                   <Plus className="mr-2 h-4 w-4 text-white" />
-                  Add Additional Item
+                  {t('add_additional_item')}
                 </ButtonSm>
               )}
             </>
@@ -603,7 +606,7 @@ export const AdditionalItemsPage = () => {
         className="mx-3"
         dataCell={additionalItemTableColumns}
         isLoading={isAdditionalItemsLoading || isFetching}
-        messageWhenNoData="No additional items available."
+        messageWhenNoData={t('no_additional_items')}
         isSelectable={formState !== 'add'}
         selectedRowIndices={selectedRowIndices}
         onSelectionChange={handleSelectionChange}

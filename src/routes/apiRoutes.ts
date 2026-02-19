@@ -15,7 +15,7 @@ export const apiRoutes = {
 
 
   //driver routes
-  driverdashboard: '/api/driver/dashboard/date',
+  driverdashboard: '/api/driver/dashboard',
   driverorder: '/api/driver/deliveries/order',
   driverDeliveries:"/api/driver/deliveries"
 }
