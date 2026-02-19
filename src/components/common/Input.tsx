@@ -52,7 +52,7 @@ const Input = <T extends string | number>({
     const recognition = new SpeechRecognition()
     recognition.continuous = false
     recognition.interimResults = false
-    recognition.lang = 'ta-IN' // 🔥 Tamil only
+    recognition.lang = 'ta-IN' // Tamil only
 
     recognition.onresult = (event: any) => {
       const transcript =
@@ -61,14 +61,17 @@ const Input = <T extends string | number>({
       if (!transcript) return
 
       if (type === 'num') {
-        // Extract digits only
-        const digits = transcript.replace(/[^\d]/g, '')
+        // 🔥 STRICT NUMBER MODE
+        // Accept only digits
+        const digitsOnly = transcript.replace(/\D/g, '')
 
-        if (digits) {
+        if (digitsOnly.length === transcript.length) {
+          // Only append if fully numeric
           const oldValue = String(inputValue ?? '')
-          const newValue = oldValue + digits
+          const newValue = oldValue + digitsOnly
           onChange(Number(newValue) as T)
         }
+        // else ignore completely
       } else {
         const oldValue = String(inputValue ?? '')
         const newText =
@@ -162,9 +165,9 @@ const Input = <T extends string | number>({
           onChange={handleChange}
           value={inputValue}
           disabled={disabled}
-                          className={`custom-disabled-cursor hover:cursor[text]:color-black min-h-max w-full ${
-            disabled ? 'bg-slate-200' : 'cursor-text'
-          } ${className} text-start ${viewMode ? 'text-base font-medium text-slate-900' : 'px-3 py-3 text-sm font-medium text-slate-600 autofill:text-black focus:outline-none'} shadow-sm read-only:cursor-default read-only:bg-white`}
+          className={`w-full px-3 py-3 text-sm font-medium focus:outline-none ${
+            disabled ? 'bg-slate-200' : 'bg-white'
+          } ${className}`}
         />
 
         {!viewMode && !disabled && (
@@ -191,8 +194,6 @@ const Input = <T extends string | number>({
 }
 
 export default Input
-
-
 
 
 interface CheckBoxProps {

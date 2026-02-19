@@ -11,7 +11,7 @@ const MainLayout: React.FC = () => {
   const formattedDate = 'Saturday, 11th November 2022'
 
   return (
-    <div className="Main-entry-point flex h-screen w-screen flex-row overflow-hidden bg-[#FAFAFA]">
+    <div className="Main-entry-point flex h-screen w-screen flex-col lg:flex-row overflow-hidden bg-[#FAFAFA]">
       <SideNav />
       <section className="flex h-full w-full flex-col overflow-hidden">
         {/* Top Navbar */}

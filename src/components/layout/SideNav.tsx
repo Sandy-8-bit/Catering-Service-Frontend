@@ -82,12 +82,131 @@ const SideNav: React.FC = () => {
   }, [])
 
   const toggleExpansion = () => setIsExpanded((prev) => !prev)
+  const MobileNav: React.FC<{
+  navigationItems: NavigationItem[]
+  activeRoute: string
+  navigateToRoute: (route: string) => void
+  handleLogout: () => void
+}> = ({ navigationItems, activeRoute, navigateToRoute, handleLogout }) => {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const isRouteActive = (route: string) =>
+    activeRoute.startsWith(route)
+
+  const mainItems = navigationItems.filter(
+    (item) => item.section === 'main'
+  )
 
   return (
-    <div
-      style={{ zoom: 0.85 }}
-      className="floating-container relative flex min-h-[125vh] border-r border-gray-200 bg-[#FAFAFA] transition-all duration-300"
-    >
+    <div className="md:hidden">
+      {/* 🔝 Top Nav */}
+      <div className="   flex items-center justify-between bg-white px-4 py-3 shadow-md">
+        <span className="font-semibold text-slate-800">
+          EBT Catering
+        </span>
+        <button onClick={() => setMenuOpen(true)}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      </div>
+
+      {/* 📂 Slide Menu */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40">
+          <div className="absolute right-0 top-0 h-full w-64 bg-white p-4 shadow-lg">
+            <button
+              className="mb-4 text-sm text-red-500"
+              onClick={() => setMenuOpen(false)}
+            >
+              Close
+            </button>
+
+            {navigationItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => {
+                  navigateToRoute(item.path)
+                  setMenuOpen(false)
+                }}
+                className={`block w-full text-left px-3 py-2 rounded-lg ${
+                  isRouteActive(item.path)
+                    ? 'bg-orange-100 font-semibold'
+                    : ''
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+
+            <button
+              onClick={handleLogout}
+              className="mt-4 w-full rounded-lg bg-red-500 py-2 text-white"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 🔻 Bottom Tab Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 flex justify-around border-t bg-white py-2 shadow-md">
+        {mainItems.map((item) => (
+          <button
+            key={item.path}
+            onClick={() => navigateToRoute(item.path)}
+            className="flex flex-col items-center text-xs"
+          >
+            <img
+              src={
+                isRouteActive(item.path) && item.activeIcon
+                  ? item.activeIcon
+                  : item.icon
+              }
+              className="h-6 w-6"
+            />
+            <span
+              className={
+                isRouteActive(item.path)
+                  ? 'text-orange-500 font-semibold'
+                  : 'text-slate-500'
+              }
+            >
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+
+  return (
+    <>
+  <MobileNav
+    navigationItems={navigationItems}
+    activeRoute={activeRoute}
+    navigateToRoute={navigateToRoute}
+    handleLogout={handleLogout}
+  />
+
+ <div
+  style={{ zoom: 0.85 }}
+  className="hidden md:flex floating-container relative min-h-[125vh] border-r border-gray-200 bg-[#FAFAFA]"
+>
+
       <motion.section
         className={`flex h-[115vh] flex-col gap-4 overflow-hidden bg-[#FAFAFA] px-2.5 pt-4 transition-all duration-300 select-none ${isExpanded ? 'w-[280px]' : 'w-[100px]'}`}
         animate={{ x: 0, opacity: 1 }}
@@ -201,6 +320,7 @@ const SideNav: React.FC = () => {
         </motion.div>
       </motion.section>
     </div>
+    </>
   )
 }
 

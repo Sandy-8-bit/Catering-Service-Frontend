@@ -120,7 +120,7 @@ export const OrdersForm = () => {
 
           <div className="grid gap-4 md:grid-cols-4">
             <VoiceInput
-              title={t('customer_name')}
+              title={t('name')}
               name="customerName"
               placeholder={t('eg_name')}
               inputValue={editData.customerName}
