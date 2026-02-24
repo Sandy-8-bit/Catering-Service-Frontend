@@ -84,7 +84,15 @@ body {
 }
 
 html {
-  font-size: 90%;
+  font-size: 95%;
+}
+
+body {
+  font-weight: 600;
+}
+
+body * {
+  font-weight: 600 !important;
 }
 
 @layer utilities {
