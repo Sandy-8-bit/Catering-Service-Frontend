@@ -215,3 +215,98 @@ export const useDeleteOrder = () => {
     },
   })
 }
+
+export const useUploadVoiceOrder = () => {
+  const uploadVoiceOrder = async (payload: {
+    file: Blob
+    eventDate: string
+  }) => {
+    try {
+      const token = authHandler()
+
+      // Determine file extension based on MIME type
+      const extension = payload.file.type.includes('wav')
+        ? 'recording.wav'
+        : 'recording.webm'
+
+      // Create a proper File object from the Blob
+      const audioFile = new File([payload.file], extension, {
+        type: payload.file.type || 'audio/wav',
+      })
+
+      const formData = new FormData()
+      formData.append('file', audioFile)
+      formData.append('eventDate', payload.eventDate)
+
+      // Use native fetch to avoid axios transforming FormData
+      const baseURL = axiosInstance.defaults.baseURL || ''
+      const url = `${baseURL}${apiRoutes.audioOrderUpload}`
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Do NOT set Content-Type - let browser set it with boundary
+        },
+        body: formData,
+        credentials: 'include',
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(
+          errorData?.message ||
+            `HTTP ${response.status}: ${response.statusText}`
+        )
+      }
+
+      return await response.json()
+    } catch (error: unknown) {
+      handleApiError(error, 'Upload voice order')
+    }
+  }
+
+  return useMutation({
+    mutationFn: uploadVoiceOrder,
+    onSuccess: () => {
+      toast.success('Voice order uploaded successfully!')
+    },
+  })
+}
+
+// ─── Bill ────────────────────────────────────────────────────────────────────
+
+export type BillType = 'CUSTOMER' | 'STAFF' | 'OWNER'
+
+export interface BillCustomerItem {
+  productName?: string
+  quantity?: number
+  unitPrice?: number
+  lineTotal?: number
+}
+
+export interface BillRawMaterial {
+  rawMaterialName?: string
+  requiredQuantity?: number
+  unit?: string
+}
+
+export interface BillData {
+  orderId?: number
+  customerItems?: BillCustomerItem[] | null
+  rawMaterials?: BillRawMaterial[] | null
+  totalAmount?: number | null
+  [key: string]: unknown
+}
+
+export const fetchOrderBill = async (
+  orderId: number,
+  type: BillType
+): Promise<BillData> => {
+  const token = authHandler()
+  const res = await axiosInstance.get(`${apiRoutes.orders}/${orderId}/bill`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { type },
+  })
+  return (res.data?.data ?? res.data) as BillData
+}

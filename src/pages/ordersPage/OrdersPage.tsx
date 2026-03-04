@@ -1,126 +1,100 @@
-import { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Archive, ArrowLeft, Edit3, Plus } from 'lucide-react'
+import { Archive, ArrowLeft, Edit3, Mic, Plus } from 'lucide-react'
 import InlineCalendar from '@/components/common/InlineCalendar'
 import ButtonSm from '@/components/common/Buttons'
+import GenericTable from '@/components/common/GenericTable'
+import DialogBox from '@/components/common/DialogBox'
+import VoiceOrderDialog from '@/components/orders/VoiceOrderDialog'
+import DownloadBillButton from '@/components/orders/DownloadBillButton'
 import { appRoutes } from '@/routes/appRoutes'
 import { useFetchOrders } from '@/queries/ordersQueries'
 import type { Order } from '@/types/order'
 
-interface SummaryListProps {
-  title: string
-  items: Array<{ label: string; quantity: number }>
-  emptyLabel: string
-}
-
-const SummaryList = ({ title, items, emptyLabel }: SummaryListProps) => {
-  return (
-    <article className="">
-      <header className="mb-4 flex flex-row items-center justify-between">
-        <h3 className="text-lg font-semibold text-zinc-900">{title}</h3>
-        {items.length > 0 && (
-          <span className="text-sm font-medium text-zinc-400">
-            {items.length} items
-          </span>
-        )}
-      </header>
-      {items.length === 0 ? (
-        <p className="flex flex-row items-center gap-2 rounded-md border-2 border-dashed border-[#f1f1f1] bg-white p-3 text-base text-zinc-500 shadow-sm">
-          <Archive className="mr-2" size={18} /> {emptyLabel}
-        </p>
-      ) : (
-        <section className="flex max-h-80 min-w-[100px] flex-wrap divide-slate-100 overflow-y-auto text-base text-zinc-700">
-          {items.map((item) => (
-            <div
-              key={`${title}-${item.label}`}
-              className="mr-2 mb-2 flex w-max flex-row items-center justify-between rounded-lg border border-slate-600 bg-black px-3 py-2 text-white shadow-sm"
-            >
-              <span className="text-sm font-medium text-white md:text-base">
-                {item.label}
-              </span>
-              <span className="ml-4 text-base font-medium text-white">
-                {item.quantity}
-              </span>
-            </div>
-          ))}
-        </section>
-      )}
-    </article>
-  )
-}
+const DetailCell = ({
+  label,
+  value,
+}: {
+  label: string
+  value: React.ReactNode
+}) => (
+  <div className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-zinc-200">
+    <p className="mb-1 text-xs font-semibold tracking-wider text-zinc-400 uppercase">
+      {label}
+    </p>
+    <p className="text-base leading-snug font-bold text-zinc-900">{value}</p>
+  </div>
+)
 
 const OrderDetailsCard = ({ order }: { order: Order | null }) => {
+  const { t } = useTranslation()
+
   if (!order) {
     return <></>
   }
-    const { t } = useTranslation()
-    
 
   const eventDate = new Date(order.eventDate)
 
   return (
-    <article className="">
-      <header className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium tracking-wide text-orange-500 uppercase">
-          {t('order_details')}
-        </p>
-
-        <span className="roundezinc-100 fo uppercasent-semibold px-4 py-1 text-sm text-zinc-600">
+    <article className="overflow-hidden rounded-xl border-2 border-zinc-200/80 bg-white">
+      <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50 px-5 py-3">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-orange-500" />
+          <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">
+            {t('order_details')}
+          </p>
+        </div>
+        <span className="rounded-md bg-zinc-900 px-3 py-1 text-xs font-bold tracking-wide text-white">
           #{order.id}
         </span>
-      </header>
-      <dl className="grid grid-cols-1 gap-6 text-sm text-zinc-600 md:grid-cols-2">
-        <div className="space-y-1 border-t border-slate-100 pt-4">
-          <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            {t('customer')}
-          </dt>
-          <dd className="text-base font-semibold text-zinc-900">
-            {order.customerName}
-          </dd>
-          <p className="text-sm text-zinc-500">{order.customerPhone}</p>
-        </div>
-        <div className="space-y-1 border-t border-slate-100 pt-4">
-          <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            {t('event')}
-          </dt>
-          <dd className="text-base font-semibold text-zinc-900">
-            {order.eventType}
-          </dd>
-          <p className="text-sm text-zinc-500">
-            {eventDate.toLocaleDateString(undefined, {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-            })}
-            ,{' '}
-            {eventDate.toLocaleTimeString(undefined, {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
-          </p>
-        </div>
-        <div className="space-y-1 border-t border-slate-100 pt-4">
-          <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            {t('headcount')}
-          </dt>
-          <dd className="text-base font-semibold text-zinc-900">
-            {order.totalPeople} {t('guests')}
-          </dd>
-        </div>
-        <div className="space-y-1 border-t border-slate-100 pt-4">
-          <dt className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            {t('payment')}
-          </dt>
-          <dd className="text-base font-semibold text-zinc-900">
-            {order.paymentType}
-          </dd>
-          <p className="text-sm text-zinc-500">
-            {t('advance')} ₹{order.advanceAmount.toLocaleString()} / {t('balance')} ₹
-            {order.balanceAmount.toLocaleString()}
-          </p>
-        </div>
-      </dl>
+      </div>
+      <div className="p-5">
+        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <DetailCell label={t('customer')} value={order.customerName} />
+          <DetailCell label={t('phone')} value={order.customerPhone} />
+          <DetailCell label={t('event')} value={order.eventType} />
+          <DetailCell
+            label={t('date_time')}
+            value={
+              <span>
+                {eventDate.toLocaleDateString(undefined, {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                })}
+                {' | '}
+                <span className="">
+                  {eventDate.toLocaleTimeString(undefined, {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+              </span>
+            }
+          />
+          <DetailCell
+            label={t('head count')}
+            value={
+              <span>
+                {order.totalPeople}{' '}
+                <span className="text-sm font-normal text-zinc-400">
+                  {t('guests')}
+                </span>
+              </span>
+            }
+          />
+          <DetailCell label={t('payment')} value={order.paymentType} />
+          <DetailCell
+            label={t('advance')}
+            value={`₹${order.advanceAmount.toLocaleString()}`}
+          />
+          <DetailCell
+            label={t('balance')}
+            value={`₹${order.balanceAmount.toLocaleString()}`}
+          />
+        </dl>
+      </div>
     </article>
   )
 }
@@ -166,7 +140,7 @@ const buildQuantitySummary = <T,>(
 }
 
 const detailSectionTitleClass =
-  'text-md font-semibold uppercase tracking-[0.2em] text-orange-500'
+  'text-xs font-bold uppercase tracking-[0.2em] text-orange-500'
 
 export const OrdersPage = () => {
   const { t } = useTranslation()
@@ -174,6 +148,9 @@ export const OrdersPage = () => {
 
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
+  const [showVoiceDialog, setShowVoiceDialog] = useState(false)
+
+  const selectedDateISO = selectedDate.toLocaleDateString('en-CA') // YYYY-MM-DD
 
   const { data: orders = [], isLoading } = useFetchOrders({
     year: selectedDate.getFullYear(),
@@ -272,24 +249,35 @@ export const OrdersPage = () => {
   }
 
   return (
-    <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
-      <header className="flex flex-col items-center gap-2 px-4 py-2 sm:flex-row sm:justify-between">
-        <div>
-          <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
+    <main className="layout-container flex min-h-[95vh] flex-col overflow-hidden rounded-[12px] border border-zinc-200 bg-zinc-50 shadow-sm">
+      <header className="flex flex-col items-center gap-2 border-b border-zinc-200 bg-white px-5 py-3 sm:flex-row sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="h-5 w-1 rounded-full bg-orange-500" />
+          <h1 className="text-xl font-bold tracking-tight text-zinc-900">
             {t('orders')}
           </h1>
         </div>
         <div className="flex flex-row items-center gap-3">
           {selectedOrder && (
-            <ButtonSm
-              state="outline"
-              disabled={!selectedOrderId}
-              onClick={() => handleNavigateToForm('edit', selectedOrderId)}
-              className="font-medium"
-            >
-              <Edit3 className="mr-2 h-4 w-4 text-black" /> {t('edit_order')}
-            </ButtonSm>
+            <>
+              <ButtonSm
+                state="outline"
+                disabled={!selectedOrderId}
+                onClick={() => handleNavigateToForm('edit', selectedOrderId)}
+                className="font-medium"
+              >
+                <Edit3 className="mr-2 h-4 w-4 text-black" /> {t('edit_order')}
+              </ButtonSm>
+              <DownloadBillButton orderId={selectedOrder.id} />
+            </>
           )}
+          <ButtonSm
+            state="outline"
+            onClick={() => setShowVoiceDialog(true)}
+            className="font-medium"
+          >
+            <Mic className="mr-2 h-4 w-4 text-zinc-700" /> Create Voice Order
+          </ButtonSm>
           <ButtonSm
             state="default"
             onClick={() => handleNavigateToForm('create')}
@@ -299,15 +287,23 @@ export const OrdersPage = () => {
           </ButtonSm>
         </div>
       </header>
-      <div className="divider min-w-full border border-[#F1F1F1]" />
 
-      <section className="mt-6 flex flex-col gap-6 px-4 pb-6 lg:flex-row">
+      {showVoiceDialog && (
+        <DialogBox setToggleDialogueBox={setShowVoiceDialog} width="420px">
+          <VoiceOrderDialog
+            onClose={() => setShowVoiceDialog(false)}
+            eventDate={selectedDateISO}
+          />
+        </DialogBox>
+      )}
+
+      <section className="flex flex-1 flex-col gap-0 overflow-hidden lg:flex-row">
         <div
-          className="flex w-full flex-col gap-6 lg:w-auto"
+          className="flex w-full flex-col gap-5 border-b border-zinc-200 bg-zinc-50 p-4 lg:w-[360px] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0"
           style={{ zoom: 0.95 }}
         >
           <InlineCalendar
-            className="min-w-[360px]!"
+            className="min-w-full!"
             showSelectedLabel={false}
             selectedDate={selectedDate}
             dateCounts={ordersPerDate}
@@ -317,26 +313,26 @@ export const OrdersPage = () => {
             }}
           />
 
-          <div className="rounded-2xl border-2 border-[#F1F1F1] p-5">
-            <header className="flex items-center justify-between gap-4">
+          <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <header className="mb-3 flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                <p className="text-xs font-semibold tracking-widest text-zinc-400 uppercase">
                   {t('orders_on')}
                 </p>
-                <h3 className="text-lg font-semibold text-zinc-900">
+                <h3 className="text-base font-bold text-zinc-900">
                   {formattedDateLabel}
                 </h3>
               </div>
               {ordersForDate.length > 0 && (
-                <span className="rounded-full bg-zinc-50 px-3 py-1 text-sm font-medium text-zinc-600">
+                <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-500 ring-1 ring-orange-200">
                   {ordersForDate.length} {t('total')}
                 </span>
               )}
             </header>
 
-            <div className="mt-4 flex max-h-[300px] flex-col gap-3 overflow-y-auto">
+            <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
               {infoMessage ? (
-                <p className="rounded-md border-2 border-dashed border-[#f1f1f1] p-3 text-base text-zinc-500">
+                <p className="rounded-xl border border-zinc-100 bg-zinc-50 p-3 text-sm text-zinc-400">
                   {infoMessage}
                 </p>
               ) : (
@@ -351,16 +347,20 @@ export const OrdersPage = () => {
                           prev === order.id ? null : order.id
                         )
                       }
-                      className={`w-full cursor-pointer rounded-2xl px-4 py-3 text-left text-base transition ${
+                      className={`w-full cursor-pointer rounded-xl px-4 py-3 text-left transition-all ${
                         isActive
-                          ? 'border border-orange-300 bg-orange-100 text-zinc-900'
-                          : 'border border-[#f1f1f1] bg-white hover:border-zinc-200'
+                          ? 'bg-orange-500 shadow-md shadow-orange-200'
+                          : 'border border-zinc-100 bg-zinc-50 hover:bg-zinc-100'
                       }`}
                     >
-                      <p className="text-lg font-semibold">
+                      <p
+                        className={`text-base font-bold ${isActive ? 'text-white' : 'text-zinc-800'}`}
+                      >
                         {order.customerName}
                       </p>
-                      <span className="text-sm text-zinc-500">
+                      <span
+                        className={`text-xs ${isActive ? 'text-orange-100' : 'text-zinc-400'}`}
+                      >
                         #{order.id} · {order.eventType}
                       </span>
                     </button>
@@ -371,50 +371,196 @@ export const OrdersPage = () => {
           </div>
         </div>
 
-        <div className="flex w-full flex-col gap-5 rounded-2xl border-2 border-[#F1F1F1] bg-white p-5">
+        <div className="flex w-full flex-col gap-7 overflow-y-auto bg-white p-6 shadow-[-1px_0_0_0_#e4e4e7]">
           <div className="flex flex-col items-start gap-1">
-            {selectedOrder && (
-              <ArrowLeft
-                className="cursor-pointer text-orange-500"
-                onClick={() => {
-                  setSelectedOrderId(null)
-                }}
-                size={14}
-              />
+            {selectedOrder ? (
+              <button
+                type="button"
+                onClick={() => setSelectedOrderId(null)}
+                className="flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600"
+              >
+                <ArrowLeft size={12} /> Back to day view
+              </button>
+            ) : (
+              <>
+                <p className={detailSectionTitleClass}>{t('summary')}</p>
+                <p className="text-xl font-bold text-zinc-900">
+                  Overview for the Day
+                </p>
+              </>
             )}
-            <p className={detailSectionTitleClass}> {t('summary')}</p>
-            <p className="text-lg font-semibold text-zinc-900">
-              {selectedOrder
-                ? selectedOrder.customerName
-                : 'Overall Orders for the Day'}
-            </p>
           </div>
 
-          <SummaryList
-            title={selectedOrder ? t('items_in_order') : t('items_required')}
-            items={itemsSummary}
-            emptyLabel={
-              selectedOrder
-                ? t('no_menu_items_order')
-                : t('no_items_planned')
-            }
-          />
+          {selectedOrder && <OrderDetailsCard order={selectedOrder} />}
 
-          <SummaryList
-            title={
-              selectedOrder
-                ? t('additional_items_in_order')
-                : t('additional_items_required')
-            }
-            items={additionalItemsSummary}
-            emptyLabel={
-              selectedOrder
-                ? t('no_additional_items_order')
-                : t('no_additional_items_planned')
-            }
-          />
+          <div className="flex flex-col gap-10 overflow-hidden">
+            <div className="flex flex-col gap-4 overflow-hidden">
+              <div className="flex items-center gap-2">
+                <span className="h-4 w-0.5 rounded-full bg-orange-500" />
+                <h3 className="text-base font-bold text-zinc-900">
+                  {selectedOrder ? t('items_in_order') : t('items_required')}
+                </h3>
+              </div>
+              <div className="w-full overflow-x-auto">
+                {selectedOrder ? (
+                  selectedOrder.items && selectedOrder.items.length > 0 ? (
+                    <GenericTable
+                      data={selectedOrder.items}
+                      dataCell={[
+                        {
+                          headingTitle: t('primary_name'),
+                          accessVar: 'productPrimaryName',
+                        },
+                        {
+                          headingTitle: t('secondary_name'),
+                          accessVar: 'productSecondaryName',
+                        },
+                        {
+                          headingTitle: t('quantity'),
+                          accessVar: 'quantity',
+                          render: (value) => (
+                            <span className="font-semibold text-zinc-900">
+                              {value}
+                            </span>
+                          ),
+                        },
+                        {
+                          headingTitle: t('total_price'),
+                          accessVar: 'totalPrice',
+                          render: (value) => (
+                            <span className="font-semibold text-zinc-900">
+                              ₹{value?.toLocaleString()}
+                            </span>
+                          ),
+                        },
+                      ]}
+                      isHeaderVisible={true}
+                      messageWhenNoData={t('no_menu_items_order')}
+                    />
+                  ) : (
+                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                      <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
+                      {t('no_menu_items_order')}
+                    </p>
+                  )
+                ) : itemsSummary.length > 0 ? (
+                  <GenericTable
+                    data={itemsSummary.map((item) => ({
+                      productPrimaryName: item.label,
+                      quantity: item.quantity,
+                    }))}
+                    dataCell={[
+                      {
+                        headingTitle: t('item_name'),
+                        accessVar: 'productPrimaryName',
+                      },
+                      {
+                        headingTitle: t('quantity'),
+                        accessVar: 'quantity',
+                        render: (value) => (
+                          <span className="font-semibold text-zinc-900">
+                            {value}
+                          </span>
+                        ),
+                      },
+                    ]}
+                    isHeaderVisible={true}
+                    messageWhenNoData={t('no_items_planned')}
+                  />
+                ) : (
+                  <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                    <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
+                    {t('no_items_planned')}
+                  </p>
+                )}
+              </div>
+            </div>
 
-          <OrderDetailsCard order={selectedOrder} />
+            <div className="flex flex-col gap-4 overflow-hidden">
+              <div className="flex items-center gap-2">
+                <span className="h-4 w-0.5 rounded-full bg-orange-500" />
+                <h3 className="text-base font-bold text-zinc-900">
+                  {selectedOrder
+                    ? t('additional_items_in_order')
+                    : t('additional_items_required')}
+                </h3>
+              </div>
+              <div className="w-full overflow-x-auto">
+                {selectedOrder ? (
+                  selectedOrder.additionalItems &&
+                  selectedOrder.additionalItems.length > 0 ? (
+                    <GenericTable
+                      data={selectedOrder.additionalItems}
+                      dataCell={[
+                        {
+                          headingTitle: t('primary_name'),
+                          accessVar: 'itemPrimaryName',
+                        },
+                        {
+                          headingTitle: t('secondary_name'),
+                          accessVar: 'itemSecondaryName',
+                        },
+                        {
+                          headingTitle: t('quantity'),
+                          accessVar: 'quantity',
+                          render: (value) => (
+                            <span className="font-semibold text-zinc-900">
+                              {value}
+                            </span>
+                          ),
+                        },
+                        {
+                          headingTitle: t('total_price'),
+                          accessVar: 'totalPrice',
+                          render: (value) => (
+                            <span className="font-semibold text-zinc-900">
+                              ₹{value?.toLocaleString()}
+                            </span>
+                          ),
+                        },
+                      ]}
+                      isHeaderVisible={true}
+                      messageWhenNoData={t('no_additional_items_order')}
+                    />
+                  ) : (
+                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                      <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
+                      {t('no_additional_items_order')}
+                    </p>
+                  )
+                ) : additionalItemsSummary.length > 0 ? (
+                  <GenericTable
+                    data={additionalItemsSummary.map((item) => ({
+                      itemPrimaryName: item.label,
+                      quantity: item.quantity,
+                    }))}
+                    dataCell={[
+                      {
+                        headingTitle: t('item_name'),
+                        accessVar: 'itemPrimaryName',
+                      },
+                      {
+                        headingTitle: t('quantity'),
+                        accessVar: 'quantity',
+                        render: (value) => (
+                          <span className="font-semibold text-zinc-900">
+                            {value}
+                          </span>
+                        ),
+                      },
+                    ]}
+                    isHeaderVisible={true}
+                    messageWhenNoData={t('no_additional_items_planned')}
+                  />
+                ) : (
+                  <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                    <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
+                    {t('no_additional_items_planned')}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
