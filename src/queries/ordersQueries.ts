@@ -112,7 +112,7 @@ export const useFetchOrderById = (id?: number) => {
   return useQuery({
     queryKey: orderKey(id ?? 'unknown'),
     queryFn: fetchById,
-    enabled: typeof id === 'number' && id > 0,
+    enabled: !!id,
     staleTime: 1000 * 60 * 5,
     retry: 1,
   })

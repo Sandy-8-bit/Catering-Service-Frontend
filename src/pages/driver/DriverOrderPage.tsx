@@ -13,9 +13,8 @@ import {
   CheckCircle,
   Truck,
   Plus,
+  Trash2,
 } from 'lucide-react'
-
-// Removed - vessel options are now loaded from API
 
 const DriverOrderPage = () => {
   const { orderId } = useParams<{ orderId: string }>()
@@ -51,7 +50,12 @@ const DriverOrderPage = () => {
   // Add vessel form
   const [newVesselName, setNewVesselName] = useState<string>('')
   const [newVesselQuantity, setNewVesselQuantity] = useState<number>(0)
-  const [isAddingVessel, setIsAddingVessel] = useState(false)
+
+  // Pending vessels (locally added, not yet submitted)
+  const [pendingVessels, setPendingVessels] = useState<
+    { name: string; quantityGiven: number }[]
+  >([])
+  const [isStartingOrder, setIsStartingOrder] = useState(false)
 
   const { mutate: completeReturn } = useCompleteReturnDelivery()
   const { mutate: updateReturnDate } = useUpdateReturnPickupDate()
@@ -61,6 +65,7 @@ const DriverOrderPage = () => {
   const isOrderDelivered = order?.orderStatus === 'ORDER_DELIVERED'
   const isPending = order?.orderStatus === 'PENDING'
   const isOutForDelivery = order?.orderStatus === 'OUT_FOR_DELIVERY'
+  const orderplaced = order?.orderStatus === 'ORDER_PLACED'
 
   useEffect(() => {
     if (order?.vessels) {
@@ -76,24 +81,14 @@ const DriverOrderPage = () => {
     }
   }, [order])
 
-  // Vessel data is loaded from API response
-
-  // 🚚 Mark as Delivered
   const handleMarkAsDelivered = () => {
-    // Clear previous messages
     setError('')
     setSuccess('')
 
-    // Validation checks
     if (!returnPickupDate) {
       setError('Please select return pickup date')
       return
     }
-
-    console.log('Marking as delivered with payload:', {
-      deliveryId: order!.id,
-      returnPickupDate,
-    })
 
     setIsDeliveryLoading(true)
 
@@ -103,14 +98,12 @@ const DriverOrderPage = () => {
         returnPickupDate,
       },
       {
-        onSuccess: (data) => {
-          console.log('Order marked as delivered:', data)
+        onSuccess: () => {
           setSuccess('Order marked as delivered successfully!')
           setReturnPickupDate('')
           setIsDeliveryLoading(false)
         },
         onError: (error: any) => {
-          console.error('Delivery error:', error?.response?.data || error)
           setError(error?.response?.data?.message || 'Failed to mark delivery. Please try again.')
           setIsDeliveryLoading(false)
         },
@@ -118,13 +111,10 @@ const DriverOrderPage = () => {
     )
   }
 
-  // 📦 Add Vessel
   const handleAddVessel = () => {
-    // Clear previous messages
     setError('')
     setSuccess('')
 
-    // Validation checks
     if (!newVesselName.trim()) {
       setError('Please select a vessel type')
       return
@@ -135,59 +125,63 @@ const DriverOrderPage = () => {
       return
     }
 
-    console.log('Adding vessel with payload:', {
-      driverId: order!.driverId,
-      orderId: order!.orderId,
-      vessels: [
-        {
-          name: newVesselName,
-          quantityGiven: newVesselQuantity,
-        },
-      ],
-    })
+    setPendingVessels(prev => [
+      ...prev,
+      { name: newVesselName, quantityGiven: newVesselQuantity },
+    ])
+    setNewVesselName('')
+    setNewVesselQuantity(0)
+  }
 
-    setIsAddingVessel(true)
+  const handleRemovePendingVessel = (index: number) => {
+    setPendingVessels(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handlePendingQuantityChange = (index: number, quantity: number) => {
+    setPendingVessels(prev =>
+      prev.map((v, i) => (i === index ? { ...v, quantityGiven: quantity } : v))
+    )
+  }
+
+  const handleStartOrder = () => {
+    setError('')
+    setSuccess('')
+
+    if (pendingVessels.length === 0) {
+      setError('Please add at least one vessel')
+      return
+    }
+
+    setIsStartingOrder(true)
 
     updateVessels(
       {
         driverId: order!.driverId,
         orderId: order!.orderId,
-        vessels: [
-          {
-            name: newVesselName,
-            quantityGiven: newVesselQuantity,
-          },
-        ],
+        vessels: pendingVessels,
       },
       {
         onSuccess: (data) => {
-          console.log('Vessel added successfully:', data)
-          setSuccess('Vessel added successfully!')
-          setNewVesselName('')
-          setNewVesselQuantity(0)
-          setIsAddingVessel(false)
-          // Reset vessels from updated data
+          setSuccess('Order started successfully!')
+          setPendingVessels([])
+          setIsStartingOrder(false)
           if (data?.data && Array.isArray(data.data)) {
             const updatedVessels = data.data[0]?.vessels || []
             setVessels(updatedVessels)
           }
         },
         onError: (error: any) => {
-          console.error('Add vessel error:', error?.response?.data || error)
-          setError(error?.response?.data?.message || 'Failed to add vessel. Please try again.')
-          setIsAddingVessel(false)
+          setError(error?.response?.data?.message || 'Failed to start order. Please try again.')
+          setIsStartingOrder(false)
         },
       }
     )
   }
 
-  //  Close Order
   const handleCloseOrder = async () => {
-    // Clear previous messages
     setError('')
     setSuccess('')
 
-    // Validation checks
     if (amountCollected <= 0) {
       setError('Please enter valid amount collected')
       return
@@ -197,13 +191,6 @@ const DriverOrderPage = () => {
       setError('Please select payment mode')
       return
     }
-
-    console.log('Closing order with payload:', {
-      deliveryId: order!.id,
-      vessels: vesselReturns,
-      amountCollected,
-      paymentMode,
-    })
 
     setIsCloseOrderLoading(true)
 
@@ -215,8 +202,7 @@ const DriverOrderPage = () => {
         paymentMode,
       },
       {
-        onSuccess: (data) => {
-          console.log('Order closed successfully:', data)
+        onSuccess: () => {
           setSuccess('Order closed successfully!')
           setVesselReturns(
             order!.vessels.map(v => ({
@@ -229,7 +215,6 @@ const DriverOrderPage = () => {
           setIsCloseOrderLoading(false)
         },
         onError: (error: any) => {
-          console.error('Close order error:', error?.response?.data || error)
           setError(error?.response?.data?.message || 'Failed to close order. Please try again.')
           setIsCloseOrderLoading(false)
         },
@@ -265,7 +250,7 @@ const DriverOrderPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 pb-6">
 
-      {/* HEADER */}
+      {/* Header */}
       <div className="bg-blue-600 text-white p-4 sticky top-0 shadow-md">
         <div className="flex justify-between">
           <h1 className="font-bold text-lg">Order #{order.orderId}</h1>
@@ -395,25 +380,25 @@ const DriverOrderPage = () => {
 
       </div>
 
-      {/* VESSEL SECTION */}
+      {/* Vessel Section */}
       <div className="p-4">
         <div className="bg-white rounded-lg shadow border p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-semibold text-lg">Vessels Information</h2>
-            {vessels.length > 0 && (
+            {(vessels.length + pendingVessels.length) > 0 && (
               <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-                {vessels.length} vessel{vessels.length !== 1 ? 's' : ''}
+                {vessels.length + pendingVessels.length} vessel{(vessels.length + pendingVessels.length) !== 1 ? 's' : ''}
               </span>
             )}
           </div>
 
-          {/* VESSEL LIST */}
-          {vessels.length > 0 ? (
+          {/* Saved Vessels (from API) */}
+          {vessels.length > 0 && (
             <div className="space-y-3">
               {vessels.map((v, i) => (
                 <div
-                  key={i}
-                  className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center border rounded-md p-3 bg-gray-50"
+                  key={v.id ?? i}
+                  className="flex items-center justify-between border rounded-md p-3 bg-gray-50"
                 >
                   <div className="flex-1">
                     <span className="font-medium block">{v.name}</span>
@@ -424,89 +409,129 @@ const DriverOrderPage = () => {
                 </div>
               ))}
             </div>
-          ) : (
-            <div className="space-y-4">
-              <p className="text-gray-600 text-center py-4">No vessels added yet</p>
+          )}
 
-              {/* Add Vessel Form */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-                <div className="flex items-center gap-2 pb-3 border-b border-blue-200">
-                  <Plus className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-semibold text-blue-900">Add Vessel</h3>
-                </div>
-
-                {/* Vessel Type Selection */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Vessel Type *
-                  </label>
-                  <select
-                    value={newVesselName}
-                    onChange={e => setNewVesselName(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base bg-white"
-                  >
-                    <option value="">Select Vessel Type</option>
-                    <option value="Vessel A">Vessel A</option>
-                    <option value="Vessel B">Vessel B</option>
-                    <option value="Vessel C">Vessel C</option>
-                    <option value="Vessel D">Vessel D</option>
-                    <option value="Vessel E">Vessel E</option>
-                    <option value="Vessel F">Vessel F</option>
-                  </select>
-                </div>
-
-                {/* Quantity Input */}
-                <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Quantity *
-                  </label>
+          {/* Pending Vessels (locally added, not yet submitted) */}
+          {pendingVessels.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Newly Added</p>
+              {pendingVessels.map((v, i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-3 border border-blue-200 rounded-md p-3 bg-blue-50"
+                >
+                  <div className="flex-1">
+                    <span className="font-medium block text-gray-900">{v.name}</span>
+                  </div>
                   <input
                     type="number"
                     min={1}
-                    value={newVesselQuantity || ''}
-                    onChange={e => setNewVesselQuantity(Number(e.target.value))}
-                    placeholder="Enter quantity"
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+                    value={v.quantityGiven || ''}
+                    onChange={e => handlePendingQuantityChange(i, Number(e.target.value))}
+                    className="w-20 border border-gray-300 rounded-lg px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  <button
+                    onClick={() => handleRemovePendingVessel(i)}
+                    className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors"
+                    type="button"
+                    aria-label="Remove vessel"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
                 </div>
-
-                {/* Add Button */}
-                <button
-                  onClick={handleAddVessel}
-                  disabled={
-                    isAddingVessel ||
-                    !newVesselName ||
-                    newVesselQuantity <= 0
-                  }
-                  className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg font-semibold text-sm md:text-base hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all flex items-center justify-center gap-2"
-                  type="button"
-                >
-                  <Plus className="w-4 h-4" />
-                  {isAddingVessel ? 'Adding Vessel...' : 'Add Vessel'}
-                </button>
-              </div>
+              ))}
             </div>
+          )}
+
+          {vessels.length === 0 && pendingVessels.length === 0 && (
+            <p className="text-gray-600 text-center py-4">No vessels added yet</p>
+          )}
+
+          {/* Add Vessel Form */}
+           {orderplaced && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+            <div className="flex items-center gap-2 pb-3 border-b border-blue-200">
+              <Plus className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold text-blue-900">Add Vessel</h3>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Vessel Type *
+              </label>
+              <select
+                value={newVesselName}
+                onChange={e => setNewVesselName(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base bg-white"
+              >
+                <option value="">Select Vessel Type</option>
+                <option value="Vessel A">Vessel A</option>
+                <option value="Vessel B">Vessel B</option>
+                <option value="Vessel C">Vessel C</option>
+                <option value="Vessel D">Vessel D</option>
+                <option value="Vessel E">Vessel E</option>
+                <option value="Vessel F">Vessel F</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700">
+                Quantity *
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={newVesselQuantity || ''}
+                onChange={e => setNewVesselQuantity(Number(e.target.value))}
+                placeholder="Enter quantity"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+              />
+            </div>
+
+            <button
+              onClick={handleAddVessel}
+              disabled={!newVesselName || newVesselQuantity <= 0}
+              className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg font-semibold text-sm md:text-base hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all flex items-center justify-center gap-2"
+              type="button"
+            >
+              <Plus className="w-4 h-4" />
+              Add Vessel
+            </button>
+          </div>
+        )}
+
+          {/* Start Order Button */}
+          {pendingVessels.length > 0 && (
+            <button
+              onClick={handleStartOrder}
+              disabled={isStartingOrder}
+              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold text-base md:text-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              type="button"
+            >
+              <Truck className="w-5 h-5" />
+              {isStartingOrder ? 'Starting Order...' : 'Start Order'}
+            </button>
           )}
         </div>
       </div>
 
-      {/* DELIVERY SECTION - OUT FOR DELIVERY */}
+      {/* Delivery Section */}
       {isOutForDelivery && (
         <div className="p-4 md:p-6">
           <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 md:p-6 space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+            {/* <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                 <Truck className="w-6 h-6 text-green-600" />
               </div>
               <h2 className="font-bold text-lg md:text-xl text-gray-900">Mark as Delivered</h2>
-            </div>
+            </div> */}
 
             {/* Return Pickup Date */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-blue-600" />
                 <label className="block font-semibold text-gray-800 text-base md:text-lg">
-                  Return Pickup Date
+                  Select the date when items will be returned or picked up
                 </label>
               </div>
               <input
@@ -516,12 +541,12 @@ const DriverOrderPage = () => {
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
               />
               <p className="text-xs md:text-sm text-gray-600">
-                Select the date when items will be returned or picked up
+                
               </p>
             </div>
 
             {/* Delivery Info */}
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
+            {/* <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
               <div className="flex items-start gap-2">
                 <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
                 <div>
@@ -530,7 +555,7 @@ const DriverOrderPage = () => {
                   <p className="text-xs text-green-800">Location: <span className="font-medium">{order?.customerAddress}</span></p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* Deliver Button */}
@@ -557,7 +582,7 @@ const DriverOrderPage = () => {
         </div>
       )}
 
-      {/* CLOSE ORDER SECTION */}
+      {/* Close Order Section */}
       {(isDelivered || isOrderDelivered || isPending) && (
         <div className="p-4 md:p-6">
           <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 md:p-6 space-y-6">
@@ -668,7 +693,7 @@ const DriverOrderPage = () => {
         </div>
       )}
 
-      {/* CLOSE ORDER BUTTON */}
+      {/* Close Order Button */}
       {(isDelivered || isOrderDelivered || isPending) && (
         <div className="p-4 mt-6 border-t">
           <button
