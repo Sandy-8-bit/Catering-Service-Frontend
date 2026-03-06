@@ -19,17 +19,13 @@ import {
 const DriverOrderPage = () => {
   const { orderId } = useParams<{ orderId: string }>()
   const parsedOrderId = Number(orderId)
-
   const { data, isLoading, isError } = useFetchDriverOrderDelivery({
     orderId: parsedOrderId,
   })
-
   const order: DriverOrderDetail | undefined = data?.[0]
-
   const [vessels, setVessels] = useState<
     { id?: number; name: string; quantityGiven: number }[]
   >([])
-
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -53,7 +49,7 @@ const DriverOrderPage = () => {
 
   // Pending vessels (locally added, not yet submitted)
   const [pendingVessels, setPendingVessels] = useState<
-    { name: string; quantityGiven: number }[]
+    { name: string; quantityGiven: number; quantityReturned: 0 }[]
   >([])
   const [isStartingOrder, setIsStartingOrder] = useState(false)
 
@@ -127,7 +123,7 @@ const DriverOrderPage = () => {
 
     setPendingVessels(prev => [
       ...prev,
-      { name: newVesselName, quantityGiven: newVesselQuantity },
+      { name: newVesselName, quantityGiven: newVesselQuantity, quantityReturned: 0 },
     ])
     setNewVesselName('')
     setNewVesselQuantity(0)
@@ -249,7 +245,6 @@ const DriverOrderPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-6">
-
       {/* Header */}
       <div className="bg-blue-600 text-white p-4 sticky top-0 shadow-md">
         <div className="flex justify-between">
@@ -377,7 +372,6 @@ const DriverOrderPage = () => {
             </div>
           </div>
         </div>
-
       </div>
 
       {/* Vessel Section */}
@@ -519,13 +513,7 @@ const DriverOrderPage = () => {
       {isOutForDelivery && (
         <div className="p-4 md:p-6">
           <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 md:p-6 space-y-6">
-            {/* <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                <Truck className="w-6 h-6 text-green-600" />
-              </div>
-              <h2 className="font-bold text-lg md:text-xl text-gray-900">Mark as Delivered</h2>
-            </div> */}
-
+  
             {/* Return Pickup Date */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
@@ -540,22 +528,9 @@ const DriverOrderPage = () => {
                 onChange={e => setReturnPickupDate(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
               />
-              <p className="text-xs md:text-sm text-gray-600">
-                
+              <p className="text-xs md:text-sm text-gray-600">          
               </p>
             </div>
-
-            {/* Delivery Info */}
-            {/* <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-2">
-              <div className="flex items-start gap-2">
-                <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-green-900 text-sm">Order Details</p>
-                  <p className="text-xs text-green-800 mt-1">Customer: <span className="font-medium">{order?.customerName}</span></p>
-                  <p className="text-xs text-green-800">Location: <span className="font-medium">{order?.customerAddress}</span></p>
-                </div>
-              </div>
-            </div> */}
           </div>
 
           {/* Deliver Button */}

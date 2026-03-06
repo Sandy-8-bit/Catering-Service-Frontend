@@ -97,6 +97,12 @@ const SideNav: React.FC = () => {
     (item) => item.section === 'main'
   )
 
+  const role = localStorage.getItem("CATERING_ROLE")
+
+if (role === "DRIVER") {
+  return null
+}
+
   return (
     <div className="md:hidden">
       {/* 🔝 Top Nav */}
