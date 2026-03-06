@@ -44,13 +44,13 @@ const SideNav: React.FC = () => {
 
   const navigationItems: NavigationItem[] = useMemo(
     () => [
-      {
-        label: 'Dashboard',
-        path: appRoutes.dashboard.path,
-        icon: '/icons/sideNavIcons/dashboard-icon.svg',
-        activeIcon: '/icons/sideNavIcons/dashboard-icon-active.svg',
-        section: 'main',
-      },
+      // {
+      //   label: 'Dashboard',
+      //   path: appRoutes.dashboard.path,
+      //   icon: '/icons/sideNavIcons/dashboard-icon.svg',
+      //   activeIcon: '/icons/sideNavIcons/dashboard-icon-active.svg',
+      //   section: 'main',
+      // },
       {
         label: 'Master Configuration',
         path: appRoutes.master.path,

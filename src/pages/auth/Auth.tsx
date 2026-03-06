@@ -1,36 +1,14 @@
 import ButtonSm from '@/components/common/Buttons'
-import DropdownSelect, {
-  type DropdownOption,
-} from '@/components/common/DropDown'
 import Input from '@/components/common/Input'
 import { useLogin } from '@/queries/authQueries'
-import { type FormEvent, useEffect, useState } from 'react'
+import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import VerifyTotpModal from './VerifyTotpModal'
 
-const LANGUAGE_OPTIONS: DropdownOption[] = [
-  { id: 1, label: 'English' },
-  { id: 2, label: 'Tamil' },
-]
-
-const LANGUAGE_CODE_LOOKUP: Record<number, string> = {
-  1: 'en',
-  2: 'ta',
-}
-
-const getLanguageOptionByCode = (code: string): DropdownOption => {
-  const normalizedCode = code.split('-')[0]
-  return (
-    LANGUAGE_OPTIONS.find(
-      (option) => LANGUAGE_CODE_LOOKUP[option.id] === normalizedCode
-    ) || LANGUAGE_OPTIONS[0]
-  )
-}
-
 export const SignInPage = () => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const { mutate: login, isPending } = useLogin()
 
@@ -39,9 +17,6 @@ export const SignInPage = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showTotp, setShowTotp] = useState(false)
   const [loginIdentifier, setLoginIdentifier] = useState('')
-  const [selectedLanguage, setSelectedLanguage] = useState<DropdownOption>(() =>
-    getLanguageOptionByCode(i18n.language)
-  )
 
   const handleLogin = () => {
     login(
@@ -60,21 +35,6 @@ export const SignInPage = () => {
     )
   }
 
-  useEffect(() => {
-    const option = getLanguageOptionByCode(i18n.language)
-    if (option.id !== selectedLanguage.id) {
-      setSelectedLanguage(option)
-    }
-  }, [i18n.language, selectedLanguage.id])
-
-  const handleLanguageChange = (option: DropdownOption) => {
-    setSelectedLanguage(option)
-    const nextLanguage = LANGUAGE_CODE_LOOKUP[option.id]
-    if (nextLanguage && nextLanguage !== i18n.language) {
-      i18n.changeLanguage(nextLanguage)
-    }
-  }
-
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!identifier || !password || isPending) return
@@ -91,16 +51,6 @@ export const SignInPage = () => {
           className="flex w-full max-w-[380px] flex-col gap-4"
           onSubmit={handleSubmit}
         >
-          {/* Language Selector */}
-          <div className="mb-2 flex justify-end">
-            <DropdownSelect
-              options={LANGUAGE_OPTIONS}
-              selected={selectedLanguage}
-              onChange={handleLanguageChange}
-              className="w-full max-w-40"
-            />
-          </div>
-
           {/* Welcome text */}
           <p className="text-start text-sm font-medium text-gray-500 md:text-base">
             {t('signin_subtitle')}

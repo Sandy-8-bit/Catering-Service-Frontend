@@ -1,11 +1,49 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ConfigCard, { type ConfigCardType } from '@/components/common/ConfigCard'
+import DropdownSelect, { type DropdownOption } from '@/components/common/DropDown'
 import { appRoutes } from '@/routes/appRoutes'
 
+const LANGUAGE_OPTIONS: DropdownOption[] = [
+  { id: 1, label: 'English' },
+  { id: 2, label: 'Tamil' },
+]
+
+const LANGUAGE_CODE_LOOKUP: Record<number, string> = {
+  1: 'en',
+  2: 'ta',
+}
+
+const getLanguageOptionByCode = (code: string): DropdownOption => {
+  const normalizedCode = code.split('-')[0]
+  return (
+    LANGUAGE_OPTIONS.find(
+      (option) => LANGUAGE_CODE_LOOKUP[option.id] === normalizedCode
+    ) || LANGUAGE_OPTIONS[0]
+  )
+}
+
 const MasterPage: React.FC = () => {
-  const { t } = useTranslation()
-  
+  const { t, i18n } = useTranslation()
+  const [selectedLanguage, setSelectedLanguage] = useState<DropdownOption>(() =>
+    getLanguageOptionByCode(i18n.language)
+  )
+
+  useEffect(() => {
+    const option = getLanguageOptionByCode(i18n.language)
+    if (option.id !== selectedLanguage.id) {
+      setSelectedLanguage(option)
+    }
+  }, [i18n.language, selectedLanguage.id])
+
+  const handleLanguageChange = (option: DropdownOption) => {
+    setSelectedLanguage(option)
+    const nextLanguage = LANGUAGE_CODE_LOOKUP[option.id]
+    if (nextLanguage && nextLanguage !== i18n.language) {
+      i18n.changeLanguage(nextLanguage)
+    }
+  }
+
   const configCards = useMemo<ConfigCardType[]>(
     () => [
       {
@@ -74,6 +112,28 @@ const MasterPage: React.FC = () => {
         ) : (
           configCards.map((card) => <ConfigCard key={card.title} {...card} />)
         )}
+
+        <div className="flex h-full w-full flex-col justify-between rounded-xl border border-[#f1f1f1] bg-white px-4 py-5 text-left">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-800">
+              {t('language_settings')}
+            </h2>
+            <span className="rounded-2xl bg-cyan-50 px-3 py-1 text-sm font-medium text-cyan-700">
+              {t('language_settings_label')}
+            </span>
+          </div>
+          <p className="mb-4 text-sm font-medium text-slate-500">
+            {t('language_settings_desc')}
+          </p>
+          <DropdownSelect
+            title={t('choose_language')}
+            options={LANGUAGE_OPTIONS}
+            selected={selectedLanguage}
+            onChange={handleLanguageChange}
+            autoScroll={false}
+            className="w-full"
+          />
+        </div>
       </div>
     </main>
   )

@@ -165,9 +165,9 @@ const Input = <T extends string | number>({
           onChange={handleChange}
           value={inputValue}
           disabled={disabled}
-          className={`w-full px-3 py-3 text-sm font-medium focus:outline-none ${
-            disabled ? 'bg-slate-200' : 'bg-white'
-          } ${className}`}
+         className={`custom-disabled-cursor hover:cursor[text]:color-black min-h-max w-full ${
+            disabled ? 'bg-slate-200' : 'cursor-text'
+          } ${className} text-start ${viewMode ? 'text-base font-medium text-slate-900' : 'px-3 py-3 text-sm font-medium text-slate-600 autofill:text-black focus:outline-none  overflow-clip'} shadow-sm read-only:cursor-default read-only:bg-white`}
         />
 
         {!viewMode && !disabled && (

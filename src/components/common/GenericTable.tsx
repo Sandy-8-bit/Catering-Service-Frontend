@@ -22,6 +22,7 @@ import PaginationControls from './Pagination'
 import { CheckBox } from './Input'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { useHandleDeleteHook } from '@/hooks/useHandleDeleteHook'
+import { t } from 'i18next'
 
 // ============= TYPES =============
 
@@ -861,7 +862,7 @@ export default function GenericTable({
                 />
               )}
               <p className="text-left text-sm font-medium text-[#1F1F21]">
-                S.No
+                 {t('s.no')}
               </p>
             </div>
 

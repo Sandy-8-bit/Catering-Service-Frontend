@@ -27,6 +27,7 @@ interface DropdownSelectProps {
   // class for the main container's parent this is mainly for changing relatice and postion
   className?: string
   direction?: 'down' | 'up' | 'left' | 'right'
+  autoScroll?: boolean
   allowClear?: boolean
   // class for the main dropdown container mainly for styling
   MainclassName?: string
@@ -45,6 +46,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   required = false,
   className = '',
   direction = 'down',
+  autoScroll = true,
   allowClear = false,
   MainclassName = '',
   dropDownClassName = '',
@@ -124,6 +126,11 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
       const el = containerRef.current
       if (!el) return
 
+      if (!autoScroll) {
+        updatePortalPosition()
+        return
+      }
+
       try {
         // Prefer element scrollIntoView with center block
         el.scrollIntoView({
@@ -154,7 +161,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
       window.scrollTo({ top: Math.max(0, scrollY), behavior })
       setTimeout(() => updatePortalPosition(), 200)
     },
-    [updatePortalPosition]
+    [autoScroll, updatePortalPosition]
   )
 
   useLayoutEffect(() => {
@@ -224,13 +231,14 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   }, [selected.id, required, title])
 
   useEffect(() => {
+    if (!autoScroll) return
     if (highlightIndex >= 0 && optionRefs.current[highlightIndex]) {
       optionRefs.current[highlightIndex]?.scrollIntoView({
         behavior: 'smooth',
         block: 'nearest',
       })
     }
-  }, [highlightIndex])
+  }, [autoScroll, highlightIndex])
 
   const toggleDropdown = () => {
     if (!disabled) {
