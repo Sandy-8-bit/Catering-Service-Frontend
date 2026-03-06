@@ -43,7 +43,6 @@ export const useLogin = () => {
       localStorage.setItem('CATERING_ROLE', data.role || '')
       localStorage.setItem('CATERING_USER_ID', String(data.Id))
 
-      toast.success('Logged in successfully')
     },
     onError: (error) => {
       if (axios.isAxiosError(error)) {

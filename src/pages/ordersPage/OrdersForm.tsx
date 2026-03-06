@@ -305,6 +305,7 @@ export const OrdersForm = () => {
             />
             <DropdownSelect
               title={t('payment_type')}
+              autoScroll={false}
               options={paymentTypeOptions}
               selected={
                 paymentTypeOptions.find(

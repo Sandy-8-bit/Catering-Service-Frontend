@@ -1,6 +1,6 @@
 import ButtonSm from '@/components/common/Buttons'
 import Input from '@/components/common/Input'
-import { useLogin } from '@/queries/authQueries'
+import { useLogin } from '@/queries/AuthQueries'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
