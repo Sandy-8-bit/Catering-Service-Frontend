@@ -1,16 +1,30 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useFetchDriverDashboard } from '@/queries/driverQueries'
-import type { AssignedOrder, ReturnableItem, DriverDashboard, Vessel } from '@/types/driverDash'
-import { Calendar, Package, MapPin, Phone, User, Clock, ChevronRight, ExternalLink } from 'lucide-react'
+import type {
+  AssignedOrder,
+  ReturnableItem,
+  DriverDashboard,
+  Vessel,
+} from '@/types/driverDash'
+import {
+  Calendar,
+  Package,
+  MapPin,
+  Phone,
+  User,
+  Clock,
+  ChevronRight,
+  ExternalLink,
+} from 'lucide-react'
 
 const DriverDashboardPage = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const driverId = Number(id)
 
-  const [date, setDate] = useState<string>(() =>
-    new Date().toISOString().split('T')[0]
+  const [date, setDate] = useState<string>(
+    () => new Date().toISOString().split('T')[0]
   )
 
   const { data, isLoading, isError } = useFetchDriverDashboard({
@@ -26,196 +40,205 @@ const DriverDashboardPage = () => {
     navigate(`/driver/order/${orderId}`)
   }
 
-  const handleCallClick = (phone: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    window.location.href = `tel:${phone}`
-  }
-
   const handleLocationClick = (url: string, e: React.MouseEvent) => {
     e.stopPropagation()
     window.open(url, '_blank')
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
       maximumFractionDigits: 0,
     }).format(amount)
-  }
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('en-IN', { 
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     })
-  }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header - Sticky */}
-      <div className=" z-10 bg-white border-b border-slate-200 shadow-sm">
-        <div className="px-4 py-4">
-          <h1 className="text-lg font-semibold text-slate-900">
+    <div className="min-h-screen bg-zinc-50">
+      {/* Header */}
+      <div className="sticky top-0 z-10 border-b border-zinc-200 bg-white">
+        <div className="px-4 pt-4 pb-3">
+          <h1 className="text-base font-semibold tracking-tight text-zinc-900">
             Driver Dashboard
           </h1>
-          
-          {/* Date Selector */}
-          <div className="mt-3">
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+          <div className="relative mt-2.5">
+            <Calendar className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-lg border border-zinc-300 bg-white py-2 pr-4 pl-9 text-sm font-medium text-zinc-900 focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
+            />
           </div>
         </div>
       </div>
 
-      <div className="px-4 py-4 flex flex-col gap-6">
-        {/* Loading State */}
+      <div className="flex flex-col gap-6 px-4 py-4">
+        {/* Loading */}
         {isLoading && (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-16">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-              <p className="text-sm text-slate-600">Loading...</p>
+              <div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-[3px] border-orange-500 border-t-transparent" />
+              <p className="text-xs text-zinc-500">Loading...</p>
             </div>
           </div>
         )}
 
-        {/* Error State */}
+        {/* Error */}
         {isError && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-sm text-red-800 font-medium">Failed to load data</p>
-            <p className="text-xs text-red-600 mt-1">Please try again later</p>
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-medium text-red-800">
+              Failed to load data
+            </p>
+            <p className="mt-0.5 text-xs text-red-600">
+              Please try again later
+            </p>
           </div>
         )}
 
         {!isLoading && !isError && (
           <div className="flex flex-col gap-6">
-            {/* ================= Assigned Orders ================= */}
+            {/* ── Assigned Orders ── */}
             <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base font-semibold text-slate-900">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold tracking-wide text-zinc-900 uppercase">
                   Today's Deliveries
                 </h2>
-                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-                  {assignedOrders.length} {assignedOrders.length === 1 ? 'order' : 'orders'}
+                <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500">
+                  {assignedOrders.length}{' '}
+                  {assignedOrders.length === 1 ? 'order' : 'orders'}
                 </span>
               </div>
 
               {assignedOrders.length === 0 ? (
-                <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-                  <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-sm text-slate-500">No deliveries scheduled</p>
+                <div className="rounded-xl border border-zinc-200 bg-white py-10 text-center">
+                  <Package className="mx-auto mb-2 h-10 w-10 text-zinc-300" />
+                  <p className="text-sm text-zinc-400">
+                    No deliveries scheduled
+                  </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3">
                   {assignedOrders.map((order: AssignedOrder) => (
                     <div
                       key={order.orderId}
                       onClick={() => handleOrderClick(order.orderId)}
-                      className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md active:scale-95 transition-all duration-200 cursor-pointer"
+                      className="cursor-pointer overflow-hidden rounded-xl border border-zinc-200 bg-white transition-transform duration-150 active:scale-[0.98]"
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
+                        if (e.key === 'Enter' || e.key === ' ')
                           handleOrderClick(order.orderId)
-                        }
                       }}
                     >
-                      {/* Header */}
-                      <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                      {/* Card header */}
+                      <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
                         <div>
-                          <span className="text-xs font-medium text-slate-500">Order</span>
-                          <p className="text-base font-semibold text-slate-900">#{order.orderId}</p>
+                          <p className="text-[11px] font-medium text-zinc-400">
+                            Order
+                          </p>
+                          <p className="text-base font-bold text-zinc-900">
+                            #{order.orderId}
+                          </p>
                         </div>
-                        <div className="flex flex-col gap-2 items-end">
-                          <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-orange-600">
                             {order.eventType}
                           </span>
-                          <ChevronRight className="w-5 h-5 text-slate-400" />
+                          <ChevronRight className="h-4 w-4 text-zinc-400" />
                         </div>
                       </div>
 
-                      {/* Body */}
-                      <div className="p-4 flex flex-col gap-3">
-                  
-                        {/* Time */}
-                        <div className="flex items-start gap-3">
-                          <Clock className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900">
+                      {/* Card body */}
+                      <div className="flex flex-col gap-2.5 px-4 py-3">
+                        {/* Time + date */}
+                        <div className="flex items-start gap-2.5">
+                          <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+                          <div>
+                            <p className="text-sm font-medium text-zinc-900">
                               {order.eventTime}
                             </p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-zinc-400">
                               {formatDate(order.eventDate)}
                             </p>
                           </div>
                         </div>
 
                         {/* Customer */}
-                        <div className="flex items-start gap-3">
-                          <User className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900">
+                        <div className="flex items-start gap-2.5">
+                          <User className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+                          <div>
+                            <p className="text-sm font-medium text-zinc-900">
                               {order.customerName}
                             </p>
-                            <button
-                              onClick={(e) => handleCallClick(order.customerPhone, e)}
-                              className="text-xs text-blue-600 font-medium flex items-center gap-1 mt-0.5 active:text-blue-700 hover:text-blue-700 transition-colors"
-                              type="button"
+                            <a
+                              href={`tel:${order.customerPhone}`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="mt-0.5 flex items-center gap-1 text-xs font-medium text-orange-600"
                             >
-                              <Phone className="w-3 h-3" />
+                              <Phone className="h-3 w-3" />
                               {order.customerPhone}
-                            </button>
+                            </a>
                           </div>
                         </div>
 
                         {/* Address */}
-                        <div className="flex items-start gap-3">
-                          <MapPin className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-slate-700 leading-relaxed">
+                        <div className="flex items-start gap-2.5">
+                          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+                          <div>
+                            <p className="text-xs leading-relaxed text-zinc-600">
                               {order.customerAddress}
                             </p>
                             <button
-                              onClick={(e) => handleLocationClick(order.locationUrl, e)}
-                              className="text-xs text-blue-600 font-medium flex items-center gap-1 mt-1.5 active:text-blue-700 hover:text-blue-700 transition-colors"
+                              onClick={(e) =>
+                                handleLocationClick(order.locationUrl, e)
+                              }
+                              className="mt-1 flex items-center gap-1 text-xs font-medium text-orange-600"
                               type="button"
                             >
-                              <ExternalLink className="w-3 h-3" />
+                              <ExternalLink className="h-3 w-3" />
                               Open in Maps
                             </button>
                           </div>
                         </div>
 
-                        {/* Details Grid */}
-                        <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
-                          <div className="bg-slate-50 rounded-lg p-2.5">
-                            <p className="text-xs text-slate-500 mb-0.5">People</p>
-                            <p className="text-sm font-semibold text-slate-900">{order.totalPeople}</p>
+                        {/* Stats grid */}
+                        <div className="mt-0.5 grid grid-cols-2 gap-2 border-t border-zinc-100 pt-2.5">
+                          <div className="rounded-lg bg-zinc-50 p-2.5">
+                            <p className="mb-0.5 text-[11px] text-zinc-400">
+                              People
+                            </p>
+                            <p className="text-sm font-bold text-zinc-900">
+                              {order.totalPeople}
+                            </p>
                           </div>
-                          <div className="bg-slate-50 rounded-lg p-2.5">
-                            <p className="text-xs text-slate-500 mb-0.5">Total</p>
-                            <p className="text-sm font-semibold text-slate-900">
+                          <div className="rounded-lg bg-zinc-50 p-2.5">
+                            <p className="mb-0.5 text-[11px] text-zinc-400">
+                              Total
+                            </p>
+                            <p className="text-sm font-bold text-zinc-900">
                               {formatCurrency(order.totalAmount)}
                             </p>
                           </div>
-                          <div className="bg-green-50 rounded-lg p-2.5">
-                            <p className="text-xs text-green-600 mb-0.5">Advance</p>
-                            <p className="text-sm font-semibold text-green-700">
+                          <div className="rounded-lg bg-zinc-50 p-2.5">
+                            <p className="mb-0.5 text-[11px] text-zinc-400">
+                              Advance
+                            </p>
+                            <p className="text-sm font-bold text-green-600">
                               {formatCurrency(order.advanceAmount)}
                             </p>
                           </div>
-                          <div className="bg-amber-50 rounded-lg p-2.5">
-                            <p className="text-xs text-amber-600 mb-0.5">Balance</p>
-                            <p className="text-sm font-semibold text-amber-700">
+                          <div className="rounded-lg bg-orange-50 p-2.5">
+                            <p className="mb-0.5 text-[11px] text-orange-500">
+                              Balance
+                            </p>
+                            <p className="text-sm font-bold text-orange-600">
                               {formatCurrency(order.balanceAmount)}
                             </p>
                           </div>
@@ -227,21 +250,21 @@ const DriverDashboardPage = () => {
               )}
             </section>
 
-            {/* ================= Returnable Items ================= */}
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-base font-semibold text-slate-900">
+            {/* ── Returnable Items ── */}
+            <section className="pb-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-sm font-semibold tracking-wide text-zinc-900 uppercase">
                   Items to Return
                 </h2>
-                <span className="text-xs font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+                <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-500">
                   {returnableItems.length}
                 </span>
               </div>
 
               {returnableItems.length === 0 ? (
-                <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
-                  <Package className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                  <p className="text-sm text-slate-500">No pending returns</p>
+                <div className="rounded-xl border border-zinc-200 bg-white py-10 text-center">
+                  <Package className="mx-auto mb-2 h-10 w-10 text-zinc-300" />
+                  <p className="text-sm text-zinc-400">No pending returns</p>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -249,83 +272,107 @@ const DriverDashboardPage = () => {
                     <div
                       key={item.deliveryId}
                       onClick={() => handleOrderClick(item.orderId)}
-                      className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md active:scale-95 transition-all duration-200 cursor-pointer"
+                      className="cursor-pointer overflow-hidden rounded-xl border border-zinc-200 bg-white transition-transform duration-150 active:scale-[0.98]"
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
+                        if (e.key === 'Enter' || e.key === ' ')
                           handleOrderClick(item.orderId)
-                        }
                       }}
                     >
-                      {/* Header */}
-                      <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                      {/* Card header */}
+                      <div className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
                         <div>
-                          <span className="text-xs font-medium text-slate-500">Order</span>
-                          <p className="text-base font-semibold text-slate-900">#{item.orderId}</p>
+                          <p className="text-[11px] font-medium text-zinc-400">
+                            Order
+                          </p>
+                          <p className="text-base font-bold text-zinc-900">
+                            #{item.orderId}
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-                            item.status === 'Pending Return' 
-                              ? 'text-amber-700 bg-amber-50' 
-                              : 'text-green-700 bg-green-50'
-                          }`}>
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                              item.status === 'Pending Return'
+                                ? 'bg-orange-50 text-orange-600'
+                                : 'bg-green-50 text-green-700'
+                            }`}
+                          >
                             {item.status}
                           </span>
-                          <ChevronRight className="w-5 h-5 text-slate-400" />
+                          <ChevronRight className="h-4 w-4 text-zinc-400" />
                         </div>
                       </div>
 
-                      {/* Body */}
-                      <div className="p-4 flex flex-col gap-3">
-                        {/* Main Vessel Summary */}
-                        <div className="bg-slate-50 rounded-lg p-3">
-                          <p className="text-xs font-medium text-slate-500 mb-2">Main Item</p>
-                          <p className="text-sm font-semibold text-slate-900 mb-2">
+                      {/* Card body */}
+                      <div className="flex flex-col gap-3 px-4 py-3">
+                        {/* Main vessel summary */}
+                        <div className="rounded-lg bg-zinc-50 p-3">
+                          <p className="mb-1.5 text-[11px] font-medium text-zinc-400">
                             {item.vesselName}
                           </p>
                           <div className="grid grid-cols-3 gap-2 text-center">
                             <div>
-                              <p className="text-xs text-slate-500">Given</p>
-                              <p className="text-sm font-semibold text-slate-900">{item.quantityGiven}</p>
+                              <p className="text-[11px] text-zinc-400">Given</p>
+                              <p className="text-sm font-bold text-zinc-900">
+                                {item.quantityGiven}
+                              </p>
                             </div>
                             <div>
-                              <p className="text-xs text-slate-500">Returned</p>
-                              <p className="text-sm font-semibold text-green-600">{item.quantityReturned}</p>
+                              <p className="text-[11px] text-zinc-400">
+                                Returned
+                              </p>
+                              <p className="text-sm font-bold text-green-600">
+                                {item.quantityReturned}
+                              </p>
                             </div>
                             <div>
-                              <p className="text-xs text-slate-500">Pending</p>
-                              <p className="text-sm font-semibold text-amber-600">{item.pendingReturn}</p>
+                              <p className="text-[11px] text-zinc-400">
+                                Pending
+                              </p>
+                              <p className="text-sm font-bold text-orange-600">
+                                {item.pendingReturn}
+                              </p>
                             </div>
                           </div>
                         </div>
 
-                        {/* Pickup Date */}
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-slate-400" />
-                          <span className="text-xs text-slate-500">Pickup:</span>
-                          <span className="text-sm font-medium text-slate-900">
+                        {/* Pickup date */}
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-3.5 w-3.5 text-zinc-400" />
+                          <span className="text-xs text-zinc-400">Pickup:</span>
+                          <span className="text-xs font-semibold text-zinc-800">
                             {formatDate(item.returnPickupDate)}
                           </span>
                         </div>
 
-                        {/* All Vessels */}
+                        {/* All vessels */}
                         {item.vessels?.length > 0 && (
-                          <div className="pt-3 border-t border-slate-100">
-                            <p className="text-xs font-medium text-slate-500 mb-2">All Items</p>
-                            <div className="flex flex-col gap-2">
+                          <div className="border-t border-zinc-100 pt-3">
+                            <p className="mb-2 text-[11px] font-medium tracking-wide text-zinc-400 uppercase">
+                              All Items
+                            </p>
+                            <div className="flex flex-col gap-1.5">
                               {item.vessels.map((vessel: Vessel) => (
                                 <div
                                   key={vessel.id}
-                                  className="flex items-center justify-between text-xs bg-slate-50 rounded-lg p-2"
+                                  className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2 text-xs"
                                 >
-                                  <span className="font-medium text-slate-700">{vessel.name}</span>
-                                  <div className="flex gap-3 text-slate-600">
+                                  <span className="font-medium text-zinc-800">
+                                    {vessel.name}
+                                  </span>
+                                  <div className="flex gap-3 text-zinc-500">
                                     <span>
-                                      <span className="text-slate-400">G:</span> {vessel.quantityGiven}
+                                      G:{' '}
+                                      <span className="font-semibold text-zinc-700">
+                                        {vessel.quantityGiven}
+                                      </span>
                                     </span>
                                     <span>
-                                      <span className="text-slate-400">R:</span> {vessel.quantityReturned}
+                                      R:{' '}
+                                      <span className="font-semibold text-green-600">
+                                        {vessel.quantityReturned}
+                                      </span>
                                     </span>
                                   </div>
                                 </div>

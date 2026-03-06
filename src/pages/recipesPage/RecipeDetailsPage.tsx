@@ -62,7 +62,7 @@ const isRowEmpty = (row: RecipeRow) => {
   if (row.ingredientType === 'RAW_MATERIAL') {
     return !row.rawMaterialId && !row.qtyPerUnit && !row.unit.trim()
   }
-  return !row.subProductId && !row.qtyPerUnit && !row.unit.trim()
+  return !row.subProductId && !row.qtyPerUnit
 }
 
 const isRowValid = (row: RecipeRow) => {
@@ -145,8 +145,17 @@ const mapRecipeToRow = (
     subProductId: recipe.subProductId ?? recipe.subProduct?.subProductId ?? 0,
     subProductPrimaryName:
       recipe.subProductName ?? recipe.subProduct?.subProductPrimaryName ?? '',
-    qtyPerUnit: recipe.qtyPerUnit ?? 0,
-    unit: material?.purchaseUnit ?? recipe.unit ?? '',
+    qtyPerUnit:
+      type === 'RAW_MATERIAL'
+        ? (recipe.rawMaterial?.qtyPerUnit ?? recipe.qtyPerUnit ?? 0)
+        : (recipe.subProduct?.qtyPerUnit ?? recipe.qtyPerUnit ?? 0),
+    unit:
+      type === 'RAW_MATERIAL'
+        ? (material?.purchaseUnit ??
+          recipe.rawMaterial?.unit ??
+          recipe.unit ??
+          '')
+        : (recipe.subProduct?.unit ?? recipe.unit ?? ''),
   }
 }
 
@@ -487,7 +496,7 @@ const RecipeDetailsPage = () => {
       className: 'min-w-[120px]',
       render: (_, row: RecipeRow) => (
         <span className="text-sm font-medium text-zinc-700">
-          {row.unit || 'portion'}
+          {row.unit || 'portion'} qt
         </span>
       ),
     },

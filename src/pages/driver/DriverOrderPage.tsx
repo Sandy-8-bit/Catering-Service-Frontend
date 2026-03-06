@@ -1,6 +1,11 @@
 import { useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { useFetchDriverOrderDelivery, useCompleteReturnDelivery, useUpdateReturnPickupDate, useUpdateDeliveryVessels } from '@/queries/driverQueries'
+import {
+  useFetchDriverOrderDelivery,
+  useCompleteReturnDelivery,
+  useUpdateReturnPickupDate,
+  useUpdateDeliveryVessels,
+} from '@/queries/driverQueries'
 import type { DriverOrderDetail } from '@/types/driverOrderDetail'
 import {
   MapPin,
@@ -14,7 +19,28 @@ import {
   Truck,
   Plus,
   Trash2,
+  CreditCard,
 } from 'lucide-react'
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+const statusLabel: Record<string, string> = {
+  ORDER_PLACED: 'Order Placed',
+  OUT_FOR_DELIVERY: 'Out for Delivery',
+  DELIVERED: 'Delivered',
+  ORDER_DELIVERED: 'Order Delivered',
+  PENDING: 'Pending',
+}
+
+const statusClass: Record<string, string> = {
+  ORDER_PLACED: 'bg-zinc-100 text-zinc-700',
+  OUT_FOR_DELIVERY: 'bg-orange-50 text-orange-600',
+  DELIVERED: 'bg-green-50 text-green-700',
+  ORDER_DELIVERED: 'bg-green-50 text-green-700',
+  PENDING: 'bg-zinc-100 text-zinc-600',
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 const DriverOrderPage = () => {
   const { orderId } = useParams<{ orderId: string }>()
@@ -23,31 +49,26 @@ const DriverOrderPage = () => {
     orderId: parsedOrderId,
   })
   const order: DriverOrderDetail | undefined = data?.[0]
+
   const [vessels, setVessels] = useState<
     { id?: number; name: string; quantityGiven: number }[]
   >([])
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  // Vessel return tracking (for close order)
   const [vesselReturns, setVesselReturns] = useState<
     { id: number; quantityReturned: number }[]
   >([])
-
-  // Payment details for close order
   const [amountCollected, setAmountCollected] = useState<number>(0)
   const [paymentMode, setPaymentMode] = useState<string>('CASH')
   const [isCloseOrderLoading, setIsCloseOrderLoading] = useState(false)
 
-  // Return pickup date for delivery
   const [returnPickupDate, setReturnPickupDate] = useState<string>('')
   const [isDeliveryLoading, setIsDeliveryLoading] = useState(false)
 
-  // Add vessel form
   const [newVesselName, setNewVesselName] = useState<string>('')
   const [newVesselQuantity, setNewVesselQuantity] = useState<number>(0)
 
-  // Pending vessels (locally added, not yet submitted)
   const [pendingVessels, setPendingVessels] = useState<
     { name: string; quantityGiven: number; quantityReturned: 0 }[]
   >([])
@@ -66,13 +87,9 @@ const DriverOrderPage = () => {
   useEffect(() => {
     if (order?.vessels) {
       setVessels(order.vessels)
-      // Initialize vessel returns
-      const initialReturns = order.vessels.map(v => ({
-        id: v.id,
-        quantityReturned: 0,
-      }))
-      setVesselReturns(initialReturns)
-      // Initialize amount collected with balance amount
+      setVesselReturns(
+        order.vessels.map((v) => ({ id: v.id, quantityReturned: 0 }))
+      )
       setAmountCollected(order.orderBalanceAmount)
     }
   }, [order])
@@ -80,27 +97,24 @@ const DriverOrderPage = () => {
   const handleMarkAsDelivered = () => {
     setError('')
     setSuccess('')
-
     if (!returnPickupDate) {
       setError('Please select return pickup date')
       return
     }
-
     setIsDeliveryLoading(true)
-
     updateReturnDate(
-      {
-        deliveryId: order!.id,
-        returnPickupDate,
-      },
+      { deliveryId: order!.id, returnPickupDate },
       {
         onSuccess: () => {
           setSuccess('Order marked as delivered successfully!')
           setReturnPickupDate('')
           setIsDeliveryLoading(false)
         },
-        onError: (error: any) => {
-          setError(error?.response?.data?.message || 'Failed to mark delivery. Please try again.')
+        onError: (err: any) => {
+          setError(
+            err?.response?.data?.message ||
+              'Failed to mark delivery. Please try again.'
+          )
           setIsDeliveryLoading(false)
         },
       }
@@ -110,46 +124,42 @@ const DriverOrderPage = () => {
   const handleAddVessel = () => {
     setError('')
     setSuccess('')
-
     if (!newVesselName.trim()) {
       setError('Please select a vessel type')
       return
     }
-
     if (newVesselQuantity <= 0) {
       setError('Please enter valid quantity')
       return
     }
-
-    setPendingVessels(prev => [
+    setPendingVessels((prev) => [
       ...prev,
-      { name: newVesselName, quantityGiven: newVesselQuantity, quantityReturned: 0 },
+      {
+        name: newVesselName,
+        quantityGiven: newVesselQuantity,
+        quantityReturned: 0,
+      },
     ])
     setNewVesselName('')
     setNewVesselQuantity(0)
   }
 
-  const handleRemovePendingVessel = (index: number) => {
-    setPendingVessels(prev => prev.filter((_, i) => i !== index))
-  }
+  const handleRemovePendingVessel = (index: number) =>
+    setPendingVessels((prev) => prev.filter((_, i) => i !== index))
 
-  const handlePendingQuantityChange = (index: number, quantity: number) => {
-    setPendingVessels(prev =>
+  const handlePendingQuantityChange = (index: number, quantity: number) =>
+    setPendingVessels((prev) =>
       prev.map((v, i) => (i === index ? { ...v, quantityGiven: quantity } : v))
     )
-  }
 
   const handleStartOrder = () => {
     setError('')
     setSuccess('')
-
     if (pendingVessels.length === 0) {
       setError('Please add at least one vessel')
       return
     }
-
     setIsStartingOrder(true)
-
     updateVessels(
       {
         driverId: order!.driverId,
@@ -162,12 +172,14 @@ const DriverOrderPage = () => {
           setPendingVessels([])
           setIsStartingOrder(false)
           if (data?.data && Array.isArray(data.data)) {
-            const updatedVessels = data.data[0]?.vessels || []
-            setVessels(updatedVessels)
+            setVessels(data.data[0]?.vessels || [])
           }
         },
-        onError: (error: any) => {
-          setError(error?.response?.data?.message || 'Failed to start order. Please try again.')
+        onError: (err: any) => {
+          setError(
+            err?.response?.data?.message ||
+              'Failed to start order. Please try again.'
+          )
           setIsStartingOrder(false)
         },
       }
@@ -177,19 +189,15 @@ const DriverOrderPage = () => {
   const handleCloseOrder = async () => {
     setError('')
     setSuccess('')
-
     if (amountCollected <= 0) {
       setError('Please enter valid amount collected')
       return
     }
-
     if (!paymentMode) {
       setError('Please select payment mode')
       return
     }
-
     setIsCloseOrderLoading(true)
-
     completeReturn(
       {
         deliveryId: order!.id,
@@ -201,149 +209,162 @@ const DriverOrderPage = () => {
         onSuccess: () => {
           setSuccess('Order closed successfully!')
           setVesselReturns(
-            order!.vessels.map(v => ({
-              id: v.id,
-              quantityReturned: 0,
-            }))
+            order!.vessels.map((v) => ({ id: v.id, quantityReturned: 0 }))
           )
           setAmountCollected(0)
           setPaymentMode('CASH')
           setIsCloseOrderLoading(false)
         },
-        onError: (error: any) => {
-          setError(error?.response?.data?.message || 'Failed to close order. Please try again.')
+        onError: (err: any) => {
+          setError(
+            err?.response?.data?.message ||
+              'Failed to close order. Please try again.'
+          )
           setIsCloseOrderLoading(false)
         },
       }
     )
   }
 
-  const handleVesselReturnChange = (vesselId: number, quantity: number) => {
-    setVesselReturns(prev =>
-      prev.map(v => (v.id === vesselId ? { ...v, quantityReturned: quantity } : v))
+  const handleVesselReturnChange = (vesselId: number, quantity: number) =>
+    setVesselReturns((prev) =>
+      prev.map((v) =>
+        v.id === vesselId ? { ...v, quantityReturned: quantity } : v
+      )
     )
-  }
+
+  // ── Guards ──────────────────────────────────────────────────────────────────
 
   if (isLoading)
-    return <div className="p-6 text-center">Loading order...</div>
-
-  if (isError || !order)
-    return <div className="p-6 text-center">Failed to load order</div>
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ORDER_PLACED':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'OUT_FOR_DELIVERY':
-        return 'bg-blue-100 text-blue-800'
-      case 'DELIVERED':
-        return 'bg-green-100 text-green-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 pb-6">
-      {/* Header */}
-      <div className="bg-blue-600 text-white p-4 sticky top-0 shadow-md">
-        <div className="flex justify-between">
-          <h1 className="font-bold text-lg">Order #{order.orderId}</h1>
-          <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
-              order.orderStatus
-            )}`}
-          >
-            {order.orderStatus}
-          </span>
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+        <div className="text-center">
+          <div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-[3px] border-orange-500 border-t-transparent" />
+          <p className="text-xs text-zinc-500">Loading order...</p>
         </div>
       </div>
+    )
 
-      <div className="p-4 flex flex-col gap-4">
-        {/* Error Alert */}
+  if (isError || !order)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50">
+        <p className="text-sm text-zinc-500">Failed to load order</p>
+      </div>
+    )
+
+  // ── Render ──────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="min-h-screen bg-zinc-50 pb-10">
+      {/* ── Header ── */}
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
+        <div>
+          <p className="text-[11px] font-medium text-zinc-400">Order</p>
+          <p className="text-base font-bold text-zinc-900">#{order.orderId}</p>
+        </div>
+        <span
+          className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusClass[order.orderStatus] ?? 'bg-zinc-100 text-zinc-600'}`}
+        >
+          {statusLabel[order.orderStatus] ?? order.orderStatus}
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-3 px-4 py-4">
+        {/* ── Alerts ── */}
         {error && (
-          <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-            <p className="text-red-700 font-medium text-sm">{error}</p>
+          <div className="flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 px-3.5 py-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+            <p className="text-sm font-medium text-red-700">{error}</p>
           </div>
         )}
-
-        {/* Success Alert */}
         {success && (
-          <div className="bg-green-50 border-2 border-green-300 rounded-lg p-4 flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-            <p className="text-green-700 font-medium text-sm">{success}</p>
+          <div className="flex items-start gap-2.5 rounded-lg border border-green-200 bg-green-50 px-3.5 py-3">
+            <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+            <p className="text-sm font-medium text-green-700">{success}</p>
           </div>
         )}
 
-        {/* Customer Info Card */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col gap-3">
-          <h2 className="font-semibold text-gray-900 text-lg">Customer Details</h2>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-start gap-3">
-              <Phone className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-              <div className="flex flex-col gap-1">
-                <p className="font-medium text-gray-900">{order.customerName}</p>
-                <a href={`tel:${order.customerPhone}`} className="text-blue-600 text-sm">
-                  {order.customerPhone}
-                </a>
-              </div>
+        {/* ── Customer Details ── */}
+        <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
+          <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+            Customer
+          </p>
+          <div className="flex items-start gap-3">
+            <Phone className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+            <div>
+              <p className="text-sm font-semibold text-zinc-900">
+                {order.customerName}
+              </p>
+              <a
+                href={`tel:${order.customerPhone}`}
+                className="text-sm font-medium text-orange-600"
+              >
+                {order.customerPhone}
+              </a>
             </div>
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
-              <div className="flex flex-col gap-1">
-                <p className="text-gray-700 text-sm">{order.customerAddress}</p>
-                {order.locationUrl && (
-                  <a
-                    href={order.locationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 text-sm font-medium"
-                  >
-                    Open in Maps →
-                  </a>
-                )}
-              </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+            <div>
+              <p className="text-sm leading-relaxed text-zinc-700">
+                {order.customerAddress}
+              </p>
+              {order.locationUrl && (
+                <a
+                  href={order.locationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block text-xs font-medium text-orange-600"
+                >
+                  Open in Maps →
+                </a>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Event Details Card */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col gap-3">
-          <h2 className="font-semibold text-gray-900 text-lg">Event Details</h2>
+        {/* ── Event Details ── */}
+        <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
+          <p className="mb-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+            Event
+          </p>
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2">
-              <Package className="w-5 h-5 text-blue-600 shrink-0" />
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs text-gray-500">Event Type</p>
-                <p className="font-medium text-gray-900 text-sm">{order.eventType}</p>
+            <div className="flex items-start gap-2">
+              <Package className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+              <div>
+                <p className="text-[11px] text-zinc-400">Type</p>
+                <p className="text-sm font-semibold text-zinc-900">
+                  {order.eventType}
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-blue-600 shrink-0" />
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs text-gray-500">People</p>
-                <p className="font-medium text-gray-900 text-sm">{order.totalPeople}</p>
+            <div className="flex items-start gap-2">
+              <Users className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+              <div>
+                <p className="text-[11px] text-zinc-400">People</p>
+                <p className="text-sm font-semibold text-zinc-900">
+                  {order.totalPeople}
+                </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-blue-600 shrink-0" />
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs text-gray-500">Date</p>
-                <p className="font-medium text-gray-900 text-sm">
+            <div className="flex items-start gap-2">
+              <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+              <div>
+                <p className="text-[11px] text-zinc-400">Date</p>
+                <p className="text-sm font-semibold text-zinc-900">
                   {new Date(order.eventDate).toLocaleDateString('en-IN', {
                     day: 'numeric',
                     month: 'short',
-                    year: 'numeric'
+                    year: 'numeric',
                   })}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-600 shrink-0" />
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs text-gray-500">Time</p>
-                <p className="font-medium text-gray-900 text-sm">
+            <div className="flex items-start gap-2">
+              <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
+              <div>
+                <p className="text-[11px] text-zinc-400">Time</p>
+                <p className="text-sm font-semibold text-zinc-900">
                   {order.eventTime.slice(0, 5)}
                 </p>
               </div>
@@ -351,86 +372,104 @@ const DriverOrderPage = () => {
           </div>
         </div>
 
-        {/* Payment Summary Card */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col gap-3">
-          <h2 className="font-semibold text-gray-900 text-lg">Payment Summary</h2>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-600">Total Amount</span>
-              <span className="font-semibold text-gray-900">₹{order.orderTotalAmount.toFixed(2)}</span>
+        {/* ── Payment Summary ── */}
+        <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
+          <p className="mb-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+            Payment
+          </p>
+          <div className="flex flex-col divide-y divide-zinc-100">
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-zinc-600">Total Amount</span>
+              <span className="text-sm font-bold text-zinc-900">
+                ₹{order.orderTotalAmount.toFixed(2)}
+              </span>
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-gray-100">
-              <span className="text-gray-600">Advance Paid</span>
-              <span className="font-semibold text-green-600">₹{order.orderAdvanceAmount.toFixed(2)}</span>
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-zinc-600">Advance Paid</span>
+              <span className="text-sm font-bold text-green-600">
+                ₹{order.orderAdvanceAmount.toFixed(2)}
+              </span>
             </div>
-            <div className="flex items-center justify-between py-2">
-              <span className="text-gray-900 font-medium">Balance to Collect</span>
-              <span className={`font-bold text-lg ${order.orderBalanceAmount < 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm font-semibold text-zinc-900">
+                Balance
+              </span>
+              <span
+                className={`text-sm font-bold ${order.orderBalanceAmount < 0 ? 'text-green-600' : 'text-orange-600'}`}
+              >
                 ₹{Math.abs(order.orderBalanceAmount).toFixed(2)}
                 {order.orderBalanceAmount < 0 && ' (Overpaid)'}
               </span>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Vessel Section */}
-      <div className="p-4">
-        <div className="bg-white rounded-lg shadow border p-4 space-y-4">
+        {/* ── Vessels ── */}
+        <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-lg">Vessels Information</h2>
-            {(vessels.length + pendingVessels.length) > 0 && (
-              <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-semibold">
-                {vessels.length + pendingVessels.length} vessel{(vessels.length + pendingVessels.length) !== 1 ? 's' : ''}
+            <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+              Vessels
+            </p>
+            {vessels.length + pendingVessels.length > 0 && (
+              <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-orange-600">
+                {vessels.length + pendingVessels.length} vessel
+                {vessels.length + pendingVessels.length !== 1 ? 's' : ''}
               </span>
             )}
           </div>
 
-          {/* Saved Vessels (from API) */}
+          {/* Saved */}
           {vessels.length > 0 && (
-            <div className="space-y-3">
+            <div className="flex flex-col gap-2">
               {vessels.map((v, i) => (
                 <div
                   key={v.id ?? i}
-                  className="flex items-center justify-between border rounded-md p-3 bg-gray-50"
+                  className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2.5"
                 >
-                  <div className="flex-1">
-                    <span className="font-medium block">{v.name}</span>
-                    <span className="text-sm text-gray-600">
-                      Quantity Given: {v.quantityGiven}
+                  <span className="text-sm font-medium text-zinc-900">
+                    {v.name}
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    Qty:{' '}
+                    <span className="font-semibold text-zinc-800">
+                      {v.quantityGiven}
                     </span>
-                  </div>
+                  </span>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Pending Vessels (locally added, not yet submitted) */}
+          {/* Locally added */}
           {pendingVessels.length > 0 && (
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Newly Added</p>
+            <div className="flex flex-col gap-2">
+              <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
+                Newly Added
+              </p>
               {pendingVessels.map((v, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 border border-blue-200 rounded-md p-3 bg-blue-50"
+                  className="flex items-center gap-2.5 rounded-lg border border-orange-100 bg-orange-50 px-3 py-2.5"
                 >
-                  <div className="flex-1">
-                    <span className="font-medium block text-gray-900">{v.name}</span>
-                  </div>
+                  <span className="flex-1 text-sm font-medium text-zinc-900">
+                    {v.name}
+                  </span>
                   <input
                     type="number"
                     min={1}
                     value={v.quantityGiven || ''}
-                    onChange={e => handlePendingQuantityChange(i, Number(e.target.value))}
-                    className="w-20 border border-gray-300 rounded-lg px-2 py-1.5 text-center text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    onChange={(e) =>
+                      handlePendingQuantityChange(i, Number(e.target.value))
+                    }
+                    className="w-16 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-center text-sm focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   />
                   <button
                     onClick={() => handleRemovePendingVessel(i)}
-                    className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors"
+                    className="p-1 text-zinc-400 transition-colors hover:text-red-500"
                     type="button"
-                    aria-label="Remove vessel"
+                    aria-label="Remove"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               ))}
@@ -438,27 +477,23 @@ const DriverOrderPage = () => {
           )}
 
           {vessels.length === 0 && pendingVessels.length === 0 && (
-            <p className="text-gray-600 text-center py-4">No vessels added yet</p>
+            <p className="py-3 text-center text-sm text-zinc-400">
+              No vessels added yet
+            </p>
           )}
 
-          {/* Add Vessel Form */}
-           {orderplaced && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
-            <div className="flex items-center gap-2 pb-3 border-b border-blue-200">
-              <Plus className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-900">Add Vessel</h3>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Vessel Type *
-              </label>
+          {/* Add vessel form */}
+          {orderplaced && (
+            <div className="flex flex-col gap-2.5 border-t border-zinc-100 pt-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
+                <Plus className="h-3.5 w-3.5" /> Add Vessel
+              </p>
               <select
                 value={newVesselName}
-                onChange={e => setNewVesselName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base bg-white"
+                onChange={(e) => setNewVesselName(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
               >
-                <option value="">Select Vessel Type</option>
+                <option value="">Select vessel type</option>
                 <option value="Vessel A">Vessel A</option>
                 <option value="Vessel B">Vessel B</option>
                 <option value="Vessel C">Vessel C</option>
@@ -466,231 +501,201 @@ const DriverOrderPage = () => {
                 <option value="Vessel E">Vessel E</option>
                 <option value="Vessel F">Vessel F</option>
               </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-gray-700">
-                Quantity *
-              </label>
               <input
                 type="number"
                 min={1}
                 value={newVesselQuantity || ''}
-                onChange={e => setNewVesselQuantity(Number(e.target.value))}
-                placeholder="Enter quantity"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
+                onChange={(e) => setNewVesselQuantity(Number(e.target.value))}
+                placeholder="Quantity"
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
               />
+              <button
+                onClick={handleAddVessel}
+                disabled={!newVesselName || newVesselQuantity <= 0}
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-zinc-900 py-2.5 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+                type="button"
+              >
+                <Plus className="h-4 w-4" /> Add
+              </button>
             </div>
+          )}
 
-            <button
-              onClick={handleAddVessel}
-              disabled={!newVesselName || newVesselQuantity <= 0}
-              className="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg font-semibold text-sm md:text-base hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all flex items-center justify-center gap-2"
-              type="button"
-            >
-              <Plus className="w-4 h-4" />
-              Add Vessel
-            </button>
-          </div>
-        )}
-
-          {/* Start Order Button */}
+          {/* Start Order */}
           {pendingVessels.length > 0 && (
             <button
               onClick={handleStartOrder}
               disabled={isStartingOrder}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold text-base md:text-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 py-3 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
             >
-              <Truck className="w-5 h-5" />
-              {isStartingOrder ? 'Starting Order...' : 'Start Order'}
+              <Truck className="h-4 w-4" />
+              {isStartingOrder ? 'Starting...' : 'Start Order'}
             </button>
           )}
         </div>
-      </div>
 
-      {/* Delivery Section */}
-      {isOutForDelivery && (
-        <div className="p-4 md:p-6">
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 md:p-6 space-y-6">
-  
-            {/* Return Pickup Date */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-blue-600" />
-                <label className="block font-semibold text-gray-800 text-base md:text-lg">
-                  Select the date when items will be returned or picked up
-                </label>
-              </div>
+        {/* ── Delivery Section ── */}
+        {isOutForDelivery && (
+          <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
+            <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+              Mark Delivered
+            </p>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-zinc-700">
+                Return Pickup Date
+              </label>
               <input
                 type="date"
                 value={returnPickupDate}
-                onChange={e => setReturnPickupDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
+                onChange={(e) => setReturnPickupDate(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
               />
-              <p className="text-xs md:text-sm text-gray-600">          
-              </p>
             </div>
-          </div>
-
-          {/* Deliver Button */}
-          <div className="mt-6 p-4 md:p-0">
             <button
               onClick={handleMarkAsDelivered}
-              disabled={
-                isDeliveryLoading ||
-                !returnPickupDate
-              }
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold text-base md:text-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all shadow-md hover:shadow-lg"
+              disabled={isDeliveryLoading || !returnPickupDate}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 py-3 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
               type="button"
             >
               {isDeliveryLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin">⏳</span> 
-                  <span>Marking Delivered...</span>
-                </span>
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />{' '}
+                  Marking...
+                </>
               ) : (
                 'Mark as Delivered'
               )}
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Close Order Section */}
-      {(isDelivered || isOrderDelivered || isPending) && (
-        <div className="p-4 md:p-6">
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 p-5 md:p-6 space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-purple-600" />
-              </div>
-              <h2 className="font-bold text-lg md:text-xl text-gray-900">Complete Order</h2>
-            </div>
+        {/* ── Close Order Section ── */}
+        {(isDelivered || isOrderDelivered || isPending) && (
+          <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
+            <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+              Complete Order
+            </p>
 
             {/* Vessel Returns */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-blue-600" />
-                <h3 className="font-semibold text-gray-800 text-base md:text-lg">Vessel Returns</h3>
-              </div>
+            <div className="flex flex-col gap-2">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-zinc-800">
+                <Package className="h-4 w-4 text-zinc-400" /> Vessel Returns
+              </p>
               {order?.vessels && order.vessels.length > 0 ? (
-                <div className="space-y-3">
-                  {order.vessels.map(vessel => (
+                <div className="flex flex-col gap-2">
+                  {order.vessels.map((vessel) => (
                     <div
                       key={vessel.id}
-                      className="bg-white rounded-lg border border-gray-200 p-4 hover:border-purple-300 hover:shadow-sm transition-all"
+                      className="flex items-center justify-between gap-3 rounded-lg bg-zinc-50 px-3 py-2.5"
                     >
-                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-900 text-sm md:text-base">{vessel.name}</p>
-                          <p className="text-xs md:text-sm text-gray-600 mt-1">
-                            Quantity Given: <span className="font-medium">{vessel.quantityGiven}</span>
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-1 w-full md:w-auto">
-                          <label className="text-xs text-gray-600 font-medium">Quantity Returned</label>
-                          <input
-                            type="number"
-                            min={0}
-                            max={vessel.quantityGiven}
-                            placeholder="0"
-                            value={
-                              vesselReturns.find(v => v.id === vessel.id)
-                                ?.quantityReturned || ''
-                            }
-                            onChange={e =>
-                              handleVesselReturnChange(
-                                vessel.id,
-                                Number(e.target.value)
-                              )
-                            }
-                            className="w-full md:w-28 border border-gray-300 rounded-lg px-3 py-2 text-center focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base"
-                          />
-                        </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-zinc-900">
+                          {vessel.name}
+                        </p>
+                        <p className="text-xs text-zinc-400">
+                          Given: {vessel.quantityGiven}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <label className="text-[11px] text-zinc-400">
+                          Returned
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          max={vessel.quantityGiven}
+                          placeholder="0"
+                          value={
+                            vesselReturns.find((v) => v.id === vessel.id)
+                              ?.quantityReturned || ''
+                          }
+                          onChange={(e) =>
+                            handleVesselReturnChange(
+                              vessel.id,
+                              Number(e.target.value)
+                            )
+                          }
+                          className="w-20 rounded-lg border border-zinc-300 px-2 py-1.5 text-center text-sm focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
+                        />
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600 text-sm text-center py-4">No vessels in this order</p>
+                <p className="py-3 text-center text-sm text-zinc-400">
+                  No vessels in this order
+                </p>
               )}
             </div>
 
             {/* Amount Collected */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
-                <label className="block font-semibold text-gray-800 text-base md:text-lg">
-                  Amount Collected
-                </label>
-              </div>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-1.5 text-sm font-semibold text-zinc-800">
+                <CreditCard className="h-4 w-4 text-zinc-400" /> Amount
+                Collected
+              </label>
               <div className="relative">
-                <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-700 font-semibold text-base md:text-lg">₹</span>
+                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm font-medium text-zinc-500">
+                  ₹
+                </span>
                 <input
                   type="number"
                   min={0}
                   step={0.01}
                   value={amountCollected || ''}
-                  onChange={e => setAmountCollected(Number(e.target.value))}
-                  className="w-full border border-gray-300 rounded-lg pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base"
+                  onChange={(e) => setAmountCollected(Number(e.target.value))}
+                  className="w-full rounded-lg border border-zinc-300 py-2.5 pr-4 pl-7 text-sm focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   placeholder="0.00"
                 />
               </div>
-              <p className="text-xs md:text-sm text-gray-600 flex justify-between">
-                <span>Balance to collect:</span>
-                <span className={`font-semibold ${order?.orderBalanceAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+              <div className="flex justify-between text-xs text-zinc-500">
+                <span>Balance to collect</span>
+                <span
+                  className={`font-semibold ${order?.orderBalanceAmount > 0 ? 'text-orange-600' : 'text-green-600'}`}
+                >
                   ₹{order?.orderBalanceAmount.toFixed(2)}
                 </span>
-              </p>
+              </div>
             </div>
 
             {/* Payment Mode */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Phone className="w-5 h-5 text-blue-600" />
-                <label className="block font-semibold text-gray-800 text-base md:text-lg">
-                  Payment Mode
-                </label>
-              </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-zinc-800">
+                Payment Mode
+              </label>
               <select
                 value={paymentMode}
-                onChange={e => setPaymentMode(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white text-sm md:text-base font-medium"
+                onChange={(e) => setPaymentMode(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm font-medium text-zinc-900 focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
               >
-                <option value="CASH">💵 Cash</option>
-                <option value="CARD">💳 Card</option>
-                <option value="UPI">📱 UPI</option>
-                <option value="ONLINE_TRANSFER">🏦 Online Transfer</option>
+                <option value="CASH">Cash</option>
+                <option value="CARD">Card</option>
+                <option value="UPI">UPI</option>
+                <option value="ONLINE_TRANSFER">Online Transfer</option>
               </select>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Close Order Button */}
-      {(isDelivered || isOrderDelivered || isPending) && (
-        <div className="p-4 mt-6 border-t">
-          <button
-            onClick={handleCloseOrder}
-            disabled={
-              isCloseOrderLoading ||
-              amountCollected <= 0
-            }
-            className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg font-semibold text-base md:text-lg hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-60 transition-all shadow-md hover:shadow-lg"
-            type="button"
-          >
-            {isCloseOrderLoading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="animate-spin">⏳</span> 
-                <span>Closing Order...</span>
-              </span>
-            ) : (
-              'Close Order'
-            )}
-          </button>
-        </div>
-      )}
+            {/* Close button */}
+            <button
+              onClick={handleCloseOrder}
+              disabled={isCloseOrderLoading || amountCollected <= 0}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-3 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+              type="button"
+            >
+              {isCloseOrderLoading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />{' '}
+                  Closing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4" /> Close Order
+                </>
+              )}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

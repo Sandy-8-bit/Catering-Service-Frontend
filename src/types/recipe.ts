@@ -14,12 +14,16 @@ export interface RecipeRawMaterialRef {
   rawMaterialId: number
   rawMaterialPrimaryName: string
   rawMaterialSecondaryName?: string
+  qtyPerUnit?: number
+  unit?: string
 }
 
 export interface RecipeSubProductRef {
   subProductId: number
   subProductPrimaryName: string
   subProductSecondaryName?: string
+  qtyPerUnit?: number
+  unit?: string
 }
 
 export interface Recipe {
