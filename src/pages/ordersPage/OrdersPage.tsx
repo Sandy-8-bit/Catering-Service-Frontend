@@ -271,6 +271,19 @@ export const OrdersPage = () => {
               <DownloadBillButton orderId={selectedOrder.id} />
             </>
           )}
+           {selectedOrder && (
+            <>
+              <ButtonSm
+                state="outline"
+                disabled={!selectedOrderId}
+                onClick={() =>  navigate(`/driver/order/${selectedOrder.id}`)}
+                className="font-medium"
+              >
+                <Edit3 className="mr-2 h-4 w-4 text-black" /> {t('Update Status')}
+              </ButtonSm>
+              
+            </>
+          )}
           <ButtonSm
             state="outline"
             onClick={() => setShowVoiceDialog(true)}

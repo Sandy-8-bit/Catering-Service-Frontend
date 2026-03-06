@@ -199,7 +199,7 @@
   "save_material": "Save Material",
   "add_raw_material": "Add Raw Material",
   "no_raw_materials": "No raw materials available.",
-
+  "Update Status": "Update Status",
   "raw_material_column": "Raw Material",
   "unit": "Unit",
   "qty_per_unit": "Qty / Unit",
