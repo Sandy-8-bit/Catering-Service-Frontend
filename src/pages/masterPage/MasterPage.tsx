@@ -44,8 +44,11 @@ const MasterPage: React.FC = () => {
     }
   }
 
-  const configCards = useMemo<ConfigCardType[]>(
-    () => [
+const role = localStorage.getItem("CATERING_ROLE")
+
+const configCards = useMemo<ConfigCardType[]>(
+  () => {
+    const cards: ConfigCardType[] = [
       {
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         title: t('raw_materials'),
@@ -73,7 +76,11 @@ const MasterPage: React.FC = () => {
         btnText: t('configure'),
         navigateUrl: appRoutes.products.path,
       },
-      {
+    ]
+
+    // Only show Recipes if NOT staff
+    if (role !== "STAFF") {
+      cards.push({
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         title: t('recipes'),
         desc: t('recipes_desc'),
@@ -81,19 +88,23 @@ const MasterPage: React.FC = () => {
         labelColor: 'bg-orange-50 text-orange-700',
         btnText: t('configure'),
         navigateUrl: appRoutes.recipes.path,
-      },
-      {
-        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
-        title: t('additional_items'),
-        desc: t('additional_items_desc'),
-        label: t('additional_items_label'),
-        labelColor: 'bg-emerald-50 text-emerald-700',
-        btnText: t('configure'),
-        navigateUrl: appRoutes.additionalItems.path,
-      },
-    ],
-    [t]
-  )
+      })
+    }
+
+    cards.push({
+      icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
+      title: t('additional_items'),
+      desc: t('additional_items_desc'),
+      label: t('additional_items_label'),
+      labelColor: 'bg-emerald-50 text-emerald-700',
+      btnText: t('configure'),
+      navigateUrl: appRoutes.additionalItems.path,
+    })
+
+    return cards
+  },
+  [t, role]
+)
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">

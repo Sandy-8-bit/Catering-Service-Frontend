@@ -51,6 +51,13 @@ const SideNav: React.FC = () => {
       //   activeIcon: '/icons/sideNavIcons/dashboard-icon-active.svg',
       //   section: 'main',
       // },
+       {
+        label: 'Order Managmenet',
+        path: appRoutes.orders.path,
+        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
+        activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
+        section: 'orders',
+      },
       {
         label: 'Master Configuration',
         path: appRoutes.master.path,
@@ -58,13 +65,7 @@ const SideNav: React.FC = () => {
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
         section: 'main',
       },
-      {
-        label: 'Order Managmenet',
-        path: appRoutes.orders.path,
-        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
-        activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
-        section: 'orders',
-      },
+     
       {
         label: 'User Management',
         path: appRoutes.userManagement.path,
