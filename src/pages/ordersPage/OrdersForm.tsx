@@ -224,26 +224,40 @@ export const OrdersForm = () => {
               label={t('delivery_preference')}
             />
             {editData.deliveredByUs && (
-              <DropdownSelect
-                title={t('assign_driver')}
-                options={driverOptions}
-                required
-                selected={
-                  driverOptions.find(
-                    (option) => option.id === editData.driver?.driverId
-                  ) || { id: 0, label: t('select_driver') }
-                }
-                onChange={(option) =>
-                  setEditData((prev) => ({
-                    ...prev,
-                    driver: {
-                      driverId: option.id,
-                      driverName: option.label,
-                      driverNumber: '',
-                    },
-                  }))
-                }
-              />
+              <>
+                <DropdownSelect
+                  title={t('assign_driver')}
+                  options={driverOptions}
+                  required
+                  selected={
+                    driverOptions.find(
+                      (option) => option.id === editData.driver?.driverId
+                    ) || { id: 0, label: t('select_driver') }
+                  }
+                  onChange={(option) =>
+                    setEditData((prev) => ({
+                      ...prev,
+                      driver: {
+                        driverId: option.id,
+                        driverName: option.label,
+                        driverNumber: '',
+                      },
+                    }))
+                  }
+                />
+                <Input
+                  title={t('delivery_charges')}
+                  prefixText="₹"
+                  placeholder="0"
+                  inputValue={editData.deliveryCharges?.toString() || ''}
+                  onChange={(value) =>
+                    setEditData((prev) => ({
+                      ...prev,
+                      deliveryCharges: Number(value),
+                    }))
+                  }
+                />
+              </>
             )}
 
             <Input
@@ -289,6 +303,54 @@ export const OrdersForm = () => {
             </h2>
             <p className="text-sm text-zinc-500">{t('payment_text')}</p>
           </header>
+
+          {/* Total Amount Display */}
+          <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4">
+            <div className="flex justify-between gap-3 text-sm text-zinc-600">
+              <span>{t('items_subtotal')}:</span>
+              <span className="font-regular text-zinc-900">
+                ₹
+                {editData.items
+                  ?.reduce((sum, item) => sum + (item.totalPrice || 0), 0)
+                  .toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm text-zinc-600">
+              <span>{t('additional_items_subtotal')}:</span>
+              <span className="font-regular text-zinc-900">
+                ₹
+                {editData.additionalItems
+                  ?.reduce((sum, item) => sum + (item.lineTotal || 0), 0)
+                  .toLocaleString()}
+              </span>
+            </div>
+            {editData.deliveredByUs && (
+              <div className="flex justify-between text-sm text-zinc-600">
+                <span>{t('delivery_charges')}:</span>
+                <span className="font-regular text-zinc-900">
+                  ₹{(editData.deliveryCharges || 0).toLocaleString()}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between border-t border-zinc-200 pt-3">
+              <span className="font-semibold text-zinc-900">{t('total')}:</span>
+              <span className="text-lg font-bold text-zinc-900">
+                ₹
+                {(
+                  (editData.items?.reduce(
+                    (sum, item) => sum + (item.totalPrice || 0),
+                    0
+                  ) || 0) +
+                  (editData.additionalItems?.reduce(
+                    (sum, item) => sum + (item.lineTotal || 0),
+                    0
+                  ) || 0) +
+                  (editData.deliveredByUs ? editData.deliveryCharges || 0 : 0)
+                ).toLocaleString()}
+              </span>
+            </div>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-3">
             <Input
               title={t('advance_amount')}

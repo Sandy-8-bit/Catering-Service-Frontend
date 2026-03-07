@@ -24,6 +24,8 @@ const ORDER_UPDATE_DIFF_FIELDS: ReadonlyArray<keyof OrderPayload> = [
   'driverId',
   'advanceAmount',
   'paymentType',
+  'locationUrl',
+  'deliveryCharges',
 ]
 
 export const mapOrderToPayload = (order: Order): OrderPayload => {
@@ -44,6 +46,8 @@ export const mapOrderToPayload = (order: Order): OrderPayload => {
     driverId: driverId ?? order.driver?.driverId,
     advanceAmount: order.advanceAmount,
     paymentType: order.paymentType,
+    locationUrl: order.locationUrl,
+    deliveryCharges: order.deliveryCharges,
     items: toOrderItemPayload(order.items),
   }
 

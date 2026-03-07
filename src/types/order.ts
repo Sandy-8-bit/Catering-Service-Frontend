@@ -61,6 +61,7 @@ export interface Order {
   createdAt: string
   updatedAt: string
   locationUrl: string
+  deliveryCharges?: number
 }
 
 // Payload fragment for POST / PATCH item entries
@@ -94,6 +95,8 @@ export interface OrderPayload {
   driverId?: number
   advanceAmount: number
   paymentType: string
+  locationUrl?: string
+  deliveryCharges?: number
   items: OrderItemPayload[]
   additionalItems?: OrderAdditionalItemPayload[]
 }
