@@ -57,6 +57,7 @@ export const appRoutes = {
     children: {
       driverDashboard: '/driver/driver-dashboard/:id',
       driverOrderPage: '/driver/order/:orderId',
+      driverPendingOrdersPage: '/driver/pending-orders/:id',
     },
   },
 }

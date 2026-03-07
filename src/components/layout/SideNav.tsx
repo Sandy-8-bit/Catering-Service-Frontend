@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion } from 'motion/react'
 import { LogOut } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { appRoutes } from '@/routes/appRoutes'
 import LogoutConfirmModal from './LogoutConfirmModal'
 
@@ -15,13 +16,20 @@ interface NavigationItem {
   section: NavigationSection
 }
 
-const NAVIGATION_SECTIONS: Array<{ title: string; key: NavigationSection }> = [
-  { title: 'Main Menu', key: 'main' },
-  { title: 'Order Management', key: 'orders' },
-  { title: 'Settings', key: 'settings' },
+const NAVIGATION_SECTIONS: Array<{ key: NavigationSection; titleKey: string }> = [
+  { key: 'main', titleKey: 'side_nav_main_menu' },
+  { key: 'orders', titleKey: 'side_nav_order_management' },
+  { key: 'settings', titleKey: 'side_nav_settings' },
 ]
 
 const SideNav: React.FC = () => {
+  const { t } = useTranslation()
+  const role = localStorage.getItem('CATERING_ROLE')
+
+  if (role === 'DRIVER') {
+    return null
+  }
+
   const [activeRoute, setActiveRoute] = useState<string>('')
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
@@ -52,7 +60,7 @@ const SideNav: React.FC = () => {
       //   section: 'main',
       // },
       {
-        label: 'Order Managmenet',
+        label: t('side_nav_order_management'),
         path: appRoutes.orders.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
@@ -60,21 +68,21 @@ const SideNav: React.FC = () => {
       },
 
       {
-        label: 'User Management',
+        label: t('side_nav_user_management'),
         path: appRoutes.userManagement.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
         section: 'settings',
       },
       {
-        label: 'Master Configuration',
+        label: t('side_nav_master_configuration'),
         path: appRoutes.master.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
         section: 'main',
       },
     ],
-    []
+    [t]
   )
 
   const handleLogout = useCallback(() => {
@@ -95,17 +103,11 @@ const SideNav: React.FC = () => {
 
     const mainItems = navigationItems.filter((item) => item.section === 'main')
 
-    const role = localStorage.getItem('CATERING_ROLE')
-
-    if (role === 'DRIVER') {
-      return null
-    }
-
     return (
       <div className="md:hidden">
         {/* 🔝 Top Nav */}
         <div className="flex items-center justify-between bg-white px-4 py-3 shadow-md">
-          <span className="font-semibold text-slate-800">EBT Catering</span>
+          <span className="font-semibold text-slate-800">{t('side_nav_brand')}</span>
           <button onClick={() => setMenuOpen(true)}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -132,7 +134,7 @@ const SideNav: React.FC = () => {
                 className="mb-4 text-sm text-red-500"
                 onClick={() => setMenuOpen(false)}
               >
-                Close
+                {t('close')}
               </button>
 
               {navigationItems.map((item) => (
@@ -142,7 +144,7 @@ const SideNav: React.FC = () => {
                     navigateToRoute(item.path)
                     setMenuOpen(false)
                   }}
-                  className={`block w-full rounded-lg px-3 py-2 text-left ${
+                  className={`block w-full rounded-lg px-4 py-2 text-left ${
                     isRouteActive(item.path)
                       ? 'bg-orange-100 font-semibold'
                       : ''
@@ -156,7 +158,7 @@ const SideNav: React.FC = () => {
                 onClick={handleLogout}
                 className="mt-4 w-full rounded-lg bg-red-500 py-2 text-white"
               >
-                Logout
+                {t('logout')}
               </button>
             </div>
           </div>
@@ -226,9 +228,9 @@ const SideNav: React.FC = () => {
             {isExpanded && (
               <div className="flex w-full flex-col">
                 <span className="text-md min-w-max font-semibold text-slate-900">
-                  EBT Catering
+                  {t('side_nav_brand')}
                 </span>
-                <span className="text-sm text-slate-500">Admin</span>
+                <span className="text-sm text-slate-500">{t('side_nav_admin')}</span>
               </div>
             )}
             <button
@@ -261,7 +263,7 @@ const SideNav: React.FC = () => {
             <div
               className={`flex w-full flex-col ${isExpanded ? 'gap-0' : 'items-center gap-0'}`}
             >
-              {NAVIGATION_SECTIONS.map(({ title, key }) => {
+              {NAVIGATION_SECTIONS.map(({ key, titleKey }) => {
                 const sectionItems = navigationItems.filter(
                   (item) => item.section === key
                 )
@@ -274,7 +276,7 @@ const SideNav: React.FC = () => {
                   <React.Fragment key={key}>
                     {isExpanded && (
                       <h4 className="my-3 mt-2 px-3 text-sm font-medium text-slate-500">
-                        {title}
+                        {t(titleKey)}
                       </h4>
                     )}
                     {sectionItems.map((item) => (
@@ -303,9 +305,9 @@ const SideNav: React.FC = () => {
                 <LogOut className="h-5 w-5" />
               </div>
               {isExpanded ? (
-                <span className="text-base font-semibold">Logout</span>
+                <span className="text-base font-semibold">{t('logout')}</span>
               ) : (
-                <h4 className="text-sm font-semibold">Logout</h4>
+                <h4 className="text-sm font-semibold">{t('logout')}</h4>
               )}
             </button>
 
@@ -350,7 +352,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
     <button
       type="button"
       onClick={onClick}
-      className={`Navigation-button-container w-full cursor-pointer rounded-[12px] border-2 border-transparent transition-all duration-300 ease-in-out ${isExpanded ? `flex items-center justify-start gap-3 px-3 py-2 ${isActive ? 'border-2! border-[#eeeeee]! bg-white text-slate-600' : ''}` : `flex scale-90 flex-col items-center px-1.5 py-2 text-center`}`}
+      className={`Navigation-button-container w-full cursor-pointer rounded-[12px] border-2 border-transparent transition-all duration-300 ease-in-out ${isExpanded ? `flex items-center justify-start gap-3 px-4 py-2 ${isActive ? 'border-2! border-[#eeeeee]! bg-white text-slate-600' : ''}` : `flex scale-90 flex-col items-center px-1.5 py-2 text-center`}`}
     >
       <div
         className={`flex items-center justify-center rounded-[10px] transition-all ${isExpanded ? 'h-11 w-11 bg-white/20' : `mb-1 h-12 w-12 ${isActive ? 'bg-orange-500' : ''} `}`}

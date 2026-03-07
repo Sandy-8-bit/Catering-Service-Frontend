@@ -1,5 +1,6 @@
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   useFetchDriverOrderDelivery,
   useCompleteReturnDelivery,
@@ -20,17 +21,11 @@ import {
   Plus,
   Trash2,
   CreditCard,
+  ArrowLeft,
 } from 'lucide-react'
+import { appRoutes } from '@/routes/appRoutes'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-
-const statusLabel: Record<string, string> = {
-  ORDER_PLACED: 'Order Placed',
-  OUT_FOR_DELIVERY: 'Out for Delivery',
-  DELIVERED: 'Delivered',
-  ORDER_DELIVERED: 'Order Delivered',
-  PENDING: 'Pending',
-}
 
 const statusClass: Record<string, string> = {
   ORDER_PLACED: 'bg-zinc-100 text-zinc-700',
@@ -43,7 +38,9 @@ const statusClass: Record<string, string> = {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const DriverOrderPage = () => {
+  const { t } = useTranslation()
   const { orderId } = useParams<{ orderId: string }>()
+  const navigate = useNavigate()
   const parsedOrderId = Number(orderId)
   const { data, isLoading, isError } = useFetchDriverOrderDelivery({
     orderId: parsedOrderId,
@@ -83,6 +80,13 @@ const DriverOrderPage = () => {
   const isPending = order?.orderStatus === 'PENDING'
   const isOutForDelivery = order?.orderStatus === 'OUT_FOR_DELIVERY'
   const orderplaced = order?.orderStatus === 'ORDER_PLACED'
+  const statusLabel: Record<string, string> = {
+    ORDER_PLACED: t('driver_status_order_placed'),
+    OUT_FOR_DELIVERY: t('driver_status_out_for_delivery'),
+    DELIVERED: t('driver_status_delivered'),
+    ORDER_DELIVERED: t('driver_status_order_delivered'),
+    PENDING: t('driver_status_pending'),
+  }
 
   useEffect(() => {
     if (order?.vessels) {
@@ -98,7 +102,7 @@ const DriverOrderPage = () => {
     setError('')
     setSuccess('')
     if (!returnPickupDate) {
-      setError('Please select return pickup date')
+      setError(t('driver_select_return_pickup_date'))
       return
     }
     setIsDeliveryLoading(true)
@@ -106,14 +110,14 @@ const DriverOrderPage = () => {
       { deliveryId: order!.id, returnPickupDate },
       {
         onSuccess: () => {
-          setSuccess('Order marked as delivered successfully!')
+          setSuccess(t('driver_order_marked_delivered'))
           setReturnPickupDate('')
           setIsDeliveryLoading(false)
         },
         onError: (err: any) => {
           setError(
             err?.response?.data?.message ||
-              'Failed to mark delivery. Please try again.'
+              t('driver_failed_mark_delivery')
           )
           setIsDeliveryLoading(false)
         },
@@ -125,11 +129,11 @@ const DriverOrderPage = () => {
     setError('')
     setSuccess('')
     if (!newVesselName.trim()) {
-      setError('Please select a vessel type')
+      setError(t('driver_select_vessel_type'))
       return
     }
     if (newVesselQuantity <= 0) {
-      setError('Please enter valid quantity')
+      setError(t('driver_enter_valid_quantity'))
       return
     }
     setPendingVessels((prev) => [
@@ -156,7 +160,7 @@ const DriverOrderPage = () => {
     setError('')
     setSuccess('')
     if (pendingVessels.length === 0) {
-      setError('Please add at least one vessel')
+      setError(t('driver_add_at_least_one_vessel'))
       return
     }
     setIsStartingOrder(true)
@@ -168,7 +172,7 @@ const DriverOrderPage = () => {
       },
       {
         onSuccess: (data) => {
-          setSuccess('Order started successfully!')
+          setSuccess(t('driver_order_started_success'))
           setPendingVessels([])
           setIsStartingOrder(false)
           if (data?.data && Array.isArray(data.data)) {
@@ -178,7 +182,7 @@ const DriverOrderPage = () => {
         onError: (err: any) => {
           setError(
             err?.response?.data?.message ||
-              'Failed to start order. Please try again.'
+              t('driver_failed_start_order')
           )
           setIsStartingOrder(false)
         },
@@ -190,11 +194,11 @@ const DriverOrderPage = () => {
     setError('')
     setSuccess('')
     if (amountCollected <= 0) {
-      setError('Please enter valid amount collected')
+      setError(t('driver_enter_valid_amount_collected'))
       return
     }
     if (!paymentMode) {
-      setError('Please select payment mode')
+      setError(t('driver_select_payment_mode'))
       return
     }
     setIsCloseOrderLoading(true)
@@ -207,7 +211,7 @@ const DriverOrderPage = () => {
       },
       {
         onSuccess: () => {
-          setSuccess('Order closed successfully!')
+          setSuccess(t('driver_order_closed_success'))
           setVesselReturns(
             order!.vessels.map((v) => ({ id: v.id, quantityReturned: 0 }))
           )
@@ -218,7 +222,7 @@ const DriverOrderPage = () => {
         onError: (err: any) => {
           setError(
             err?.response?.data?.message ||
-              'Failed to close order. Please try again.'
+              t('driver_failed_close_order')
           )
           setIsCloseOrderLoading(false)
         },
@@ -233,6 +237,21 @@ const DriverOrderPage = () => {
       )
     )
 
+  const handleBack = () => {
+    const storedDriverId = Number(localStorage.getItem('CATERING_USER_ID'))
+    const fallbackDriverId = order?.driverId ?? storedDriverId
+    const fallbackPath = fallbackDriverId
+      ? `/driver/driver-dashboard/${fallbackDriverId}`
+      : appRoutes.signInPage
+
+    if (window.history.length > 1) {
+      navigate(-1)
+      return
+    }
+
+    navigate(fallbackPath, { replace: true })
+  }
+
   // ── Guards ──────────────────────────────────────────────────────────────────
 
   if (isLoading)
@@ -240,7 +259,7 @@ const DriverOrderPage = () => {
       <div className="flex min-h-screen items-center justify-center bg-zinc-50">
         <div className="text-center">
           <div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-[3px] border-orange-500 border-t-transparent" />
-          <p className="text-xs text-zinc-500">Loading order...</p>
+          <p className="text-xs text-zinc-500">{t('driver_loading_order')}</p>
         </div>
       </div>
     )
@@ -248,7 +267,7 @@ const DriverOrderPage = () => {
   if (isError || !order)
     return (
       <div className="flex min-h-screen items-center justify-center bg-zinc-50">
-        <p className="text-sm text-zinc-500">Failed to load order</p>
+        <p className="text-sm text-zinc-500">{t('driver_failed_load_order')}</p>
       </div>
     )
 
@@ -257,10 +276,23 @@ const DriverOrderPage = () => {
   return (
     <div className="min-h-screen bg-zinc-50 pb-10">
       {/* ── Header ── */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-zinc-200 bg-white px-4 py-3">
-        <div>
-          <p className="text-[11px] font-medium text-zinc-400">Order</p>
-          <p className="text-base font-bold text-zinc-900">#{order.orderId}</p>
+      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-zinc-200 bg-white px-4 py-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 text-xs font-semibold text-zinc-700 transition-colors hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            {t('back')}
+          </button>
+          <div className="h-7 w-px bg-zinc-200" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium text-zinc-400">{t('order')}</p>
+            <p className="truncate text-base font-bold text-zinc-900">
+              #{order.orderId}
+            </p>
+          </div>
         </div>
         <span
           className={`rounded-full px-3 py-1 text-[11px] font-semibold ${statusClass[order.orderStatus] ?? 'bg-zinc-100 text-zinc-600'}`}
@@ -287,7 +319,7 @@ const DriverOrderPage = () => {
         {/* ── Customer Details ── */}
         <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
           <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            Customer
+            {t('customer')}
           </p>
           <div className="flex items-start gap-3">
             <Phone className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
@@ -316,7 +348,7 @@ const DriverOrderPage = () => {
                   rel="noopener noreferrer"
                   className="mt-1 inline-block text-xs font-medium text-orange-600"
                 >
-                  Open in Maps →
+                  {t('open_in_maps')} 
                 </a>
               )}
             </div>
@@ -326,13 +358,13 @@ const DriverOrderPage = () => {
         {/* ── Event Details ── */}
         <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
           <p className="mb-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            Event
+            {t('event')}
           </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-start gap-2">
               <Package className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
               <div>
-                <p className="text-[11px] text-zinc-400">Type</p>
+                <p className="text-[11px] text-zinc-400">{t('driver_type')}</p>
                 <p className="text-sm font-semibold text-zinc-900">
                   {order.eventType}
                 </p>
@@ -341,7 +373,7 @@ const DriverOrderPage = () => {
             <div className="flex items-start gap-2">
               <Users className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
               <div>
-                <p className="text-[11px] text-zinc-400">People</p>
+                <p className="text-[11px] text-zinc-400">{t('total_people')}</p>
                 <p className="text-sm font-semibold text-zinc-900">
                   {order.totalPeople}
                 </p>
@@ -350,7 +382,7 @@ const DriverOrderPage = () => {
             <div className="flex items-start gap-2">
               <Calendar className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
               <div>
-                <p className="text-[11px] text-zinc-400">Date</p>
+                <p className="text-[11px] text-zinc-400">{t('event_date')}</p>
                 <p className="text-sm font-semibold text-zinc-900">
                   {new Date(order.eventDate).toLocaleDateString('en-IN', {
                     day: 'numeric',
@@ -363,7 +395,7 @@ const DriverOrderPage = () => {
             <div className="flex items-start gap-2">
               <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
               <div>
-                <p className="text-[11px] text-zinc-400">Time</p>
+                <p className="text-[11px] text-zinc-400">{t('event_time')}</p>
                 <p className="text-sm font-semibold text-zinc-900">
                   {order.eventTime.slice(0, 5)}
                 </p>
@@ -375,30 +407,30 @@ const DriverOrderPage = () => {
         {/* ── Payment Summary ── */}
         <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
           <p className="mb-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            Payment
+            {t('payment')}
           </p>
           <div className="flex flex-col divide-y divide-zinc-100">
             <div className="flex items-center justify-between py-2.5">
-              <span className="text-sm text-zinc-600">Total Amount</span>
+              <span className="text-sm text-zinc-600">{t('driver_total_amount')}</span>
               <span className="text-sm font-bold text-zinc-900">
                 ₹{order.orderTotalAmount.toFixed(2)}
               </span>
             </div>
             <div className="flex items-center justify-between py-2.5">
-              <span className="text-sm text-zinc-600">Advance Paid</span>
+              <span className="text-sm text-zinc-600">{t('driver_advance_paid')}</span>
               <span className="text-sm font-bold text-green-600">
                 ₹{order.orderAdvanceAmount.toFixed(2)}
               </span>
             </div>
             <div className="flex items-center justify-between py-2.5">
               <span className="text-sm font-semibold text-zinc-900">
-                Balance
+                {t('balance')}
               </span>
               <span
                 className={`text-sm font-bold ${order.orderBalanceAmount < 0 ? 'text-green-600' : 'text-orange-600'}`}
               >
                 ₹{Math.abs(order.orderBalanceAmount).toFixed(2)}
-                {order.orderBalanceAmount < 0 && ' (Overpaid)'}
+                {order.orderBalanceAmount < 0 && ` (${t('driver_overpaid')})`}
               </span>
             </div>
           </div>
@@ -408,12 +440,13 @@ const DriverOrderPage = () => {
         <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-              Vessels
+              {t('driver_vessels')}
             </p>
             {vessels.length + pendingVessels.length > 0 && (
               <span className="rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-orange-600">
-                {vessels.length + pendingVessels.length} vessel
-                {vessels.length + pendingVessels.length !== 1 ? 's' : ''}
+                {t('driver_vessel_count', {
+                  count: vessels.length + pendingVessels.length,
+                })}
               </span>
             )}
           </div>
@@ -430,7 +463,7 @@ const DriverOrderPage = () => {
                     {v.name}
                   </span>
                   <span className="text-xs text-zinc-500">
-                    Qty:{' '}
+                    {t('quantity')}:{' '}
                     <span className="font-semibold text-zinc-800">
                       {v.quantityGiven}
                     </span>
@@ -444,7 +477,7 @@ const DriverOrderPage = () => {
           {pendingVessels.length > 0 && (
             <div className="flex flex-col gap-2">
               <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
-                Newly Added
+                {t('driver_newly_added')}
               </p>
               {pendingVessels.map((v, i) => (
                 <div
@@ -467,7 +500,7 @@ const DriverOrderPage = () => {
                     onClick={() => handleRemovePendingVessel(i)}
                     className="p-1 text-zinc-400 transition-colors hover:text-red-500"
                     type="button"
-                    aria-label="Remove"
+                    aria-label={t('remove')}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -478,7 +511,7 @@ const DriverOrderPage = () => {
 
           {vessels.length === 0 && pendingVessels.length === 0 && (
             <p className="py-3 text-center text-sm text-zinc-400">
-              No vessels added yet
+              {t('driver_no_vessels_added')}
             </p>
           )}
 
@@ -486,14 +519,14 @@ const DriverOrderPage = () => {
           {orderplaced && (
             <div className="flex flex-col gap-2.5 border-t border-zinc-100 pt-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
-                <Plus className="h-3.5 w-3.5" /> Add Vessel
+                <Plus className="h-3.5 w-3.5" /> {t('driver_add_vessel')}
               </p>
               <select
                 value={newVesselName}
                 onChange={(e) => setNewVesselName(e.target.value)}
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
               >
-                <option value="">Select vessel type</option>
+                <option value="">{t('driver_select_vessel_type')}</option>
                 <option value="Vessel A">Vessel A</option>
                 <option value="Vessel B">Vessel B</option>
                 <option value="Vessel C">Vessel C</option>
@@ -506,7 +539,7 @@ const DriverOrderPage = () => {
                 min={1}
                 value={newVesselQuantity || ''}
                 onChange={(e) => setNewVesselQuantity(Number(e.target.value))}
-                placeholder="Quantity"
+                placeholder={t('quantity')}
                 className="w-full rounded-lg border border-zinc-300 px-3 py-2.5 text-sm focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
               />
               <button
@@ -515,7 +548,7 @@ const DriverOrderPage = () => {
                 className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-zinc-900 py-2.5 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
                 type="button"
               >
-                <Plus className="h-4 w-4" /> Add
+                <Plus className="h-4 w-4" /> {t('add')}
               </button>
             </div>
           )}
@@ -529,7 +562,7 @@ const DriverOrderPage = () => {
               type="button"
             >
               <Truck className="h-4 w-4" />
-              {isStartingOrder ? 'Starting...' : 'Start Order'}
+              {isStartingOrder ? t('driver_starting') : t('driver_start_order')}
             </button>
           )}
         </div>
@@ -538,11 +571,11 @@ const DriverOrderPage = () => {
         {isOutForDelivery && (
           <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
             <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-              Mark Delivered
+              {t('driver_mark_delivered')}
             </p>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-zinc-700">
-                Return Pickup Date
+                {t('driver_return_pickup_date')}
               </label>
               <input
                 type="date"
@@ -560,10 +593,10 @@ const DriverOrderPage = () => {
               {isDeliveryLoading ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />{' '}
-                  Marking...
+                  {t('driver_marking')}
                 </>
               ) : (
-                'Mark as Delivered'
+                t('driver_mark_as_delivered')
               )}
             </button>
           </div>
@@ -573,13 +606,13 @@ const DriverOrderPage = () => {
         {(isDelivered || isOrderDelivered || isPending) && (
           <div className="flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
             <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-              Complete Order
+              {t('driver_complete_order')}
             </p>
 
             {/* Vessel Returns */}
             <div className="flex flex-col gap-2">
               <p className="flex items-center gap-1.5 text-sm font-semibold text-zinc-800">
-                <Package className="h-4 w-4 text-zinc-400" /> Vessel Returns
+                <Package className="h-4 w-4 text-zinc-400" /> {t('driver_vessel_returns')}
               </p>
               {order?.vessels && order.vessels.length > 0 ? (
                 <div className="flex flex-col gap-2">
@@ -593,12 +626,12 @@ const DriverOrderPage = () => {
                           {vessel.name}
                         </p>
                         <p className="text-xs text-zinc-400">
-                          Given: {vessel.quantityGiven}
+                          {t('driver_given')}: {vessel.quantityGiven}
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <label className="text-[11px] text-zinc-400">
-                          Returned
+                          {t('driver_returned')}
                         </label>
                         <input
                           type="number"
@@ -623,7 +656,7 @@ const DriverOrderPage = () => {
                 </div>
               ) : (
                 <p className="py-3 text-center text-sm text-zinc-400">
-                  No vessels in this order
+                  {t('driver_no_vessels_order')}
                 </p>
               )}
             </div>
@@ -631,8 +664,7 @@ const DriverOrderPage = () => {
             {/* Amount Collected */}
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-1.5 text-sm font-semibold text-zinc-800">
-                <CreditCard className="h-4 w-4 text-zinc-400" /> Amount
-                Collected
+                <CreditCard className="h-4 w-4 text-zinc-400" /> {t('driver_amount_collected')}
               </label>
               <div className="relative">
                 <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm font-medium text-zinc-500">
@@ -649,7 +681,7 @@ const DriverOrderPage = () => {
                 />
               </div>
               <div className="flex justify-between text-xs text-zinc-500">
-                <span>Balance to collect</span>
+                <span>{t('driver_balance_to_collect')}</span>
                 <span
                   className={`font-semibold ${order?.orderBalanceAmount > 0 ? 'text-orange-600' : 'text-green-600'}`}
                 >
@@ -661,17 +693,17 @@ const DriverOrderPage = () => {
             {/* Payment Mode */}
             <div className="flex flex-col gap-2">
               <label className="text-sm font-semibold text-zinc-800">
-                Payment Mode
+                {t('driver_payment_mode')}
               </label>
               <select
                 value={paymentMode}
                 onChange={(e) => setPaymentMode(e.target.value)}
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm font-medium text-zinc-900 focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
               >
-                <option value="CASH">Cash</option>
-                <option value="CARD">Card</option>
+                <option value="CASH">{t('driver_cash')}</option>
+                <option value="CARD">{t('driver_card')}</option>
                 <option value="UPI">UPI</option>
-                <option value="ONLINE_TRANSFER">Online Transfer</option>
+                <option value="ONLINE_TRANSFER">{t('driver_online_transfer')}</option>
               </select>
             </div>
 
@@ -685,11 +717,11 @@ const DriverOrderPage = () => {
               {isCloseOrderLoading ? (
                 <>
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />{' '}
-                  Closing...
+                  {t('driver_closing')}
                 </>
               ) : (
                 <>
-                  <CheckCircle className="h-4 w-4" /> Close Order
+                  <CheckCircle className="h-4 w-4" /> {t('driver_close_order')}
                 </>
               )}
             </button>
