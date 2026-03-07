@@ -23,6 +23,7 @@ const ProtectedRoute = () => {
     const allowedDriverPaths = [
       allowedDriverDashboard,
       '/driver/order', // prefix match
+      '/driver/pending-orders', // prefix match
     ]
 
     const isAllowed = allowedDriverPaths.some((path) =>

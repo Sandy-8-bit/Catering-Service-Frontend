@@ -6,6 +6,7 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute'
 import { appRoutes } from './routes/appRoutes'
 import DriverDashboardPage from '@/pages/driver/DriveDashboard'
 import DriverOrderPage from './pages/driver/DriverOrderPage'
+import DriverPendingOrdersPage from '@/pages/driver/DriverPendingOrdersPage'
 
 const AdditionalItemsPage = lazy(
   () => import('@/pages/additionalItemsPage/AdditionalItemsPage')
@@ -85,6 +86,10 @@ function App() {
             <Route
               path={appRoutes.driver.children.driverOrderPage}
               element={<DriverOrderPage />}
+            />
+            <Route
+              path={appRoutes.driver.children.driverPendingOrdersPage}
+              element={<DriverPendingOrdersPage />}
             />
           </Route>
         </Route>
