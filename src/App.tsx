@@ -32,6 +32,9 @@ const RecipeDetailsPage = lazy(
   () => import('@/pages/recipesPage/RecipeDetailsPage')
 )
 const RecipesPage = lazy(() => import('@/pages/recipesPage/RecipesPage'))
+const CalculateRawMaterialsPage = lazy(
+  () => import('@/pages/recipesPage/CalculateRawMaterialsPage')
+)
 const UsersPage = lazy(() => import('@/pages/usersPage/UsersPage'))
 
 function App() {
@@ -63,6 +66,10 @@ function App() {
             />
             <Route path={appRoutes.products.path} element={<ProductsPage />} />
             <Route path={appRoutes.recipes.path} element={<RecipesPage />} />
+            <Route
+              path={appRoutes.calculateRawMaterials.path}
+              element={<CalculateRawMaterialsPage />}
+            />
             <Route
               path={appRoutes.recipes.children.detail}
               element={<RecipeDetailsPage />}

@@ -32,6 +32,10 @@ export const appRoutes = {
       detail: '/master/recipes/:productId',
     },
   },
+  calculateRawMaterials: {
+    path: '/master/calculate-raw-materials',
+    children: {},
+  },
   additionalItems: {
     path: '/master/additional-items',
     children: {},

@@ -16,6 +16,8 @@ import type {
   RecipeItemPayload,
   RecipeBulkUpdatePayload,
   RecipeCalculationRow,
+  OrderMaterialCalculationItem,
+  OrderMaterialCalculationRow,
 } from '@/types/recipe'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
@@ -170,6 +172,36 @@ export const useCalculateRecipeRequirement = () => {
       return (res.data?.data ?? []) as RecipeCalculationRow[]
     } catch (error) {
       handleApiError(error, 'Recipe requirement calculation')
+      throw error
+    }
+  }
+
+  return useMutation({
+    mutationFn: calculate,
+  })
+}
+
+/**
+ * 📦 Calculate raw material requirements for multiple products (order-level)
+ */
+export const useCalculateOrderMaterials = () => {
+  const calculate = async (
+    items: OrderMaterialCalculationItem[]
+  ): Promise<OrderMaterialCalculationRow[]> => {
+    try {
+      const token = authHandler()
+
+      const res = await axiosInstance.post(
+        `${apiRoutes.recipes}/calculate-order-materials`,
+        items,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
+
+      return (res.data?.data ?? []) as OrderMaterialCalculationRow[]
+    } catch (error) {
+      handleApiError(error, 'Order materials calculation')
       throw error
     }
   }

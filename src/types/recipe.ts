@@ -65,3 +65,17 @@ export interface RecipeCalculationRow {
   qtyPerUnit: number
   totalQuantity: number
 }
+
+export interface OrderMaterialCalculationItem {
+  productId: number
+  quantity: number
+}
+
+export interface OrderMaterialCalculationRow {
+  rawMaterialId: number
+  rawMaterialPrimaryName: string
+  rawMaterialSecondaryName?: string
+  unit: string
+  qtyPerUnit: number | null
+  totalQuantity: number
+}
