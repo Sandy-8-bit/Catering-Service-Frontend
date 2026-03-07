@@ -144,7 +144,7 @@ const SideNav: React.FC = () => {
                     navigateToRoute(item.path)
                     setMenuOpen(false)
                   }}
-                  className={`block w-full rounded-lg px-3 py-2 text-left ${
+                  className={`block w-full rounded-lg px-4 py-2 text-left ${
                     isRouteActive(item.path)
                       ? 'bg-orange-100 font-semibold'
                       : ''
@@ -352,7 +352,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
     <button
       type="button"
       onClick={onClick}
-      className={`Navigation-button-container w-full cursor-pointer rounded-[12px] border-2 border-transparent transition-all duration-300 ease-in-out ${isExpanded ? `flex items-center justify-start gap-3 px-3 py-2 ${isActive ? 'border-2! border-[#eeeeee]! bg-white text-slate-600' : ''}` : `flex scale-90 flex-col items-center px-1.5 py-2 text-center`}`}
+      className={`Navigation-button-container w-full cursor-pointer rounded-[12px] border-2 border-transparent transition-all duration-300 ease-in-out ${isExpanded ? `flex items-center justify-start gap-3 px-4 py-2 ${isActive ? 'border-2! border-[#eeeeee]! bg-white text-slate-600' : ''}` : `flex scale-90 flex-col items-center px-1.5 py-2 text-center`}`}
     >
       <div
         className={`flex items-center justify-center rounded-[10px] transition-all ${isExpanded ? 'h-11 w-11 bg-white/20' : `mb-1 h-12 w-12 ${isActive ? 'bg-orange-500' : ''} `}`}

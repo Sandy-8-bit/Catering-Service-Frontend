@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Spinner from '@/components/common/Spinner'
 import DialogBox from '@/components/common/DialogBox'
 import { useFetchProducts } from '@/queries/productQueries'
@@ -54,6 +55,7 @@ const ProductMenuSelector = ({
   selectedItems,
   onChange,
 }: ProductMenuSelectorProps) => {
+  const { t } = useTranslation()
   const safeItems = selectedItems || []
   const { data: products = [], isLoading } = useFetchProducts()
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
@@ -65,7 +67,8 @@ const ProductMenuSelector = ({
 
     products.forEach((product) => {
       const categoryId = product.category?.id ?? 0
-      const categoryName = product.category?.primaryName || 'Uncategorized'
+      const categoryName =
+        product.category?.primaryName || t('orders_uncategorized')
 
       if (!collection.has(categoryId)) {
         collection.set(categoryId, {
@@ -81,7 +84,7 @@ const ProductMenuSelector = ({
     return Array.from(collection.values()).sort((a, b) =>
       a.categoryName.localeCompare(b.categoryName)
     )
-  }, [products])
+  }, [products, t])
 
   const productsById = useMemo(() => {
     const map = new Map<number, Product>()
@@ -203,7 +206,7 @@ const ProductMenuSelector = ({
         productRef.productPrimaryName ||
         productRef.primaryName ||
         fallbackProduct?.primaryName ||
-        'Product'
+        t('orders_product')
       const unitPrice = line.unitPrice ?? fallbackProduct?.price ?? 0
 
       return (
@@ -228,7 +231,7 @@ const ProductMenuSelector = ({
             <div className="flex w-full items-center justify-between gap-3">
               <button
                 type="button"
-                aria-label="Decrease quantity"
+                aria-label={t('decrease_quantity')}
                 onClick={() =>
                   lineProductId && handleQuantityChange(lineProductId, -1)
                 }
@@ -241,7 +244,7 @@ const ProductMenuSelector = ({
               </span>
               <button
                 type="button"
-                aria-label="Increase quantity"
+                aria-label={t('increase_quantity')}
                 onClick={() =>
                   lineProductId && handleQuantityChange(lineProductId, 1)
                 }
@@ -260,15 +263,15 @@ const ProductMenuSelector = ({
       <header className="flex items-center justify-between border-b border-[#F1F1F1] pb-4">
         <div>
           <p className="text-xs font-semibold text-zinc-500 uppercase">
-            Menu builder
+            {t('orders_menu_builder')}
           </p>
           <h2 className="text-xl font-semibold text-zinc-900">
-            Menu Items Selection
+            {t('orders_menu_items_selection')}
           </h2>
         </div>
         <button
           type="button"
-          aria-label="Close menu drawer"
+          aria-label={t('orders_close_menu_drawer')}
           onClick={() => setIsDrawerOpen(false)}
           className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-[#E4E4E7] bg-black text-zinc-500 transition hover:bg-zinc-100"
         >
@@ -282,7 +285,7 @@ const ProductMenuSelector = ({
             <Search className="h-4 w-4 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search dishes or cuisines"
+              placeholder={t('orders_search_dishes_or_cuisines')}
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               className="w-full border-none bg-transparent text-sm text-zinc-700 outline-none placeholder:text-zinc-400"
@@ -298,7 +301,7 @@ const ProductMenuSelector = ({
                   : 'bg-white text-zinc-600 hover:bg-zinc-100'
               }`}
             >
-              All
+              {t('all')}
             </button>
             {groupedProducts.map((group) => (
               <button
@@ -324,7 +327,7 @@ const ProductMenuSelector = ({
             </div>
           ) : filteredGroups.length === 0 ? (
             <div className="border border-dashed border-[#E4E4E7] bg-white p-6 text-center text-sm text-zinc-500">
-              Nothing matches your search right now.
+              {t('orders_nothing_matches_search')}
             </div>
           ) : (
             filteredGroups.map((group) => (
@@ -355,7 +358,7 @@ const ProductMenuSelector = ({
                               {product.primaryName}
                             </p>
                             <p className="text-sm text-zinc-500">
-                              {product.secondaryName || 'Signature dish'}
+                              {product.secondaryName || t('orders_signature_dish')}
                             </p>
                           </div>
                           <span className="text-sm font-semibold text-zinc-900">
@@ -366,7 +369,7 @@ const ProductMenuSelector = ({
                           <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white px-4 py-2">
                             <button
                               type="button"
-                              aria-label="Decrease quantity"
+                              aria-label={t('decrease_quantity')}
                               onClick={() =>
                                 product.id &&
                                 handleQuantityChange(product.id, -1)
@@ -380,7 +383,7 @@ const ProductMenuSelector = ({
                             </span>
                             <button
                               type="button"
-                              aria-label="Increase quantity"
+                              aria-label={t('increase_quantity')}
                               onClick={() =>
                                 product.id &&
                                 handleQuantityChange(product.id, 1)
@@ -397,7 +400,7 @@ const ProductMenuSelector = ({
                             onClick={() => handleAddProduct(product.id)}
                             className="rounded-sm border border-[#E4E4E7] px-5 py-2 text-xs font-semibold tracking-wide uppercase"
                           >
-                            Add
+                            {t('add')}
                           </ButtonSm>
                         )}
                       </div>
@@ -414,10 +417,10 @@ const ProductMenuSelector = ({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold tracking-[0.3em] text-zinc-500 uppercase">
-              Summary
+              {t('summary')}
             </p>
             <p className="text-base font-semibold text-zinc-900">
-              {totalProductCount} items · {formatCurrency(totalProductCost)}
+              {totalProductCount} {t('items')} · {formatCurrency(totalProductCost)}
             </p>
           </div>
           <ButtonSm
@@ -426,7 +429,7 @@ const ProductMenuSelector = ({
             className="w-full rounded-sm border border-[#E4E4E7] px-6 py-3 text-sm font-semibold tracking-wide uppercase sm:w-auto"
             onClick={() => setIsDrawerOpen(false)}
           >
-            Review selection
+            {t('orders_review_selection')}
           </ButtonSm>
         </div>
       </div>
@@ -437,9 +440,11 @@ const ProductMenuSelector = ({
     <section className="">
       <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <header className="mt-6 space-y-1">
-          <h2 className="text-base font-semibold text-zinc-800">Menu Items</h2>
+          <h2 className="text-base font-semibold text-zinc-800">
+            {t('orders_menu_items')}
+          </h2>
           <p className="text-sm text-zinc-500">
-            Added dishes · {totalProductCount} items
+            {t('orders_added_dishes')} · {totalProductCount} {t('items')}
           </p>
         </header>
 
@@ -449,14 +454,13 @@ const ProductMenuSelector = ({
           className="rounded-sm border border-[#E4E4E7] px-4 py-2 text-xs font-semibold tracking-wide uppercase"
           onClick={() => setIsDrawerOpen(true)}
         >
-          Add more +
+          {t('orders_add_more')}
         </ButtonSm>
       </header>
 
       {safeItems.length === 0 ? (
         <div className="border border-dashed border-[#E4E4E7] bg-[#F9F9F9] px-4 py-8 text-center text-sm text-zinc-500">
-          No dishes have been added yet. Tap “Add more +” to start curating the
-          menu.
+          {t('orders_no_dishes_added_yet')}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

@@ -24,7 +24,7 @@ export const SignInPage = () => {
       {
         onSuccess: (res) => {
           if (res.token) {
-            navigate('/dashboard')
+            navigate('/order-management')
           } else {
             setLoginIdentifier(identifier)
             setShowTotp(true)

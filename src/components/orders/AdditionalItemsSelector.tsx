@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import Spinner from '@/components/common/Spinner'
 import DialogBox from '@/components/common/DialogBox'
 import type { AdditionalItem } from '@/types/additionalItem'
@@ -26,6 +27,7 @@ const AdditionalItemsSelector = ({
   onChange,
   isLoading = false,
 }: AdditionalItemsSelectorProps) => {
+  const { t } = useTranslation()
   const safeItems = selectedItems || []
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -136,12 +138,12 @@ const AdditionalItemsSelector = ({
 
   const summaryCards = selectedDetails.map(({ record, catalog }) => {
     const displayName =
-      record.itemPrimaryName || catalog?.primaryName || 'Extra'
+      record.itemPrimaryName || catalog?.primaryName || t('orders_extra')
     const description =
       catalog?.secondaryName ||
       catalog?.description ||
       record.itemSecondaryName ||
-      'Perfect add-on'
+      t('orders_perfect_add_on')
     const unitPrice = record.priceAtOrder ?? catalog?.pricePerUnit ?? 0
 
     return (
@@ -164,7 +166,7 @@ const AdditionalItemsSelector = ({
           <div className="flex w-full items-center justify-between gap-3">
             <button
               type="button"
-              aria-label="Decrease quantity"
+              aria-label={t('decrease_quantity')}
               onClick={() => handleQuantityChange(record.additionalItemId, -1)}
               className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
             >
@@ -175,7 +177,7 @@ const AdditionalItemsSelector = ({
             </span>
             <button
               type="button"
-              aria-label="Increase quantity"
+              aria-label={t('increase_quantity')}
               onClick={() => handleQuantityChange(record.additionalItemId, 1)}
               className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
             >
@@ -192,15 +194,15 @@ const AdditionalItemsSelector = ({
       <header className="flex items-center justify-between border-b border-[#F1F1F1] pb-4">
         <div>
           <p className="text-xs font-semibold tracking-[0.3em] text-zinc-500 uppercase">
-            Extras cart
+            {t('orders_extras_cart')}
           </p>
           <h2 className="text-xl font-semibold text-zinc-900">
-            Additional Items Selector
+            {t('orders_additional_items_selector')}
           </h2>
         </div>
         <button
           type="button"
-          aria-label="Close additional items drawer"
+          aria-label={t('orders_close_additional_items_drawer')}
           onClick={() => setIsDrawerOpen(false)}
           className="flex h-10 w-10 items-center justify-center border border-[#E4E4E7] text-zinc-500 transition hover:bg-zinc-100"
         >
@@ -214,7 +216,7 @@ const AdditionalItemsSelector = ({
             <Search className="h-4 w-4 text-zinc-400" />
             <input
               type="text"
-              placeholder="Search add-ons"
+              placeholder={t('orders_search_add_ons')}
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               className="w-full border-none bg-transparent text-sm text-zinc-700 outline-none placeholder:text-zinc-400"
@@ -229,7 +231,7 @@ const AdditionalItemsSelector = ({
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="border border-dashed border-[#E4E4E7] bg-white p-6 text-center text-sm text-zinc-500">
-              No add-ons match that search.
+              {t('orders_no_add_ons_match_search')}
             </div>
           ) : (
             <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -253,7 +255,7 @@ const AdditionalItemsSelector = ({
                           {item.primaryName}
                         </p>
                         <p className="text-sm text-zinc-500">
-                          {item.secondaryName || 'Perfect pairing'}
+                          {item.secondaryName || t('orders_perfect_pairing')}
                         </p>
                       </div>
                       <span className="text-sm font-semibold text-zinc-900">
@@ -264,7 +266,7 @@ const AdditionalItemsSelector = ({
                       <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white px-4 py-2">
                         <button
                           type="button"
-                          aria-label="Decrease quantity"
+                          aria-label={t('decrease_quantity')}
                           onClick={() => handleQuantityChange(item.id, -1)}
                           className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
                         >
@@ -275,7 +277,7 @@ const AdditionalItemsSelector = ({
                         </span>
                         <button
                           type="button"
-                          aria-label="Increase quantity"
+                          aria-label={t('increase_quantity')}
                           onClick={() => handleQuantityChange(item.id, 1)}
                           className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
                         >
@@ -289,7 +291,7 @@ const AdditionalItemsSelector = ({
                         onClick={() => handleAddItem(item.id)}
                         className="rounded-sm border border-[#E4E4E7] px-5 py-2 text-xs font-semibold tracking-wide uppercase"
                       >
-                        Add
+                        {t('add')}
                       </ButtonSm>
                     )}
                   </div>
@@ -304,10 +306,10 @@ const AdditionalItemsSelector = ({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold tracking-[0.3em] text-zinc-500 uppercase">
-              Extras bag
+              {t('orders_extras_bag')}
             </p>
             <p className="text-base font-semibold text-zinc-900">
-              {totalExtrasCount} items · {formatCurrency(totalExtrasCost)}
+              {totalExtrasCount} {t('items')} · {formatCurrency(totalExtrasCost)}
             </p>
           </div>
           <ButtonSm
@@ -316,7 +318,7 @@ const AdditionalItemsSelector = ({
             className="w-full rounded-sm border border-[#E4E4E7] px-6 py-3 text-sm font-semibold tracking-wide uppercase sm:w-auto"
             onClick={() => setIsDrawerOpen(false)}
           >
-            Review extras
+            {t('orders_review_extras')}
           </ButtonSm>
         </div>
       </div>
@@ -328,10 +330,10 @@ const AdditionalItemsSelector = ({
       <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="mt-6 space-y-1">
           <h2 className="text-base font-semibold text-zinc-800">
-            Additional Items
+            {t('additional_items')}
           </h2>
           <p className="text-sm text-zinc-500">
-            Added extras · {totalExtrasCount} items
+            {t('orders_added_extras')} · {totalExtrasCount} {t('items')}
           </p>
         </div>
 
@@ -341,13 +343,13 @@ const AdditionalItemsSelector = ({
           className="rounded-md border border-[#E4E4E7] px-4 py-2 text-xs font-semibold tracking-wide uppercase"
           onClick={() => setIsDrawerOpen(true)}
         >
-          Add more +
+          {t('orders_add_more')}
         </ButtonSm>
       </header>
 
       {safeItems.length === 0 ? (
         <div className="border border-dashed border-[#E4E4E7] bg-[#F9F9F9] px-4 py-8 text-center text-sm text-zinc-500">
-          No extras yet. Add tableware, beverages or desserts with “Add more +”.
+          {t('orders_no_extras_yet')}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

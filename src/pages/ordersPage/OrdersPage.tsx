@@ -74,7 +74,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
             }
           />
           <DetailCell
-            label={t('head count')}
+            label={t('headcount')}
             value={
               <span>
                 {order.totalPeople}{' '}
@@ -218,10 +218,10 @@ export const OrdersPage = () => {
         (item) =>
           item?.itemPrimaryName ||
           item?.itemSecondaryName ||
-          `Additional ${item?.id}`,
+          t('additional_item_with_id', { id: item?.id }),
         (item) => item.quantity
       ),
-    [sourceOrders]
+    [sourceOrders, t]
   )
 
   const infoMessage =
@@ -277,7 +277,7 @@ export const OrdersPage = () => {
                 className="font-medium"
               >
                 <Edit3 className="mr-2 h-4 w-4 text-black" />{' '}
-                {t('Update Status')}
+                {t('update_status')}
               </ButtonSm>
             </>
           )}
@@ -286,7 +286,7 @@ export const OrdersPage = () => {
             onClick={() => setShowVoiceDialog(true)}
             className="font-medium"
           >
-            <Mic className="mr-2 h-4 w-4 text-zinc-700" /> Create Voice Order
+            <Mic className="mr-2 h-4 w-4 text-zinc-700" /> {t('create_voice_order')}
           </ButtonSm>
           <ButtonSm
             state="default"
@@ -402,13 +402,13 @@ export const OrdersPage = () => {
                 onClick={() => setSelectedOrderId(null)}
                 className="flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600"
               >
-                <ArrowLeft size={12} /> Back to day view
+                  <ArrowLeft size={12} /> {t('back_to_day_view')}
               </button>
             ) : (
               <>
                 <p className={detailSectionTitleClass}>{t('summary')}</p>
                 <p className="text-xl font-bold text-zinc-900">
-                  Overview for the Day
+                    {t('overview_for_day')}
                 </p>
               </>
             )}
