@@ -83,6 +83,7 @@ export interface InlineCalendarProps {
   className?: string
   showSelectedLabel?: boolean
   dateCounts?: Record<string, number>
+  isLoading?: boolean
 }
 
 const InlineCalendar = ({
@@ -92,6 +93,7 @@ const InlineCalendar = ({
   className = '',
   showSelectedLabel = true,
   dateCounts = {},
+  isLoading = false,
 }: InlineCalendarProps) => {
   const today = useMemo(() => new Date(), [])
   const isControlled = typeof selectedDate !== 'undefined'
@@ -260,7 +262,20 @@ const InlineCalendar = ({
         ))}
       </div>
 
-      <div className="mt-2 grid grid-cols-7 gap-2">
+      {isLoading ? (
+        <div className="mt-2 grid animate-pulse grid-cols-7 gap-2">
+          {Array.from({ length: 35 }).map((_, i) => (
+            <div
+              key={`skel-${i}`}
+              className="aspect-square rounded-xl bg-zinc-100"
+            />
+          ))}
+        </div>
+      ) : null}
+
+      <div
+        className={`mt-2 grid grid-cols-7 gap-2 ${isLoading ? 'hidden' : ''}`}
+      >
         {calendarMatrix.map((week, weekIndex) => (
           <div className="contents" key={`week-${weekIndex}`}>
             {week.map(({ date }, dayIndex) => {

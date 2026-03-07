@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 
 import MainLayout from '@/components/layout/MainLayout'
 import ProtectedRoute from '@/components/layout/ProtectedRoute'
@@ -50,7 +50,7 @@ function App() {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
-            <Route path="*" element={<Dashboard />} />
+            <Route path="*" element={<Navigate to={appRoutes.orders.path} />} />
             <Route path={appRoutes.dashboard.path} element={<Dashboard />} />
             <Route path={appRoutes.master.path} element={<MasterPage />} />
             <Route

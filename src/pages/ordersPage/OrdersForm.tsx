@@ -22,6 +22,7 @@ import TimeInput from '@/components/common/TimeInput'
 import ProductMenuSelector from '@/components/orders/ProductMenuSelector'
 import AdditionalItemsSelector from '@/components/orders/AdditionalItemsSelector'
 import { mapOrderToUpdatePayload, mapOrderToPayload } from '@/utils/TypeMappers'
+import SkeletonForm from '@/components/common/Skleton'
 import { ArrowLeft } from 'lucide-react'
 import { appRoutes } from '@/routes/appRoutes'
 import { useFetchUsers } from '@/queries/usersQueries'
@@ -76,7 +77,7 @@ export const OrdersForm = () => {
   }
 
   if (isOrderLoading || isUserOptionLoading || isAdditionalLoading)
-    return <div>Loading...</div>
+    return <SkeletonForm inputCount={12} />
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
@@ -113,9 +114,7 @@ export const OrdersForm = () => {
             <h2 className="text-base font-semibold text-zinc-800">
               {t('customer_information')}
             </h2>
-            <p className="text-sm text-zinc-500">
-              {t('form_intro_text')}
-            </p>
+            <p className="text-sm text-zinc-500">{t('form_intro_text')}</p>
           </header>
 
           <div className="grid gap-4 md:grid-cols-4">
@@ -285,10 +284,10 @@ export const OrdersForm = () => {
             }
           />
           <header className="mt-6 space-y-1">
-            <h2 className="text-base font-semibold text-zinc-800">{t('payment')}</h2>
-            <p className="text-sm text-zinc-500">
-              {t('payment_text')}
-            </p>
+            <h2 className="text-base font-semibold text-zinc-800">
+              {t('payment')}
+            </h2>
+            <p className="text-sm text-zinc-500">{t('payment_text')}</p>
           </header>
           <div className="grid gap-4 md:grid-cols-3">
             <Input
@@ -362,8 +361,8 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   isCreatePending,
   isUpdatePending,
 }) => {
-    const { t } = useTranslation()
-    
+  const { t } = useTranslation()
+
   return (
     <div className="flex flex-wrap justify-end gap-3">
       <ButtonSm

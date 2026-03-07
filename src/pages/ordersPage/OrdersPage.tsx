@@ -224,11 +224,8 @@ export const OrdersPage = () => {
     [sourceOrders]
   )
 
-  const infoMessage = isLoading
-    ? t('loading_orders')
-    : ordersForDate.length === 0
-      ? t('no_orders_scheduled')
-      : null
+  const infoMessage =
+    !isLoading && ordersForDate.length === 0 ? t('no_orders_scheduled') : null
 
   const formattedDateLabel = selectedDate.toLocaleDateString(undefined, {
     month: 'long',
@@ -271,17 +268,17 @@ export const OrdersPage = () => {
               <DownloadBillButton orderId={selectedOrder.id} />
             </>
           )}
-           {selectedOrder && (
+          {selectedOrder && (
             <>
               <ButtonSm
                 state="outline"
                 disabled={!selectedOrderId}
-                onClick={() =>  navigate(`/driver/order/${selectedOrder.id}`)}
+                onClick={() => navigate(`/driver/order/${selectedOrder.id}`)}
                 className="font-medium"
               >
-                <Edit3 className="mr-2 h-4 w-4 text-black" /> {t('Update Status')}
+                <Edit3 className="mr-2 h-4 w-4 text-black" />{' '}
+                {t('Update Status')}
               </ButtonSm>
-              
             </>
           )}
           <ButtonSm
@@ -320,6 +317,7 @@ export const OrdersPage = () => {
             showSelectedLabel={false}
             selectedDate={selectedDate}
             dateCounts={ordersPerDate}
+            isLoading={isLoading}
             onSelectDate={(date) => {
               setSelectedDate(date)
               setSelectedOrderId(null)
@@ -344,7 +342,19 @@ export const OrdersPage = () => {
             </header>
 
             <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
-              {infoMessage ? (
+              {isLoading ? (
+                <div className="flex animate-pulse flex-col gap-2">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      key={`order-skel-${i}`}
+                      className="rounded-xl border border-zinc-100 bg-zinc-50 px-4 py-3"
+                    >
+                      <div className="mb-2 h-4 w-2/3 rounded bg-zinc-200" />
+                      <div className="h-3 w-1/3 rounded bg-zinc-100" />
+                    </div>
+                  ))}
+                </div>
+              ) : infoMessage ? (
                 <p className="rounded-xl border border-zinc-100 bg-zinc-50 p-3 text-sm text-zinc-400">
                   {infoMessage}
                 </p>
