@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Spinner from '@/components/common/Spinner'
 import DialogBox from '@/components/common/DialogBox'
@@ -31,6 +31,9 @@ const AdditionalItemsSelector = ({
   const safeItems = selectedItems || []
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [quantityDrafts, setQuantityDrafts] = useState<Record<number, string>>(
+    {}
+  )
 
   const additionalItemMap = useMemo(() => {
     const map = new Map<number, AdditionalItem>()
@@ -55,6 +58,18 @@ const AdditionalItemsSelector = ({
         .includes(normalized)
     )
   }, [sortedItems, searchTerm])
+
+  useEffect(() => {
+    setQuantityDrafts((prev) => {
+      const next: Record<number, string> = {}
+      safeItems.forEach((item) => {
+        if (item.additionalItemId in prev) {
+          next[item.additionalItemId] = prev[item.additionalItemId]
+        }
+      })
+      return next
+    })
+  }, [safeItems])
 
   const createOrderAdditionalItem = (
     item: AdditionalItem
@@ -119,6 +134,81 @@ const AdditionalItemsSelector = ({
     onChange(nextItems)
   }
 
+  const handleQuantityInputChange = (
+    additionalItemId: number,
+    value: string
+  ) => {
+    setQuantityDrafts((prev) => ({
+      ...prev,
+      [additionalItemId]: value,
+    }))
+
+    if (value === '' || !/^\d+$/.test(value)) return
+
+    const parsedQuantity = Number.parseInt(value, 10)
+    if (!Number.isFinite(parsedQuantity) || parsedQuantity < 1) return
+
+    const nextItems = safeItems.map((item) => {
+      if (item.additionalItemId !== additionalItemId) return item
+
+      const catalogItem = additionalItemMap.get(additionalItemId)
+      const unitPrice = item.priceAtOrder ?? catalogItem?.pricePerUnit ?? 0
+
+      return {
+        ...item,
+        quantity: parsedQuantity,
+        lineTotal: unitPrice * parsedQuantity,
+      }
+    })
+
+    onChange(nextItems)
+  }
+
+  const handleQuantityInputBlur = (
+    additionalItemId: number,
+    currentQuantity: number
+  ) => {
+    const draftValue = quantityDrafts[additionalItemId]
+
+    if (draftValue == null) return
+
+    const parsedQuantity = Number.parseInt(draftValue, 10)
+    const isValidQuantity =
+      Number.isFinite(parsedQuantity) && parsedQuantity >= 1 &&
+      /^\d+$/.test(draftValue)
+
+    if (!isValidQuantity) {
+      setQuantityDrafts((prev) => {
+        const next = { ...prev }
+        delete next[additionalItemId]
+        return next
+      })
+      return
+    }
+
+    if (parsedQuantity !== currentQuantity) {
+      const nextItems = safeItems.map((item) => {
+        if (item.additionalItemId !== additionalItemId) return item
+
+        const catalogItem = additionalItemMap.get(additionalItemId)
+        const unitPrice = item.priceAtOrder ?? catalogItem?.pricePerUnit ?? 0
+
+        return {
+          ...item,
+          quantity: parsedQuantity,
+          lineTotal: unitPrice * parsedQuantity,
+        }
+      })
+
+      onChange(nextItems)
+    }
+
+    setQuantityDrafts((prev) => ({
+      ...prev,
+      [additionalItemId]: String(parsedQuantity),
+    }))
+  }
+
   const selectedDetails = safeItems.map((item) => ({
     record: item,
     catalog: additionalItemMap.get(item.additionalItemId),
@@ -172,9 +262,28 @@ const AdditionalItemsSelector = ({
             >
               <Minus size={12} />
             </button>
-            <span className="min-w-7 text-center text-sm font-semibold">
-              {record.quantity}
-            </span>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              inputMode="numeric"
+              value={
+                quantityDrafts[record.additionalItemId] ?? String(record.quantity)
+              }
+              onChange={(event) =>
+                handleQuantityInputChange(
+                  record.additionalItemId,
+                  event.target.value
+                )
+              }
+              onBlur={() =>
+                handleQuantityInputBlur(
+                  record.additionalItemId,
+                  record.quantity
+                )
+              }
+              className="h-8 w-14 rounded-md border border-[#E4E4E7] text-center text-sm font-semibold outline-none focus:border-zinc-900"
+            />
             <button
               type="button"
               aria-label={t('increase_quantity')}
@@ -272,9 +381,23 @@ const AdditionalItemsSelector = ({
                         >
                           <Minus size={14} />
                         </button>
-                        <span className="text-sm font-semibold text-zinc-900">
-                          {existing?.quantity}
-                        </span>
+                        <input
+                          type="number"
+                          min={1}
+                          step={1}
+                          inputMode="numeric"
+                          value={
+                            quantityDrafts[item.id] ??
+                            String(existing?.quantity ?? 1)
+                          }
+                          onChange={(event) =>
+                            handleQuantityInputChange(item.id, event.target.value)
+                          }
+                          onBlur={() =>
+                            handleQuantityInputBlur(item.id, existing?.quantity ?? 1)
+                          }
+                          className="h-9 w-16 rounded-md border border-[#E4E4E7] text-center text-sm font-semibold text-zinc-900 outline-none focus:border-zinc-900"
+                        />
                         <button
                           type="button"
                           aria-label={t('increase_quantity')}

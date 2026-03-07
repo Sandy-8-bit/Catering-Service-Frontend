@@ -129,7 +129,7 @@ export const SignInPage = () => {
           <VerifyTotpModal
             identifier={loginIdentifier}
             onClose={() => setShowTotp(false)}
-            onSuccess={() => navigate('/dashboard')}
+            onSuccess={() => navigate('/order-management')}
           />
         )}
       </div>
