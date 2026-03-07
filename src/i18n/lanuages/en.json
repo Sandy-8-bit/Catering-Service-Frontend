@@ -384,5 +384,15 @@
   "orders_review_extras": "Review extras",
   "orders_added_extras": "Added extras",
   "orders_no_extras_yet": "No extras yet. Add tableware, beverages or desserts with \"Add more +\"."
+  ,"download_bill": "Download Bill"
+  ,"select_bill_type": "Select Bill Type"
+  ,"bill_customer": "Customer Bill"
+  ,"bill_customer_desc": "Itemised bill for the customer"
+  ,"bill_staff": "Staff Bill"
+  ,"bill_staff_desc": "Preparation summary for kitchen staff"
+  ,"bill_owner": "Owner Bill"
+  ,"bill_owner_desc": "Combined overview for the owner"
+  ,"bill_downloaded_success": "{{billType}} downloaded"
+  ,"bill_downloaded_error": "Failed to fetch {{billType}}. Please try again."
   
 }

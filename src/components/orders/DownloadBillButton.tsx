@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { ChevronDown, Download, Loader2 } from 'lucide-react'
 import jsPDF from 'jspdf'
 import { toast } from 'react-hot-toast'
+import { useTranslation } from 'react-i18next'
 import useClickOutside from '@/hooks/useClickOutside'
 import {
   fetchOrderBill,
@@ -18,24 +19,6 @@ interface BillOption {
   label: string
   description: string
 }
-
-const BILL_OPTIONS: BillOption[] = [
-  {
-    type: 'CUSTOMER',
-    label: 'Customer Bill',
-    description: 'Itemised bill for the customer',
-  },
-  {
-    type: 'STAFF',
-    label: 'Staff Bill',
-    description: 'Preparation summary for kitchen staff',
-  },
-  {
-    type: 'OWNER',
-    label: 'Owner Bill',
-    description: 'Combined overview for the owner',
-  },
-]
 
 // ─── PDF builder (thermal receipt style) ────────────────────────────────────
 
@@ -258,8 +241,27 @@ interface DownloadBillButtonProps {
 }
 
 const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({ orderId }) => {
+  const { t } = useTranslation()
   const [dropdownRef, isOpen, setIsOpen] = useClickOutside(false)
   const [loadingType, setLoadingType] = useState<BillType | null>(null)
+
+  const billOptions: BillOption[] = [
+    {
+      type: 'CUSTOMER',
+      label: t('bill_customer'),
+      description: t('bill_customer_desc'),
+    },
+    {
+      type: 'STAFF',
+      label: t('bill_staff'),
+      description: t('bill_staff_desc'),
+    },
+    {
+      type: 'OWNER',
+      label: t('bill_owner'),
+      description: t('bill_owner_desc'),
+    },
+  ]
 
   const handleDownload = async (option: BillOption) => {
     setIsOpen(false)
@@ -269,9 +271,9 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({ orderId }) => {
       const doc = buildPdf({ ...data, orderId }, option.type)
       const filename = `order-${orderId}-${option.type.toLowerCase()}-bill.pdf`
       doc.save(filename)
-      toast.success(`${option.label} downloaded`)
+      toast.success(t('bill_downloaded_success', { billType: option.label }))
     } catch {
-      toast.error(`Failed to fetch ${option.label}. Please try again.`)
+      toast.error(t('bill_downloaded_error', { billType: option.label }))
     } finally {
       setLoadingType(null)
     }
@@ -294,7 +296,7 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({ orderId }) => {
         ) : (
           <Download className="h-4 w-4 text-zinc-700" />
         )}
-        Download Bill
+        {t('download_bill')}
         <ChevronDown
           className={`h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
@@ -305,10 +307,10 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({ orderId }) => {
       {isOpen && (
         <div className="absolute right-0 z-50 mt-1.5 w-60 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg ring-1 ring-zinc-100">
           <p className="border-b border-zinc-100 px-4 py-2 text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
-            Select Bill Type
+            {t('select_bill_type')}
           </p>
           <ul className="py-1">
-            {BILL_OPTIONS.map((option) => (
+            {billOptions.map((option) => (
               <li key={option.type}>
                 <button
                   type="button"
