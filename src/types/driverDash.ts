@@ -67,6 +67,16 @@ export interface Vessel {
 }
 
 /* =========================
+   Pending Order
+========================= */
+export interface PendingOrder {
+  orderId: number
+  customerName: string
+  pendingAmount: number
+}
+
+/* =========================
    Final API Response Type
 ========================= */
 export type DriverDashboardResponse = ApiResponse<DriverDashboard>
+export type DriverPendingOrdersResponse = ApiResponse<PendingOrder[]>

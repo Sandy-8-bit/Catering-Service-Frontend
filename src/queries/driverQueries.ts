@@ -1,12 +1,14 @@
-import { apiRoutes } from "@/routes/apiRoutes"
-import type { DriverDashboardResponse } from "@/types/driverDash"
-import type { DriverOrdersResponse } from "@/types/driverOrderDetail"
-import { authHandler } from "@/utils/authHandler"
-import axiosInstance from "@/utils/axios"
-import { handleApiError } from "@/utils/handleApiError"
+import { apiRoutes } from '@/routes/apiRoutes'
+import type {
+  DriverDashboardResponse,
+  DriverPendingOrdersResponse,
+} from '@/types/driverDash'
+import type { DriverOrdersResponse } from '@/types/driverOrderDetail'
+import { authHandler } from '@/utils/authHandler'
+import axiosInstance from '@/utils/axios'
+import { handleApiError } from '@/utils/handleApiError'
 import { useQuery } from '@tanstack/react-query'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-
 
 export const useFetchDriverDashboard = ({
   driverId,
@@ -41,6 +43,42 @@ export const useFetchDriverDashboard = ({
     queryKey: ['DRIVER_DASHBOARD', driverId, date],
     queryFn: fetchDashboard,
     enabled: !!driverId && !!date, // important
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  })
+}
+
+export const useFetchDriverPendingOrders = ({
+  driverId,
+}: {
+  driverId?: number
+}) => {
+  const fetchPendingOrders = async () => {
+    if (!driverId) return []
+
+    try {
+      const token = authHandler()
+
+      const res = await axiosInstance.get<DriverPendingOrdersResponse>(
+        `${apiRoutes.driverPendingDeliveries}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      return res.data?.data ?? res.data ?? []
+    } catch (error: unknown) {
+      handleApiError(error, 'Driver Pending Orders')
+      return []
+    }
+  }
+
+  return useQuery({
+    queryKey: ['DRIVER_PENDING_ORDERS', driverId],
+    queryFn: fetchPendingOrders,
+    enabled: !!driverId,
     staleTime: 1000 * 60 * 5,
     retry: 1,
   })
@@ -81,7 +119,6 @@ export const useFetchDriverOrderDelivery = ({
     retry: 1,
   })
 }
-
 
 type VesselPayload = {
   name: string
@@ -149,7 +186,6 @@ type CompleteReturnPayload = {
   paymentMode: string
 }
 
-
 export const useCompleteReturnDelivery = () => {
   const queryClient = useQueryClient()
 
@@ -200,7 +236,6 @@ type UpdateReturnDatePayload = {
   deliveryId: number
   returnPickupDate: string // format: YYYY-MM-DD
 }
-
 
 export const useUpdateReturnPickupDate = () => {
   const queryClient = useQueryClient()

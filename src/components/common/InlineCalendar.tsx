@@ -226,7 +226,7 @@ const InlineCalendar = ({
       </header>
 
       {isPickerOpen && (
-        <div className="mb-3 flex flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 p-3 sm:flex-row">
+        <div className="mb-3 flex flex-col gap-3 rounded-md border border-zinc-100 bg-zinc-50 p-3 sm:flex-row">
           <DropdownSelect
             className="w-full"
             options={MONTH_OPTIONS}
@@ -267,7 +267,7 @@ const InlineCalendar = ({
           {Array.from({ length: 35 }).map((_, i) => (
             <div
               key={`skel-${i}`}
-              className="aspect-square rounded-xl bg-zinc-100"
+              className="aspect-square rounded-md bg-zinc-100"
             />
           ))}
         </div>
@@ -288,21 +288,21 @@ const InlineCalendar = ({
               const stateClasses = !date
                 ? 'cursor-default'
                 : isSelected
-                  ? 'cursor-pointer bg-orange-500 font-semibold text-white '
+                  ? 'cursor-pointer bg-orange-500 font-semibold text-white rounded-sm'
                   : isToday
                     ? 'cursor-pointer border-2 border-[#4F46E5]/70 text-[#4F46E5]'
                     : 'cursor-pointer hover:bg-zinc-100'
               const markerCount = date
                 ? (dateCounts[formatDateKey(date)] ?? 0)
                 : 0
-              const orangeDots = Math.min(markerCount, 4)
-              const showOverflow = markerCount > 4
+              const clampedOrange = Math.min(markerCount, 2)
+              const showRedDot = markerCount >= 3
 
               return (
                 <button
                   type="button"
                   key={key}
-                  className={`aspect-square rounded-xl text-sm transition ${stateClasses} ${
+                  className={`aspect-square rounded-md text-sm transition ${stateClasses} ${
                     isSelected ? 'text-white' : textColor
                   }`}
                   onClick={() => handleSelectDate(date)}
@@ -312,7 +312,7 @@ const InlineCalendar = ({
                     <span>{date?.getDate() ?? ''}</span>
                     {markerCount > 0 && (
                       <span className="flex gap-1">
-                        {Array.from({ length: orangeDots }).map(
+                        {Array.from({ length: clampedOrange }).map(
                           (_, dotIndex) => (
                             <span
                               key={`dot-${key}-${dotIndex}`}
@@ -320,8 +320,10 @@ const InlineCalendar = ({
                             />
                           )
                         )}
-                        {showOverflow && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                        {showRedDot && (
+                          <span
+                            className={`h-1 w-1 rounded-full ${isSelected ? 'bg-orange-200' : 'bg-red-500'}`}
+                          />
                         )}
                       </span>
                     )}

@@ -238,9 +238,13 @@ const buildPdf = (data: BillData, type: BillType): jsPDF => {
 
 interface DownloadBillButtonProps {
   orderId: number
+  compact?: boolean
 }
 
-const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({ orderId }) => {
+const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
+  orderId,
+  compact,
+}) => {
   const { t } = useTranslation()
   const [dropdownRef, isOpen, setIsOpen] = useClickOutside(false)
   const [loadingType, setLoadingType] = useState<BillType | null>(null)
@@ -287,18 +291,30 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({ orderId }) => {
         type="button"
         disabled={isAnyLoading}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex cursor-pointer flex-row items-center gap-2 rounded-[9px] border-2 border-[#F1F1F1] bg-white px-3 py-3 text-sm font-semibold text-black shadow-sm outline-0 transition-colors duration-200 select-none hover:bg-gray-100 active:bg-gray-200 ${
-          isAnyLoading ? 'cursor-not-allowed opacity-70' : ''
-        }`}
+        className={`flex cursor-pointer flex-row items-center border-2 border-[#F1F1F1] bg-white font-semibold text-black shadow-sm outline-0 transition-colors duration-200 select-none hover:bg-gray-100 active:bg-gray-200 ${
+          compact
+            ? 'gap-1 rounded-lg px-2 py-1 text-xs'
+            : 'gap-2 rounded-[9px] px-3 py-3 text-sm'
+        } ${isAnyLoading ? 'cursor-not-allowed opacity-70' : ''}`}
       >
         {isAnyLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin text-zinc-500" />
+          <Loader2
+            className={
+              compact
+                ? 'h-3 w-3 animate-spin text-zinc-500'
+                : 'h-4 w-4 animate-spin text-zinc-500'
+            }
+          />
         ) : (
-          <Download className="h-4 w-4 text-zinc-700" />
+          <Download
+            className={
+              compact ? 'h-3 w-3 text-zinc-700' : 'h-4 w-4 text-zinc-700'
+            }
+          />
         )}
         {t('download_bill')}
         <ChevronDown
-          className={`h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 ${
+          className={`text-zinc-400 transition-transform duration-200 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} ${
             isOpen ? 'rotate-180' : ''
           }`}
         />

@@ -184,7 +184,7 @@
   "choose_language": "Choose Language",
   "configure": "Configure",
   "no_configurations": "No configurations match your search.",
-  "s.no":"S.No",
+  "s.no": "S.No",
   "primary_name": "Primary Name",
   "secondary_name": "Secondary Name",
   "description": "Description",
@@ -236,6 +236,12 @@
   "additional_items_required": "Additional items required",
   "no_additional_items_order": "No additional items attached to this order.",
   "no_additional_items_planned": "No additional items planned for this date.",
+  "sub_products_in_order": "Sub products in this order",
+  "sub_products_required": "Sub products required",
+  "no_sub_products_order": "No sub products attached to this order.",
+  "no_sub_products_planned": "No sub products planned for this date.",
+  "sub_product_name": "Sub Product",
+  "required_quantity": "Required Qty",
 
   "create_order": "Create Order",
   "customer_information": "Customer Information",
@@ -257,6 +263,10 @@
   "total_people": "Total People",
   "count": "Count",
   "total_people_placeholder": "Enter total people count",
+  "offer_percentage": "Offer",
+  "offer_percentage_placeholder": "Enter offer %",
+  "offer_discount": "Offer Discount",
+  "total_after_offer": "Total After Offer",
   "advance_amount": "Advance Amount",
   "advance_amount_placeholder": "Enter advance amount",
   "payment_type": "Payment Type",
@@ -383,16 +393,15 @@
   "orders_extras_bag": "Extras Bag",
   "orders_review_extras": "Review extras",
   "orders_added_extras": "Added extras",
-  "orders_no_extras_yet": "No extras yet. Add tableware, beverages or desserts with \"Add more +\"."
-  ,"download_bill": "Download Bill"
-  ,"select_bill_type": "Select Bill Type"
-  ,"bill_customer": "Customer Bill"
-  ,"bill_customer_desc": "Itemised bill for the customer"
-  ,"bill_staff": "Staff Bill"
-  ,"bill_staff_desc": "Preparation summary for kitchen staff"
-  ,"bill_owner": "Owner Bill"
-  ,"bill_owner_desc": "Combined overview for the owner"
-  ,"bill_downloaded_success": "{{billType}} downloaded"
-  ,"bill_downloaded_error": "Failed to fetch {{billType}}. Please try again."
-  
+  "orders_no_extras_yet": "No extras yet. Add tableware, beverages or desserts with \"Add more +\".",
+  "download_bill": "Download Bill",
+  "select_bill_type": "Select Bill Type",
+  "bill_customer": "Customer Bill",
+  "bill_customer_desc": "Itemised bill for the customer",
+  "bill_staff": "Staff Bill",
+  "bill_staff_desc": "Preparation summary for kitchen staff",
+  "bill_owner": "Owner Bill",
+  "bill_owner_desc": "Combined overview for the owner",
+  "bill_downloaded_success": "{{billType}} downloaded",
+  "bill_downloaded_error": "Failed to fetch {{billType}}. Please try again."
 }

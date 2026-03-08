@@ -39,6 +39,12 @@ export interface OrderAdditionalItem {
   returned?: boolean
 }
 
+export interface RequiredSubProduct {
+  subProductName: string
+  requiredQuantity: number
+  unit: string
+}
+
 // Full order shape returned by GET endpoints (list/detail)
 export interface Order {
   id: number
@@ -51,6 +57,7 @@ export interface Order {
   totalPeople: number
   deliveredByUs: boolean
   driver?: OrderDriver
+  offerPercentage?: number
   totalAmount?: number
   advanceAmount: number
   balanceAmount: number
@@ -58,10 +65,12 @@ export interface Order {
   status?: string
   items: OrderItem[]
   additionalItems: OrderAdditionalItem[]
+  requiredSubProducts?: RequiredSubProduct[]
+  discountAmount?: number
   createdAt: string
   updatedAt: string
   locationUrl: string
-  deliveryCharges?: number
+  deliveryCharge?: number
 }
 
 // Payload fragment for POST / PATCH item entries
@@ -88,6 +97,7 @@ export interface OrderPayload {
   eventDate: string
   eventTime: string
   totalPeople: number
+  offerPercentage?: number
   totalAmount?: number
   status?: string
   returnableItemsChecked?: boolean
@@ -96,7 +106,7 @@ export interface OrderPayload {
   advanceAmount: number
   paymentType: string
   locationUrl?: string
-  deliveryCharges?: number
+  deliveryCharge?: number
   items: OrderItemPayload[]
   additionalItems?: OrderAdditionalItemPayload[]
 }

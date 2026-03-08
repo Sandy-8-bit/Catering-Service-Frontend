@@ -20,4 +20,5 @@ export const apiRoutes = {
   driverdashboard: '/api/driver/dashboard',
   driverorder: '/api/driver/deliveries/order',
   driverDeliveries: '/api/driver/deliveries',
+  driverPendingDeliveries: '/api/driver/deliveries/pending',
 }

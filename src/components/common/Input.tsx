@@ -13,6 +13,7 @@ interface InputProps<T extends string | number> {
   type?: InputType
   name?: string
   prefixText?: string
+  suffixText?: string
   disabled?: boolean
   required?: boolean
   viewMode?: boolean
@@ -28,6 +29,7 @@ const Input = <T extends string | number>({
   type = 'str',
   name = '',
   prefixText = '',
+  suffixText = '',
   disabled = false,
   required = false,
   viewMode = false,
@@ -75,9 +77,7 @@ const Input = <T extends string | number>({
       } else {
         const oldValue = String(inputValue ?? '')
         const newText =
-          oldValue.length > 0
-            ? oldValue + ' ' + transcript
-            : transcript
+          oldValue.length > 0 ? oldValue + ' ' + transcript : transcript
 
         onChange(newText as T)
       }
@@ -165,9 +165,9 @@ const Input = <T extends string | number>({
           onChange={handleChange}
           value={inputValue}
           disabled={disabled}
-         className={`custom-disabled-cursor hover:cursor[text]:color-black min-h-max w-full ${
+          className={`custom-disabled-cursor hover:cursor[text]:color-black min-h-max w-full ${
             disabled ? 'bg-slate-200' : 'cursor-text'
-          } ${className} text-start ${viewMode ? 'text-base font-medium text-slate-900' : 'px-3 py-3 text-sm font-medium text-slate-600 autofill:text-black focus:outline-none  overflow-clip'} shadow-sm read-only:cursor-default read-only:bg-white`}
+          } ${className} text-start ${viewMode ? 'text-base font-medium text-slate-900' : 'overflow-clip px-3 py-3 text-sm font-medium text-slate-600 autofill:text-black focus:outline-none'} shadow-sm read-only:cursor-default read-only:bg-white`}
         />
 
         {!viewMode && !disabled && (
@@ -180,13 +180,16 @@ const Input = <T extends string | number>({
             onTouchEnd={handleMouseUp}
             onClick={handleClick}
             className={`mr-3 transition ${
-              isListening
-                ? 'text-red-500 scale-110'
-                : 'text-slate-500'
+              isListening ? 'scale-110 text-red-500' : 'text-slate-500'
             }`}
           >
             <Mic size={20} />
           </button>
+        )}
+        {suffixText && (
+          <div className="bg-slate-100 px-3 py-3 text-sm font-medium text-slate-700">
+            {suffixText}
+          </div>
         )}
       </div>
     </motion.div>
@@ -194,7 +197,6 @@ const Input = <T extends string | number>({
 }
 
 export default Input
-
 
 interface CheckBoxProps {
   checked: boolean

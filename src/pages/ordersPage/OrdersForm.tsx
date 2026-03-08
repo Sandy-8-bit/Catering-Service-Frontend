@@ -72,6 +72,33 @@ export const OrdersForm = () => {
     setEditData(existingOrder)
   }, [existingOrder])
 
+  useEffect(() => {
+    const grossTotal =
+      (editData.items?.reduce((sum, item) => sum + (item.totalPrice || 0), 0) ||
+        0) +
+      (editData.additionalItems?.reduce(
+        (sum, item) => sum + (item.lineTotal || 0),
+        0
+      ) || 0) +
+      (editData.deliveredByUs ? editData.deliveryCharge || 0 : 0)
+    const offer = editData.offerPercentage || 0
+    const netTotal = Math.round(grossTotal * (1 - offer / 100))
+    const balance = netTotal - (editData.advanceAmount || 0)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setEditData((prev) => ({
+      ...prev,
+      totalAmount: netTotal,
+      balanceAmount: balance,
+    }))
+  }, [
+    editData.items,
+    editData.additionalItems,
+    editData.deliveredByUs,
+    editData.deliveryCharge,
+    editData.offerPercentage,
+    editData.advanceAmount,
+  ])
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
   }
@@ -81,7 +108,7 @@ export const OrdersForm = () => {
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
-      <header className="flex flex-row items-center justify-between gap-4 p-4">
+      <header className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="flex w-max flex-row items-center gap-2 text-start text-xl font-semibold text-zinc-800">
           <ArrowLeft
             onClick={() => {
@@ -107,7 +134,7 @@ export const OrdersForm = () => {
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
 
-      <section className="flex flex-col gap-5 p-6">
+      <section className="flex flex-col gap-5 p-4 sm:p-6">
         <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
           {/* Customer Information */}
           <header className="space-y-1">
@@ -117,7 +144,7 @@ export const OrdersForm = () => {
             <p className="text-sm text-zinc-500">{t('form_intro_text')}</p>
           </header>
 
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
             <VoiceInput
               title={t('name')}
               name="customerName"
@@ -249,11 +276,11 @@ export const OrdersForm = () => {
                   title={t('delivery_charges')}
                   prefixText="₹"
                   placeholder="0"
-                  inputValue={editData.deliveryCharges?.toString() || ''}
+                  inputValue={editData.deliveryCharge?.toString() || ''}
                   onChange={(value) =>
                     setEditData((prev) => ({
                       ...prev,
-                      deliveryCharges: Number(value),
+                      deliveryCharge: Number(value),
                     }))
                   }
                 />
@@ -305,7 +332,7 @@ export const OrdersForm = () => {
           </header>
 
           {/* Total Amount Display */}
-          <div className="flex flex-col gap-3 border-t border-zinc-200 pt-4">
+          <div className="flex flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 p-4 sm:p-5">
             <div className="flex justify-between gap-3 text-sm text-zinc-600">
               <span>{t('items_subtotal')}:</span>
               <span className="font-regular text-zinc-900">
@@ -328,15 +355,13 @@ export const OrdersForm = () => {
               <div className="flex justify-between text-sm text-zinc-600">
                 <span>{t('delivery_charges')}:</span>
                 <span className="font-regular text-zinc-900">
-                  ₹{(editData.deliveryCharges || 0).toLocaleString()}
+                  ₹{(editData.deliveryCharge || 0).toLocaleString()}
                 </span>
               </div>
             )}
-            <div className="flex justify-between border-t border-zinc-200 pt-3">
-              <span className="font-semibold text-zinc-900">{t('total')}:</span>
-              <span className="text-lg font-bold text-zinc-900">
-                ₹
-                {(
+            {(editData.offerPercentage ?? 0) > 0 &&
+              (() => {
+                const grossTotal =
                   (editData.items?.reduce(
                     (sum, item) => sum + (item.totalPrice || 0),
                     0
@@ -345,13 +370,44 @@ export const OrdersForm = () => {
                     (sum, item) => sum + (item.lineTotal || 0),
                     0
                   ) || 0) +
-                  (editData.deliveredByUs ? editData.deliveryCharges || 0 : 0)
-                ).toLocaleString()}
+                  (editData.deliveredByUs ? editData.deliveryCharge || 0 : 0)
+                const discountAmount = Math.round(
+                  grossTotal * ((editData.offerPercentage ?? 0) / 100)
+                )
+                return (
+                  <>
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>
+                        {t('offer_discount')} ({editData.offerPercentage}%):
+                      </span>
+                      <span className="font-regular">
+                        - ₹{discountAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                )
+              })()}
+            <div className="flex justify-between border-t border-zinc-200 pt-3">
+              <span className="font-semibold text-zinc-900">{t('total')}:</span>
+              <span className="text-lg font-bold text-zinc-900">
+                ₹{(editData.totalAmount ?? 0).toLocaleString()}
               </span>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            <Input
+              title={t('offer_percentage')}
+              placeholder={t('offer_percentage_placeholder')}
+              suffixText="%"
+              inputValue={editData.offerPercentage?.toString() || ''}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  offerPercentage: Number(value),
+                }))
+              }
+            />
             <Input
               title={t('advance_amount')}
               placeholder={t('advance_amount_placeholder')}

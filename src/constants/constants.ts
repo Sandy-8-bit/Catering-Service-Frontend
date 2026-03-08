@@ -47,11 +47,12 @@ export const defaultOrderData: Order = {
   eventTime: '',
   totalPeople: 0,
   deliveredByUs: false,
+  offerPercentage: 0,
   advanceAmount: 0,
   paymentType: '',
   items: [],
   additionalItems: [],
   createdAt: '',
   updatedAt: '',
-  locationUrl:"",
+  locationUrl: '',
 }

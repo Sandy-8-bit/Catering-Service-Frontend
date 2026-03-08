@@ -18,6 +18,7 @@ const ORDER_UPDATE_DIFF_FIELDS: ReadonlyArray<keyof OrderPayload> = [
   'totalPeople',
   'totalAmount',
   'balanceAmount',
+  'offerPercentage',
   'status',
   'returnableItemsChecked',
   'deliveredByUs',
@@ -25,7 +26,7 @@ const ORDER_UPDATE_DIFF_FIELDS: ReadonlyArray<keyof OrderPayload> = [
   'advanceAmount',
   'paymentType',
   'locationUrl',
-  'deliveryCharges',
+  'deliveryCharge',
 ]
 
 export const mapOrderToPayload = (order: Order): OrderPayload => {
@@ -38,6 +39,7 @@ export const mapOrderToPayload = (order: Order): OrderPayload => {
     eventDate: order.eventDate,
     eventTime: order.eventTime,
     totalPeople: order.totalPeople,
+    offerPercentage: order.offerPercentage,
     totalAmount: order.totalAmount,
     balanceAmount: order.balanceAmount,
     status: order.status,
@@ -47,7 +49,7 @@ export const mapOrderToPayload = (order: Order): OrderPayload => {
     advanceAmount: order.advanceAmount,
     paymentType: order.paymentType,
     locationUrl: order.locationUrl,
-    deliveryCharges: order.deliveryCharges,
+    deliveryCharge: order.deliveryCharge,
     items: toOrderItemPayload(order.items),
   }
 

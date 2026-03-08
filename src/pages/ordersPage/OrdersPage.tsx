@@ -10,7 +10,7 @@ import VoiceOrderDialog from '@/components/orders/VoiceOrderDialog'
 import DownloadBillButton from '@/components/orders/DownloadBillButton'
 import { appRoutes } from '@/routes/appRoutes'
 import { useFetchOrders } from '@/queries/ordersQueries'
-import type { Order } from '@/types/order'
+import type { Order, RequiredSubProduct } from '@/types/order'
 
 const DetailCell = ({
   label,
@@ -50,7 +50,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
         </span>
       </div>
       <div className="p-5">
-        <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <DetailCell label={t('customer')} value={order.customerName} />
           <DetailCell label={t('phone')} value={order.customerPhone} />
           <DetailCell label={t('event')} value={order.eventType} />
@@ -224,6 +224,30 @@ export const OrdersPage = () => {
     [sourceOrders, t]
   )
 
+  const subProductsSummary = useMemo(() => {
+    const map = new Map<string, RequiredSubProduct>()
+    sourceOrders.forEach((order) => {
+      ;(order.requiredSubProducts ?? []).forEach((sp) => {
+        if (!sp.subProductName) return
+        const key = `${sp.subProductName}||${sp.unit}`
+        const existing = map.get(key)
+        if (existing) {
+          map.set(key, {
+            ...existing,
+            requiredQuantity: existing.requiredQuantity + sp.requiredQuantity,
+          })
+        } else {
+          map.set(key, {
+            subProductName: sp.subProductName,
+            requiredQuantity: sp.requiredQuantity,
+            unit: sp.unit,
+          })
+        }
+      })
+    })
+    return Array.from(map.values())
+  }, [sourceOrders])
+
   const infoMessage =
     !isLoading && ordersForDate.length === 0 ? t('no_orders_scheduled') : null
 
@@ -247,25 +271,27 @@ export const OrdersPage = () => {
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col overflow-hidden rounded-[12px] border border-zinc-200 bg-zinc-50 shadow-sm">
-      <header className="flex flex-col items-center gap-2 border-b border-zinc-200 bg-white px-5 py-3 sm:flex-row sm:justify-between">
+      <header className="flex flex-col gap-3 border-b border-zinc-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex items-center gap-3">
           <span className="h-5 w-1 rounded-full bg-orange-500" />
           <h1 className="text-xl font-bold tracking-tight text-zinc-900">
             {t('orders')}
           </h1>
         </div>
-        <div className="flex flex-row items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {selectedOrder && (
             <>
               <ButtonSm
                 state="outline"
                 disabled={!selectedOrderId}
                 onClick={() => handleNavigateToForm('edit', selectedOrderId)}
-                className="font-medium"
+                className="hidden font-medium lg:flex"
               >
                 <Edit3 className="mr-2 h-4 w-4 text-black" /> {t('edit_order')}
               </ButtonSm>
-              <DownloadBillButton orderId={selectedOrder.id} />
+              <div className="hidden lg:block">
+                <DownloadBillButton orderId={selectedOrder.id} />
+              </div>
             </>
           )}
           {selectedOrder && (
@@ -274,7 +300,7 @@ export const OrdersPage = () => {
                 state="outline"
                 disabled={!selectedOrderId}
                 onClick={() => navigate(`/driver/order/${selectedOrder.id}`)}
-                className="font-medium"
+                className="hidden font-medium lg:flex"
               >
                 <Edit3 className="mr-2 h-4 w-4 text-black" />{' '}
                 {t('update_status')}
@@ -286,7 +312,8 @@ export const OrdersPage = () => {
             onClick={() => setShowVoiceDialog(true)}
             className="font-medium"
           >
-            <Mic className="mr-2 h-4 w-4 text-zinc-700" /> {t('create_voice_order')}
+            <Mic className="mr-2 h-4 w-4 text-zinc-700" />{' '}
+            {t('create_voice_order')}
           </ButtonSm>
           <ButtonSm
             state="default"
@@ -308,10 +335,7 @@ export const OrdersPage = () => {
       )}
 
       <section className="flex flex-1 flex-col gap-0 overflow-hidden lg:flex-row">
-        <div
-          className="flex w-full flex-col gap-5 border-b border-zinc-200 bg-zinc-50 p-4 lg:w-[360px] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0"
-          style={{ zoom: 0.95 }}
-        >
+        <div className="flex w-full flex-col gap-5 border-b border-zinc-200 bg-zinc-50 p-4 lg:w-[360px] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0">
           <InlineCalendar
             className="min-w-full!"
             showSelectedLabel={false}
@@ -341,7 +365,7 @@ export const OrdersPage = () => {
               )}
             </header>
 
-            <div className="flex max-h-[300px] flex-col gap-2 overflow-y-auto">
+            <div className="flex max-h-52 flex-col gap-2 overflow-y-auto sm:max-h-[300px]">
               {isLoading ? (
                 <div className="flex animate-pulse flex-col gap-2">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -386,6 +410,40 @@ export const OrdersPage = () => {
                       >
                         #{order.id} · {order.eventType}
                       </span>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5 lg:hidden">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleNavigateToForm('edit', order.id)
+                          }}
+                          className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
+                            isActive
+                              ? 'bg-white/20 text-white hover:bg-white/30'
+                              : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
+                          }`}
+                        >
+                          <Edit3 className="h-3 w-3" />
+                          {t('edit_order')}
+                        </button>
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <DownloadBillButton orderId={order.id} compact />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate(`/driver/order/${order.id}`)
+                          }}
+                          className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
+                            isActive
+                              ? 'bg-white/20 text-white hover:bg-white/30'
+                              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                          }`}
+                        >
+                          {t('update_status')}
+                        </button>
+                      </div>
                     </button>
                   )
                 })
@@ -394,7 +452,7 @@ export const OrdersPage = () => {
           </div>
         </div>
 
-        <div className="flex w-full flex-col gap-7 overflow-y-auto bg-white p-6 shadow-[-1px_0_0_0_#e4e4e7]">
+        <div className="flex w-full flex-col gap-6 overflow-y-auto bg-white p-4 shadow-[-1px_0_0_0_#e4e4e7] sm:p-6">
           <div className="flex flex-col items-start gap-1">
             {selectedOrder ? (
               <button
@@ -402,13 +460,13 @@ export const OrdersPage = () => {
                 onClick={() => setSelectedOrderId(null)}
                 className="flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600"
               >
-                  <ArrowLeft size={12} /> {t('back_to_day_view')}
+                <ArrowLeft size={12} /> {t('back_to_day_view')}
               </button>
             ) : (
               <>
                 <p className={detailSectionTitleClass}>{t('summary')}</p>
                 <p className="text-xl font-bold text-zinc-900">
-                    {t('overview_for_day')}
+                  {t('overview_for_day')}
                 </p>
               </>
             )}
@@ -494,6 +552,56 @@ export const OrdersPage = () => {
                   <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
                     <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
                     {t('no_items_planned')}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 overflow-hidden">
+              <div className="flex items-center gap-2">
+                <span className="h-4 w-0.5 rounded-full bg-orange-500" />
+                <h3 className="text-base font-bold text-zinc-900">
+                  {selectedOrder
+                    ? t('sub_products_in_order')
+                    : t('sub_products_required')}
+                </h3>
+              </div>
+              <div className="w-full overflow-x-auto">
+                {subProductsSummary.length > 0 ? (
+                  <GenericTable
+                    data={subProductsSummary}
+                    dataCell={[
+                      {
+                        headingTitle: t('sub_product_name'),
+                        accessVar: 'subProductName',
+                      },
+                      {
+                        headingTitle: t('required_quantity'),
+                        accessVar: 'requiredQuantity',
+                        render: (value) => (
+                          <span className="font-semibold text-zinc-900">
+                            {value}
+                          </span>
+                        ),
+                      },
+                      {
+                        headingTitle: t('unit'),
+                        accessVar: 'unit',
+                      },
+                    ]}
+                    isHeaderVisible={true}
+                    messageWhenNoData={
+                      selectedOrder
+                        ? t('no_sub_products_order')
+                        : t('no_sub_products_planned')
+                    }
+                  />
+                ) : (
+                  <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                    <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
+                    {selectedOrder
+                      ? t('no_sub_products_order')
+                      : t('no_sub_products_planned')}
                   </p>
                 )}
               </div>
