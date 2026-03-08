@@ -101,8 +101,6 @@ const SideNav: React.FC = () => {
 
     const isRouteActive = (route: string) => activeRoute.startsWith(route)
 
-    const mainItems = navigationItems.filter((item) => item.section === 'main')
-
     return (
       <div className="md:hidden">
         {/* 🔝 Top Nav */}
@@ -164,34 +162,6 @@ const SideNav: React.FC = () => {
           </div>
         )}
 
-        {/* 🔻 Bottom Tab Navigation */}
-        <div className="fixed right-0 bottom-0 left-0 flex justify-around border-t bg-white py-2 shadow-md">
-          {mainItems.map((item) => (
-            <button
-              key={item.path}
-              onClick={() => navigateToRoute(item.path)}
-              className="flex flex-col items-center text-xs"
-            >
-              <img
-                src={
-                  isRouteActive(item.path) && item.activeIcon
-                    ? item.activeIcon
-                    : item.icon
-                }
-                className="h-6 w-6"
-              />
-              <span
-                className={
-                  isRouteActive(item.path)
-                    ? 'font-semibold text-orange-500'
-                    : 'text-slate-500'
-                }
-              >
-                {item.label}
-              </span>
-            </button>
-          ))}
-        </div>
       </div>
     )
   }
