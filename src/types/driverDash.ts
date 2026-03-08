@@ -70,9 +70,16 @@ export interface Vessel {
    Pending Order
 ========================= */
 export interface PendingOrder {
-  orderId: number
+   id: number
+   orderId?: number
   customerName: string
-  pendingAmount: number
+   pendingAmount?: number
+   balanceAmount?: number
+   eventType?: string
+   eventDate?: string
+   eventTime?: string
+   totalAmount?: number
+   advanceAmount?: number
 }
 
 /* =========================

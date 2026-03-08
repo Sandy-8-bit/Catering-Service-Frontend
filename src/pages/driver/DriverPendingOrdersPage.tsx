@@ -2,6 +2,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Clock3, Package } from 'lucide-react'
 import { useFetchDriverPendingOrders } from '@/queries/driverQueries'
+import type { PendingOrder } from '@/types/driverDash'
 
 const DriverPendingOrdersPage = () => {
   const { t } = useTranslation()
@@ -56,14 +57,26 @@ const DriverPendingOrdersPage = () => {
             {t('no_data')}
           </div>
         ) : (
-          pendingOrders.map((order) => (
+          pendingOrders.map((order: PendingOrder) => {
+            const orderId = order.orderId ?? order.id
+            const pendingAmount = order.pendingAmount ?? order.balanceAmount ?? 0
+
+            return (
             <div
-              key={order.orderId}
-              className="rounded-xl border border-zinc-200 bg-white px-4 py-3"
+              key={orderId}
+              className="cursor-pointer rounded-xl border border-zinc-200 bg-white px-4 py-3 transition-transform duration-150 active:scale-[0.98]"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/driver/order/${orderId}`)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  navigate(`/driver/order/${orderId}`)
+                }
+              }}
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-bold text-zinc-900">
-                  #{order.orderId}
+                  #{orderId}
                 </p>
               </div>
 
@@ -78,11 +91,12 @@ const DriverPendingOrdersPage = () => {
                   <span>{t('driver_pending_amount')}</span>
                 </div>
                 <span className="font-semibold text-orange-600">
-                  ₹{order.pendingAmount}
+                  ₹{pendingAmount}
                 </span>
               </div>
             </div>
-          ))
+            )
+          })
         )}
       </div>
     </div>
