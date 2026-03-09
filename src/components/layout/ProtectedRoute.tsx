@@ -8,6 +8,7 @@ const ProtectedRoute = () => {
   const role = localStorage.getItem('CATERING_ROLE')
   const userId = localStorage.getItem('CATERING_USER_ID')
   const location = useLocation()
+  const normalizedRole = (role ?? '').toUpperCase()
   console.log('Unauthorized from handle unauthroized')
   // ❌ No token or expired token → logout
   if (!token || isTokenExpired(token)) {
@@ -17,7 +18,7 @@ const ProtectedRoute = () => {
   }
 
   // 🚫 DRIVER access rules
-  if (role === 'DRIVER' && userId) {
+  if (normalizedRole === 'DRIVER' && userId) {
     const allowedDriverDashboard = `/driver/driver-dashboard/${userId}`
 
     const allowedDriverPaths = [
@@ -32,6 +33,19 @@ const ProtectedRoute = () => {
 
     if (!isAllowed) {
       return <Navigate to={allowedDriverDashboard} replace />
+    }
+  }
+
+  // 🚫 STAFF access rules: only order management and driver pages
+  if (normalizedRole === 'STAFF') {
+    const allowedStaffPaths = [appRoutes.orders.path, appRoutes.driver.path]
+
+    const isAllowed = allowedStaffPaths.some((path) =>
+      location.pathname.startsWith(path)
+    )
+
+    if (!isAllowed) {
+      return <Navigate to={appRoutes.orders.path} replace />
     }
   }
 

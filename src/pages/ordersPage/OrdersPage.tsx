@@ -269,6 +269,13 @@ export const OrdersPage = () => {
     navigate(`${appRoutes.ordersForm.path}?${params.toString()}`)
   }
 
+  const staffUserId = localStorage.getItem('CATERING_USER_ID')
+
+  const handleNavigateToPendingOrders = () => {
+    if (!staffUserId) return
+    navigate(`/driver/pending-orders/${staffUserId}`)
+  }
+
   return (
     <main className="layout-container flex min-h-[95vh] flex-col overflow-hidden rounded-[12px] border border-zinc-200 bg-zinc-50 shadow-sm">
       <header className="flex flex-col gap-3 border-b border-zinc-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
@@ -314,6 +321,14 @@ export const OrdersPage = () => {
           >
             <Mic className="mr-2 h-4 w-4 text-zinc-700" />{' '}
             {t('create_voice_order')}
+          </ButtonSm>
+          <ButtonSm
+            state="outline"
+            onClick={handleNavigateToPendingOrders}
+            disabled={!staffUserId}
+            className="font-medium"
+          >
+            Pending Orders
           </ButtonSm>
           <ButtonSm
             state="default"

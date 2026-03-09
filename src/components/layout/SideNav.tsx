@@ -25,8 +25,9 @@ const NAVIGATION_SECTIONS: Array<{ key: NavigationSection; titleKey: string }> =
 const SideNav: React.FC = () => {
   const { t } = useTranslation()
   const role = localStorage.getItem('CATERING_ROLE')
+  const normalizedRole = (role ?? '').toUpperCase()
 
-  if (role === 'DRIVER') {
+  if (normalizedRole === 'DRIVER') {
     return null
   }
 
@@ -50,8 +51,8 @@ const SideNav: React.FC = () => {
     return activeRoute.startsWith(route)
   }
 
-  const navigationItems: NavigationItem[] = useMemo(
-    () => [
+  const navigationItems: NavigationItem[] = useMemo(() => {
+    const items: NavigationItem[] = [
       // {
       //   label: 'Dashboard',
       //   path: appRoutes.dashboard.path,
@@ -81,9 +82,14 @@ const SideNav: React.FC = () => {
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
         section: 'main',
       },
-    ],
-    [t]
-  )
+    ]
+
+    if (normalizedRole === 'STAFF') {
+      return items.filter((item) => item.path === appRoutes.orders.path)
+    }
+
+    return items
+  }, [normalizedRole, t])
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('CATERING_TOKEN')
