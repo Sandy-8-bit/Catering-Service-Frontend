@@ -174,7 +174,8 @@ const AdditionalItemsSelector = ({
 
     const parsedQuantity = Number.parseInt(draftValue, 10)
     const isValidQuantity =
-      Number.isFinite(parsedQuantity) && parsedQuantity >= 1 &&
+      Number.isFinite(parsedQuantity) &&
+      parsedQuantity >= 1 &&
       /^\d+$/.test(draftValue)
 
     if (!isValidQuantity) {
@@ -268,7 +269,8 @@ const AdditionalItemsSelector = ({
               step={1}
               inputMode="numeric"
               value={
-                quantityDrafts[record.additionalItemId] ?? String(record.quantity)
+                quantityDrafts[record.additionalItemId] ??
+                String(record.quantity)
               }
               onChange={(event) =>
                 handleQuantityInputChange(
@@ -391,10 +393,16 @@ const AdditionalItemsSelector = ({
                             String(existing?.quantity ?? 1)
                           }
                           onChange={(event) =>
-                            handleQuantityInputChange(item.id, event.target.value)
+                            handleQuantityInputChange(
+                              item.id,
+                              event.target.value
+                            )
                           }
                           onBlur={() =>
-                            handleQuantityInputBlur(item.id, existing?.quantity ?? 1)
+                            handleQuantityInputBlur(
+                              item.id,
+                              existing?.quantity ?? 1
+                            )
                           }
                           className="h-9 w-16 rounded-md border border-[#E4E4E7] text-center text-sm font-semibold text-zinc-900 outline-none focus:border-zinc-900"
                         />
@@ -432,7 +440,8 @@ const AdditionalItemsSelector = ({
               {t('orders_extras_bag')}
             </p>
             <p className="text-base font-semibold text-zinc-900">
-              {totalExtrasCount} {t('items')} · {formatCurrency(totalExtrasCost)}
+              {totalExtrasCount} {t('items')} ·{' '}
+              {formatCurrency(totalExtrasCost)}
             </p>
           </div>
           <ButtonSm

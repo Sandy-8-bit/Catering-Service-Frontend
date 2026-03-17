@@ -150,7 +150,7 @@ const Input = <T extends string | number>({
         {title} {required && <span className="text-red-500">*</span>}
       </h3>
 
-      <div className="flex items-center rounded-xl border-2 border-[#F1F1F1] bg-white shadow-sm focus-within:border-slate-500">
+      <div className="flex items-center rounded-xl border-2 overflow-clip border-[#F1F1F1] bg-white shadow-sm focus-within:border-slate-500">
         {prefixText && (
           <div className="bg-slate-100 px-3 py-3 text-sm font-medium text-slate-700">
             {prefixText}
@@ -295,7 +295,7 @@ export const InputCheckbox: React.FC<InputCheckboxProps> = ({
       className={`${className} relative w-full min-w-[180px] self-stretch`}
     >
       <h3
-        className={`mb-0.5 w-full justify-start text-xs leading-loose font-semibold text-slate-700`}
+        className={`mb-0.5 w-full justify-start overflow-clip text-xs leading-loose font-semibold text-slate-700`}
       >
         {label}
       </h3>
@@ -304,7 +304,7 @@ export const InputCheckbox: React.FC<InputCheckboxProps> = ({
       >
         <span className="text-sm font-medium text-slate-600">{title}</span>
 
-        <div className="relative flex items-center">
+        <div className="relative flex items-center overflow-clip">
           <input
             type="checkbox"
             id={uniqueId}

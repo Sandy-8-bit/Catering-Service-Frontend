@@ -3,6 +3,7 @@ import isEqual from 'lodash/isEqual'
 import type {
   Order,
   OrderAdditionalItemPayload,
+  OrderAdditionalMenuItemPayload,
   OrderItemPayload,
   OrderPayload,
   OrderUpdatePayload,
@@ -15,7 +16,7 @@ const ORDER_UPDATE_DIFF_FIELDS: ReadonlyArray<keyof OrderPayload> = [
   'eventType',
   'eventDate',
   'eventTime',
-  'totalPeople',
+  'totalPlates',
   'totalAmount',
   'balanceAmount',
   'offerPercentage',
@@ -38,7 +39,7 @@ export const mapOrderToPayload = (order: Order): OrderPayload => {
     eventType: order.eventType,
     eventDate: order.eventDate,
     eventTime: order.eventTime,
-    totalPeople: order.totalPeople,
+    totalPlates: order.totalPlates,
     offerPercentage: order.offerPercentage,
     totalAmount: order.totalAmount,
     balanceAmount: order.balanceAmount,
@@ -58,6 +59,13 @@ export const mapOrderToPayload = (order: Order): OrderPayload => {
     payload.additionalItems = additionalItems
   }
 
+  const additionalMenuItems = toAdditionalMenuItemPayload(
+    order.additionalMenuItems
+  )
+  if (additionalMenuItems.length) {
+    payload.additionalMenuItems = additionalMenuItems
+  }
+
   return payload
 }
 
@@ -68,12 +76,16 @@ export const mapOrderToUpdatePayload = (
   const basePayload = mapOrderToPayload(order)
   const items = toOrderItemPayload(order.items, true)
   const additionalItems = toAdditionalItemPayload(order.additionalItems, true)
+  const additionalMenuItems = toAdditionalMenuItemPayload(
+    order.additionalMenuItems
+  )
 
   const fullPayload: OrderUpdatePayload = {
     id: order.id,
     ...basePayload,
     items,
     ...(additionalItems.length ? { additionalItems } : {}),
+    ...(additionalMenuItems.length ? { additionalMenuItems } : {}),
   }
 
   if (!existingOrder) {
@@ -86,6 +98,9 @@ export const mapOrderToUpdatePayload = (
     existingOrder.additionalItems,
     true
   )
+  const existingAdditionalMenuItems = toAdditionalMenuItemPayload(
+    existingOrder.additionalMenuItems
+  )
   const diffPayload: OrderUpdatePayload = {
     id: order.id,
   }
@@ -96,6 +111,10 @@ export const mapOrderToUpdatePayload = (
 
   if (!isEqual(additionalItems, existingAdditionalItems)) {
     diffPayload.additionalItems = additionalItems
+  }
+
+  if (!isEqual(additionalMenuItems, existingAdditionalMenuItems)) {
+    diffPayload.additionalMenuItems = additionalMenuItems
   }
 
   ORDER_UPDATE_DIFF_FIELDS.forEach((field) => {
@@ -133,4 +152,12 @@ export const toAdditionalItemPayload = (
     additionalItemId: item.additionalItemId,
     quantity: item.quantity,
     returned: item.returned,
+  })) ?? []
+
+export const toAdditionalMenuItemPayload = (
+  items?: Order['additionalMenuItems']
+): OrderAdditionalMenuItemPayload[] =>
+  items?.map((item) => ({
+    productId: item.productId,
+    quantity: item.quantity,
   })) ?? []

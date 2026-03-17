@@ -21,11 +21,13 @@ import DateInput from '@/components/common/DateInput'
 import TimeInput from '@/components/common/TimeInput'
 import ProductMenuSelector from '@/components/orders/ProductMenuSelector'
 import AdditionalItemsSelector from '@/components/orders/AdditionalItemsSelector'
+import AdditionalMenuSelector from '@/components/orders/AdditionalMenuSelector'
 import { mapOrderToUpdatePayload, mapOrderToPayload } from '@/utils/TypeMappers'
 import SkeletonForm from '@/components/common/Skleton'
 import { ArrowLeft } from 'lucide-react'
 import { appRoutes } from '@/routes/appRoutes'
 import { useFetchUsers } from '@/queries/usersQueries'
+import { useFetchProducts } from '@/queries/productQueries'
 import VoiceInput from '@/components/common/VoiceInput'
 
 export const OrdersForm = () => {
@@ -36,6 +38,7 @@ export const OrdersForm = () => {
   const orderIdParam = Number(searchParams.get('orderId'))
   const orderId = Number.isFinite(orderIdParam) ? orderIdParam : undefined
   const { data: user = [], isLoading: isUserOptionLoading } = useFetchUsers()
+  const { data: products = [] } = useFetchProducts()
   const { data: existingOrder, isLoading: isOrderLoading } =
     useFetchOrderById(orderId)
 
@@ -288,14 +291,14 @@ export const OrdersForm = () => {
             )}
 
             <Input
-              title={t('total_people')}
+              title="Total Plates"
               prefixText={t('count')}
-              placeholder={t('total_people_placeholder')}
-              inputValue={editData.totalPeople?.toString() || ''}
+              placeholder="Enter total plates"
+              inputValue={editData.totalPlates?.toString() || ''}
               onChange={(value) =>
                 setEditData((prev) => ({
                   ...prev,
-                  totalPeople: Number(value),
+                  totalPlates: Number(value),
                 }))
               }
             />
@@ -312,7 +315,18 @@ export const OrdersForm = () => {
             }
           />
 
-          {/* Menu items */}
+          {/* Additional Menu Items */}
+          <AdditionalMenuSelector
+            selectedItems={editData.additionalMenuItems ?? []}
+            onChange={(items) =>
+              setEditData((prev) => ({
+                ...prev,
+                additionalMenuItems: items,
+              }))
+            }
+          />
+
+          {/* Additional Items */}
           <AdditionalItemsSelector
             availableItems={additionalItems}
             selectedItems={editData.additionalItems ?? []}
@@ -324,6 +338,7 @@ export const OrdersForm = () => {
               }))
             }
           />
+
           <header className="mt-6 space-y-1">
             <h2 className="text-base font-semibold text-zinc-800">
               {t('payment')}
@@ -334,11 +349,23 @@ export const OrdersForm = () => {
           {/* Total Amount Display */}
           <div className="flex flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 p-4 sm:p-5">
             <div className="flex justify-between gap-3 text-sm text-zinc-600">
-              <span>{t('items_subtotal')}:</span>
+              <span>Menu Items Subtotal:</span>
               <span className="font-regular text-zinc-900">
                 ₹
                 {editData.items
                   ?.reduce((sum, item) => sum + (item.totalPrice || 0), 0)
+                  .toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm text-zinc-600">
+              <span>Additional Menu Items Subtotal:</span>
+              <span className="font-regular text-zinc-900">
+                ₹
+                {(editData.additionalMenuItems ?? [])
+                  .reduce((sum, item) => {
+                    const product = products.find((p) => p.id === item.productId)
+                    return sum + (product?.price ?? 0) * item.quantity
+                  }, 0)
                   .toLocaleString()}
               </span>
             </div>
