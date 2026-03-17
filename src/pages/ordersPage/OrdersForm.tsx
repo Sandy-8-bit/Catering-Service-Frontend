@@ -363,7 +363,9 @@ export const OrdersForm = () => {
                 ₹
                 {(editData.additionalMenuItems ?? [])
                   .reduce((sum, item) => {
-                    const product = products.find((p) => p.id === item.productId)
+                    const product = products.find(
+                      (p) => p.id === item.productId
+                    )
                     return sum + (product?.price ?? 0) * item.quantity
                   }, 0)
                   .toLocaleString()}
