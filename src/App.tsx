@@ -34,7 +34,7 @@ const RecipeDetailsPage = lazy(
 )
 const RecipesPage = lazy(() => import('@/pages/recipesPage/RecipesPage'))
 const CalculateRawMaterialsPage = lazy(
-  () => import('@/pages/recipesPage/CalculateRawMaterialsPage')
+  () => import('@/pages/masterPage/CalculateRawMaterialsPage')
 )
 const UsersPage = lazy(() => import('@/pages/usersPage/UsersPage'))
 

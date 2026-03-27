@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ConfigCard, { type ConfigCardType } from '@/components/common/ConfigCard'
-import DropdownSelect, { type DropdownOption } from '@/components/common/DropDown'
+import DropdownSelect, {
+  type DropdownOption,
+} from '@/components/common/DropDown'
 import { appRoutes } from '@/routes/appRoutes'
 
 const LANGUAGE_OPTIONS: DropdownOption[] = [
@@ -44,10 +46,9 @@ const MasterPage: React.FC = () => {
     }
   }
 
-const role = localStorage.getItem("CATERING_ROLE")
+  const role = localStorage.getItem('CATERING_ROLE')
 
-const configCards = useMemo<ConfigCardType[]>(
-  () => {
+  const configCards = useMemo<ConfigCardType[]>(() => {
     const cards: ConfigCardType[] = [
       {
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
@@ -79,7 +80,7 @@ const configCards = useMemo<ConfigCardType[]>(
     ]
 
     // Only show Recipes if NOT staff
-    if (role !== "STAFF") {
+    if (role !== 'STAFF') {
       cards.push({
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         title: t('recipes'),
@@ -88,6 +89,16 @@ const configCards = useMemo<ConfigCardType[]>(
         labelColor: 'bg-orange-50 text-orange-700',
         btnText: t('configure'),
         navigateUrl: appRoutes.recipes.path,
+      })
+
+      cards.push({
+        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
+        title: t('calculate_raw_materials'),
+        desc: t('calculate_raw_materials_desc'),
+        label: t('calculate_raw_materials_label'),
+        labelColor: 'bg-rose-50 text-rose-700',
+        btnText: t('open'),
+        navigateUrl: appRoutes.calculateRawMaterials.path,
       })
     }
 
@@ -102,9 +113,7 @@ const configCards = useMemo<ConfigCardType[]>(
     })
 
     return cards
-  },
-  [t, role]
-)
+  }, [t, role])
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
