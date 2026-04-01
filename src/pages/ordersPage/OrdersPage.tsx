@@ -77,7 +77,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
             label={t('headcount')}
             value={
               <span>
-                {order.totalPeople}{' '}
+                {order.totalPlates}{' '}
                 <span className="text-sm font-normal text-zinc-400">
                   {t('guests')}
                 </span>
@@ -209,6 +209,18 @@ export const OrdersPage = () => {
       ),
     [sourceOrders]
   )
+
+  const menuItemsSubtotal = useMemo(() => {
+    if (selectedOrder) {
+      const unitPriceSum =
+        selectedOrder.items?.reduce((sum, item) => {
+          const unitPrice = item.unitPrice || (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+          return sum + unitPrice
+        }, 0) || 0
+      return Math.round((selectedOrder.totalPlates || 1) * unitPriceSum)
+    }
+    return 0
+  }, [selectedOrder])
 
   const additionalItemsSummary = useMemo(
     () =>
@@ -500,39 +512,49 @@ export const OrdersPage = () => {
               <div className="w-full overflow-x-auto">
                 {selectedOrder ? (
                   selectedOrder.items && selectedOrder.items.length > 0 ? (
-                    <GenericTable
-                      data={selectedOrder.items}
-                      dataCell={[
-                        {
-                          headingTitle: t('primary_name'),
-                          accessVar: 'productPrimaryName',
-                        },
-                        {
-                          headingTitle: t('secondary_name'),
-                          accessVar: 'productSecondaryName',
-                        },
-                        {
-                          headingTitle: t('quantity'),
-                          accessVar: 'quantity',
-                          render: (value) => (
-                            <span className="font-semibold text-zinc-900">
-                              {value}
-                            </span>
-                          ),
-                        },
-                        {
-                          headingTitle: t('total_price'),
-                          accessVar: 'totalPrice',
-                          render: (value) => (
-                            <span className="font-semibold text-zinc-900">
-                              ₹{value?.toLocaleString()}
-                            </span>
-                          ),
-                        },
-                      ]}
-                      isHeaderVisible={true}
-                      messageWhenNoData={t('no_menu_items_order')}
-                    />
+                    <>
+                      <GenericTable
+                        data={selectedOrder.items}
+                        dataCell={[
+                          {
+                            headingTitle: t('primary_name'),
+                            accessVar: 'productPrimaryName',
+                          },
+                          {
+                            headingTitle: t('secondary_name'),
+                            accessVar: 'productSecondaryName',
+                          },
+                          {
+                            headingTitle: t('quantity'),
+                            accessVar: 'quantity',
+                            render: (value) => (
+                              <span className="font-semibold text-zinc-900">
+                                {value}
+                              </span>
+                            ),
+                          },
+                          {
+                            headingTitle: t('total_price'),
+                            accessVar: 'totalPrice',
+                            render: (value) => (
+                              <span className="font-semibold text-zinc-900">
+                                ₹{value?.toLocaleString()}
+                              </span>
+                            ),
+                          },
+                        ]}
+                        isHeaderVisible={true}
+                        messageWhenNoData={t('no_menu_items_order')}
+                      />
+                      <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 flex items-center justify-between">
+                        <p className="text-sm font-semibold text-zinc-700">
+                          {t('menu_items_subtotal')}
+                        </p>
+                        <p className="text-lg font-bold text-zinc-900">
+                          ₹{menuItemsSubtotal.toLocaleString()}
+                        </p>
+                      </div>
+                    </>
                   ) : (
                     <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
                       <Archive size={16} className="shrink-0 text-zinc-300" />{' '}

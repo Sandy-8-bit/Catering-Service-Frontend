@@ -235,6 +235,7 @@
   "summary": "Summary",
   "items_in_order": "Items in this order",
   "items_required": "Items required",
+  "menu_items_subtotal": "Menu Items Subtotal",
   "no_menu_items_order": "No menu items added to this order.",
   "no_items_planned": "No items planned for this date.",
   "additional_items_in_order": "Additional items in this order",

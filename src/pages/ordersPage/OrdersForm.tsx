@@ -76,9 +76,17 @@ export const OrdersForm = () => {
   }, [existingOrder])
 
   useEffect(() => {
+    const menuItemsSubtotal = (() => {
+      const unitPriceSum =
+        editData.items?.reduce((sum, item) => {
+          const unitPrice = item.unitPrice || (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+          return sum + unitPrice
+        }, 0) || 0
+      return Math.round((editData.totalPlates || 1) * unitPriceSum)
+    })()
+
     const grossTotal =
-      (editData.items?.reduce((sum, item) => sum + (item.totalPrice || 0), 0) ||
-        0) +
+      menuItemsSubtotal +
       (editData.additionalItems?.reduce(
         (sum, item) => sum + (item.lineTotal || 0),
         0
@@ -100,6 +108,7 @@ export const OrdersForm = () => {
     editData.deliveryCharge,
     editData.offerPercentage,
     editData.advanceAmount,
+    editData.totalPlates,
   ])
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -352,9 +361,14 @@ export const OrdersForm = () => {
               <span>Menu Items Subtotal:</span>
               <span className="font-regular text-zinc-900">
                 ₹
-                {editData.items
-                  ?.reduce((sum, item) => sum + (item.totalPrice || 0), 0)
-                  .toLocaleString()}
+                {(() => {
+                  const unitPriceSum =
+                    editData.items?.reduce((sum, item) => {
+                      const unitPrice = item.unitPrice || (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+                      return sum + unitPrice
+                    }, 0) || 0
+                  return Math.round((editData.totalPlates || 1) * unitPriceSum).toLocaleString()
+                })()}
               </span>
             </div>
             <div className="flex justify-between text-sm text-zinc-600">
@@ -390,11 +404,17 @@ export const OrdersForm = () => {
             )}
             {(editData.offerPercentage ?? 0) > 0 &&
               (() => {
+                const menuItemsSubtotal = (() => {
+                  const unitPriceSum =
+                    editData.items?.reduce((sum, item) => {
+                      const unitPrice = item.unitPrice || (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+                      return sum + unitPrice
+                    }, 0) || 0
+                  return Math.round((editData.totalPlates || 1) * unitPriceSum)
+                })()
+
                 const grossTotal =
-                  (editData.items?.reduce(
-                    (sum, item) => sum + (item.totalPrice || 0),
-                    0
-                  ) || 0) +
+                  menuItemsSubtotal +
                   (editData.additionalItems?.reduce(
                     (sum, item) => sum + (item.lineTotal || 0),
                     0

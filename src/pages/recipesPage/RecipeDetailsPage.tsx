@@ -140,7 +140,7 @@ const mapRecipeToRow = (
     ingredientType: type,
     rawMaterialId: recipe.rawMaterial?.rawMaterialId ?? 0,
     rawMaterialPrimaryName: recipe.rawMaterial?.rawMaterialPrimaryName ?? '',
-    unitPrice: material?.purchasePrice ?? 0,
+    unitPrice: material?.purchasePricePerUnit ?? 0,
     // support both flat API shape { subProductId, subProductName } and nested { subProduct: { subProductId, subProductPrimaryName } }
     subProductId: recipe.subProductId ?? recipe.subProduct?.subProductId ?? 0,
     subProductPrimaryName:
@@ -222,7 +222,7 @@ const RecipeDetailsPage = () => {
         return {
           ...row,
           unit: material.purchaseUnit ?? row.unit,
-          unitPrice: material.purchasePrice ?? row.unitPrice,
+          unitPrice: material.purchasePricePerUnit ?? row.unitPrice,
         }
       })
     )
@@ -342,7 +342,7 @@ const RecipeDetailsPage = () => {
                   rawMaterialId: Number(option.id),
                   rawMaterialPrimaryName: option.label,
                   unit: material?.purchaseUnit ?? '',
-                  unitPrice: material?.purchasePrice ?? 0,
+                  unitPrice: material?.purchasePricePerUnit ?? 0,
                 })
               }}
             />

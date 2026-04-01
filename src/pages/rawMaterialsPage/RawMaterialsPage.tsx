@@ -77,7 +77,7 @@ export const RawMaterialsPage = () => {
         (original.secondaryName ?? '') !== (row.secondaryName ?? '') ||
         original.purchaseUnit !== row.purchaseUnit ||
         original.purchaseQuantity !== row.purchaseQuantity ||
-        original.purchasePrice !== row.purchasePrice
+        original.purchasePricePerUnit !== row.purchasePrice
       )
     })
   }, [editData, originalMap])
@@ -89,21 +89,21 @@ export const RawMaterialsPage = () => {
   const isRowEmpty = (row: RawMaterial) =>
     ['primaryName', 'secondaryName', 'purchaseUnit', 'purchaseQuantity'].every(
       (key) => (row[key as keyof RawMaterial]?.toString().trim() ?? '') === ''
-    ) && Number(row.purchasePrice ?? 0) === 0
+    ) && Number(row.purchasePricePerUnit ?? 0) === 0
 
   const isDraftValid = (row: RawMaterial) => {
     const trimmed = {
       primaryName: row.primaryName?.trim() ?? '',
       purchaseUnit: row.purchaseUnit?.trim() ?? '',
       purchaseQuantity: row.purchaseQuantity?.trim() ?? '',
-      purchasePrice: Number(row.purchasePrice ?? 0),
+      purchasePrice: Number(row.purchasePricePerUnit ?? 0),
     }
 
     return (
       trimmed.primaryName &&
       trimmed.purchaseUnit &&
       trimmed.purchaseQuantity &&
-      trimmed.purchasePrice > 0
+      trimmed.purchasePricePerUnit > 0
     )
   }
 
@@ -466,7 +466,8 @@ export const RawMaterialsPage = () => {
                 disabled={!hasValidDraft || isCreateRawMaterialPending}
                 isPending={isCreateRawMaterialPending}
               >
-                <SaveIcon className="mr-2 h-4 w-4 text-white" /> {t('save_material')}
+                <SaveIcon className="mr-2 h-4 w-4 text-white" />{' '}
+                {t('save_material')}
               </ButtonSm>
             </>
           ) : (
