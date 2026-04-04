@@ -1,163 +1,104 @@
-import isEqual from 'lodash/isEqual'
+import type { Order, OrderPayload, OrderUpdatePayload } from '@/types/order'
 
-import type {
-  Order,
-  OrderAdditionalItemPayload,
-  OrderAdditionalMenuItemPayload,
-  OrderItemPayload,
-  OrderPayload,
-  OrderUpdatePayload,
-} from '@/types/order'
-
-const ORDER_UPDATE_DIFF_FIELDS: ReadonlyArray<keyof OrderPayload> = [
-  'customerName',
-  'customerPhone',
-  'customerAddress',
-  'eventType',
-  'eventDate',
-  'eventTime',
-  'totalPlates',
-  'totalAmount',
-  'balanceAmount',
-  'offerPercentage',
-  'status',
-  'returnableItemsChecked',
-  'deliveredByUs',
-  'driverId',
-  'advanceAmount',
-  'paymentType',
-  'locationUrl',
-  'deliveryCharge',
-]
-
+/**
+ * Maps Order form state to API POST payload
+ * Keeps exact structure as specified in requirements
+ */
 export const mapOrderToPayload = (order: Order): OrderPayload => {
-  const driverId = (order as Partial<{ driverId?: number }>).driverId
-  const payload: OrderPayload = {
-    customerName: order.customerName,
-    customerPhone: order.customerPhone,
-    customerAddress: order.customerAddress,
-    eventType: order.eventType,
-    eventDate: order.eventDate,
-    eventTime: order.eventTime,
-    totalPlates: order.totalPlates,
-    offerPercentage: order.offerPercentage,
-    totalAmount: order.totalAmount,
-    balanceAmount: order.balanceAmount,
-    status: order.status,
-    returnableItemsChecked: order.returnableItemsChecked,
-    deliveredByUs: order.deliveredByUs,
-    driverId: driverId ?? order.driver?.driverId,
-    advanceAmount: order.advanceAmount,
-    paymentType: order.paymentType,
-    locationUrl: order.locationUrl,
-    deliveryCharge: order.deliveryCharge,
-    items: toOrderItemPayload(order.items),
+  return {
+    customerName: order.customerName || '',
+    customerPhone: order.customerPhone || '',
+    customerAddress: order.customerAddress || '',
+    eventType: order.eventType || '',
+    eventDate: order.eventDate || '',
+    eventTime: order.eventTime || '',
+    locationUrl: order.locationUrl || '',
+    totalPlates: order.totalPlates || 1,
+    priceReducedPerPlate: order.priceReducedPerPlate || 0,
+    deliveredByUs: order.deliveredByUs || false,
+    driverId: order.driver?.driverId || undefined,
+    deliveryCharge: order.deliveredByUs ? order.deliveryCharge || 0 : 0,
+    discountAmount: order.discountAmount || 0,
+    discountPercentage: order.discountPercentage || 0,
+    advanceAmount: order.advanceAmount || 0,
+    paymentType: order.paymentType || 'CASH',
+    // Send all items with proper structure
+    items: (order.items || []).map((item) => ({
+      productId: item.product?.productId || 0,
+      quantity: item.quantity || 1,
+    })),
+    // Additional menu items (complementary products)
+    additionalMenuItems: (order.additionalMenuItems || []).map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity || 1,
+    })),
+    // Additional items (extras like delivery boxes, decorations, etc)
+    additionalItems: (order.additionalItems || []).map((item) => ({
+      additionalItemId: item.additionalItemId,
+      quantity: item.quantity || 1,
+    })),
   }
-
-  const additionalItems = toAdditionalItemPayload(order.additionalItems)
-  if (additionalItems.length) {
-    payload.additionalItems = additionalItems
-  }
-
-  const additionalMenuItems = toAdditionalMenuItemPayload(
-    order.additionalMenuItems
-  )
-  if (additionalMenuItems.length) {
-    payload.additionalMenuItems = additionalMenuItems
-  }
-
-  return payload
 }
 
+/**
+ * Maps Order form state to API PATCH payload
+ * Keeps exact structure, sends all fields and complete lists
+ */
 export const mapOrderToUpdatePayload = (
   order: Order,
   existingOrder?: Order
 ): OrderUpdatePayload => {
-  const basePayload = mapOrderToPayload(order)
-  const items = toOrderItemPayload(order.items, true)
-  const additionalItems = toAdditionalItemPayload(order.additionalItems, true)
-  const additionalMenuItems = toAdditionalMenuItemPayload(
-    order.additionalMenuItems
-  )
-
-  const fullPayload: OrderUpdatePayload = {
-    id: order.id,
-    ...basePayload,
-    items,
-    ...(additionalItems.length ? { additionalItems } : {}),
-    ...(additionalMenuItems.length ? { additionalMenuItems } : {}),
+  return {
+    id: order.id || 0,
+    customerName: order.customerName || existingOrder?.customerName || '',
+    customerPhone: order.customerPhone || existingOrder?.customerPhone || '',
+    customerAddress:
+      order.customerAddress || existingOrder?.customerAddress || '',
+    eventType: order.eventType || existingOrder?.eventType || '',
+    eventDate: order.eventDate || existingOrder?.eventDate || '',
+    eventTime: order.eventTime || existingOrder?.eventTime || '',
+    locationUrl: order.locationUrl || existingOrder?.locationUrl || '',
+    totalPlates: order.totalPlates || existingOrder?.totalPlates || 1,
+    priceReducedPerPlate:
+      order.priceReducedPerPlate ?? existingOrder?.priceReducedPerPlate ?? 0,
+    deliveredByUs:
+      order.deliveredByUs !== undefined
+        ? order.deliveredByUs
+        : existingOrder?.deliveredByUs || false,
+    driverId:
+      (order.deliveredByUs || existingOrder?.deliveredByUs) &&
+      (order.driver || existingOrder?.driver)
+        ? order.driver?.driverId || existingOrder?.driver?.driverId || undefined
+        : undefined,
+    deliveryCharge:
+      order.deliveredByUs || existingOrder?.deliveredByUs
+        ? (order.deliveryCharge ?? existingOrder?.deliveryCharge ?? 0)
+        : 0,
+    discountAmount: order.discountAmount ?? existingOrder?.discountAmount ?? 0,
+    discountPercentage:
+      order.discountPercentage ?? existingOrder?.discountPercentage ?? 0,
+    advanceAmount: order.advanceAmount ?? existingOrder?.advanceAmount ?? 0,
+    paymentType: order.paymentType || existingOrder?.paymentType || 'CASH',
+    // CRITICAL: Send COMPLETE lists, not partial
+    items: (order.items || existingOrder?.items || []).map((item) => ({
+      productId: item.product?.productId || 0,
+      quantity: item.quantity || 1,
+    })),
+    additionalMenuItems: (
+      order.additionalMenuItems ||
+      existingOrder?.additionalMenuItems ||
+      []
+    ).map((item) => ({
+      productId: item.productId,
+      quantity: item.quantity || 1,
+    })),
+    additionalItems: (
+      order.additionalItems ||
+      existingOrder?.additionalItems ||
+      []
+    ).map((item) => ({
+      additionalItemId: item.additionalItemId,
+      quantity: item.quantity || 1,
+    })),
   }
-
-  if (!existingOrder) {
-    return fullPayload
-  }
-
-  const existingPayload = mapOrderToPayload(existingOrder)
-  const existingItems = toOrderItemPayload(existingOrder.items, true)
-  const existingAdditionalItems = toAdditionalItemPayload(
-    existingOrder.additionalItems,
-    true
-  )
-  const existingAdditionalMenuItems = toAdditionalMenuItemPayload(
-    existingOrder.additionalMenuItems
-  )
-  const diffPayload: OrderUpdatePayload = {
-    id: order.id,
-  }
-
-  if (!isEqual(items, existingItems)) {
-    diffPayload.items = items
-  }
-
-  if (!isEqual(additionalItems, existingAdditionalItems)) {
-    diffPayload.additionalItems = additionalItems
-  }
-
-  if (!isEqual(additionalMenuItems, existingAdditionalMenuItems)) {
-    diffPayload.additionalMenuItems = additionalMenuItems
-  }
-
-  ORDER_UPDATE_DIFF_FIELDS.forEach((field) => {
-    if (!Object.is(basePayload[field], existingPayload[field])) {
-      diffPayload[field] = basePayload[field]
-    }
-  })
-
-  return diffPayload
 }
-
-export const toOrderItemPayload = (
-  items?: Order['items'],
-  includeIds = false
-): OrderItemPayload[] =>
-  items?.map((item) => {
-    // Handle both nested (item.product.productId) and flat (item.productId) structures
-    const productId =
-      (item.product as Partial<{ productId?: number }>)?.productId ??
-      (item as Partial<{ productId?: number }>).productId
-
-    return {
-      ...(includeIds && item.id > 0 ? { id: item.id } : {}),
-      productId: productId ?? 0,
-      quantity: item.quantity,
-    }
-  }) ?? []
-
-export const toAdditionalItemPayload = (
-  items?: Order['additionalItems'],
-  includeIds = false
-): OrderAdditionalItemPayload[] =>
-  items?.map((item) => ({
-    ...(includeIds && item.id > 0 ? { id: item.id } : {}),
-    additionalItemId: item.additionalItemId,
-    quantity: item.quantity,
-    returned: item.returned,
-  })) ?? []
-
-export const toAdditionalMenuItemPayload = (
-  items?: Order['additionalMenuItems']
-): OrderAdditionalMenuItemPayload[] =>
-  items?.map((item) => ({
-    productId: item.productId,
-    quantity: item.quantity,
-  })) ?? []

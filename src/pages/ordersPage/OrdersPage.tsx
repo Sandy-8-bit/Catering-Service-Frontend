@@ -10,7 +10,7 @@ import VoiceOrderDialog from '@/components/orders/VoiceOrderDialog'
 import DownloadBillButton from '@/components/orders/DownloadBillButton'
 import { appRoutes } from '@/routes/appRoutes'
 import { useFetchOrders } from '@/queries/ordersQueries'
-import type { Order, RequiredSubProduct } from '@/types/order'
+import type { Order } from '@/types/order'
 
 const DetailCell = ({
   label,
@@ -119,6 +119,17 @@ const getProductDisplayName = (item: Order['items'][number]): string => {
   )
 }
 
+const getAdditionalMenuItemDisplayName = (
+  item: NonNullable<Order['additionalMenuItems']>[number]
+): string => {
+  return (
+    item?.productPrimaryName ||
+    item?.productSecondaryName ||
+    item?.productId?.toString() ||
+    ''
+  )
+}
+
 const buildQuantitySummary = <T,>(
   orders: Order[],
   getItems: (order: Order) => T[],
@@ -214,7 +225,9 @@ export const OrdersPage = () => {
     if (selectedOrder) {
       const unitPriceSum =
         selectedOrder.items?.reduce((sum, item) => {
-          const unitPrice = item.unitPrice || (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+          const unitPrice =
+            item.unitPrice ||
+            (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
           return sum + unitPrice
         }, 0) || 0
       return Math.round((selectedOrder.totalPlates || 1) * unitPriceSum)
@@ -236,29 +249,18 @@ export const OrdersPage = () => {
     [sourceOrders, t]
   )
 
-  const subProductsSummary = useMemo(() => {
-    const map = new Map<string, RequiredSubProduct>()
-    sourceOrders.forEach((order) => {
-      ;(order.requiredSubProducts ?? []).forEach((sp) => {
-        if (!sp.subProductName) return
-        const key = `${sp.subProductName}||${sp.unit}`
-        const existing = map.get(key)
-        if (existing) {
-          map.set(key, {
-            ...existing,
-            requiredQuantity: existing.requiredQuantity + sp.requiredQuantity,
-          })
-        } else {
-          map.set(key, {
-            subProductName: sp.subProductName,
-            requiredQuantity: sp.requiredQuantity,
-            unit: sp.unit,
-          })
-        }
-      })
-    })
-    return Array.from(map.values())
-  }, [sourceOrders])
+  const additionalMenuItemsSummary = useMemo(
+    () =>
+      buildQuantitySummary(
+        sourceOrders,
+        (order) => order.additionalMenuItems ?? [],
+        (item) =>
+          getAdditionalMenuItemDisplayName(item) ||
+          t('additional_item_with_id', { id: item?.productId }),
+        (item) => item.quantity
+      ),
+    [sourceOrders, t]
+  )
 
   const infoMessage =
     !isLoading && ordersForDate.length === 0 ? t('no_orders_scheduled') : null
@@ -546,7 +548,7 @@ export const OrdersPage = () => {
                         isHeaderVisible={true}
                         messageWhenNoData={t('no_menu_items_order')}
                       />
-                      <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 flex items-center justify-between">
+                      <div className="mt-4 flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 p-3">
                         <p className="text-sm font-semibold text-zinc-700">
                           {t('menu_items_subtotal')}
                         </p>
@@ -598,47 +600,80 @@ export const OrdersPage = () => {
               <div className="flex items-center gap-2">
                 <span className="h-4 w-0.5 rounded-full bg-orange-500" />
                 <h3 className="text-base font-bold text-zinc-900">
-                  {selectedOrder
-                    ? t('sub_products_in_order')
-                    : t('sub_products_required')}
+                  Additional Menu Items
                 </h3>
               </div>
               <div className="w-full overflow-x-auto">
-                {subProductsSummary.length > 0 ? (
+                {selectedOrder ? (
+                  selectedOrder.additionalMenuItems &&
+                  selectedOrder.additionalMenuItems.length > 0 ? (
+                    <GenericTable
+                      data={selectedOrder.additionalMenuItems}
+                      dataCell={[
+                        {
+                          headingTitle: t('primary_name'),
+                          accessVar: 'productPrimaryName',
+                        },
+                        {
+                          headingTitle: t('secondary_name'),
+                          accessVar: 'productSecondaryName',
+                        },
+                        {
+                          headingTitle: t('quantity'),
+                          accessVar: 'quantity',
+                          render: (value) => (
+                            <span className="font-semibold text-zinc-900">
+                              {value}
+                            </span>
+                          ),
+                        },
+                        {
+                          headingTitle: t('total_price'),
+                          accessVar: 'totalPrice',
+                          render: (value) => (
+                            <span className="font-semibold text-zinc-900">
+                              ₹{value?.toLocaleString?.() ?? 0}
+                            </span>
+                          ),
+                        },
+                      ]}
+                      isHeaderVisible={true}
+                      messageWhenNoData={t('no_items_planned')}
+                    />
+                  ) : (
+                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                      <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
+                      {t('no_items_planned')}
+                    </p>
+                  )
+                ) : additionalMenuItemsSummary.length > 0 ? (
                   <GenericTable
-                    data={subProductsSummary}
+                    data={additionalMenuItemsSummary.map((item) => ({
+                      productPrimaryName: item.label,
+                      quantity: item.quantity,
+                    }))}
                     dataCell={[
                       {
-                        headingTitle: t('sub_product_name'),
-                        accessVar: 'subProductName',
+                        headingTitle: t('item_name'),
+                        accessVar: 'productPrimaryName',
                       },
                       {
-                        headingTitle: t('required_quantity'),
-                        accessVar: 'requiredQuantity',
+                        headingTitle: t('quantity'),
+                        accessVar: 'quantity',
                         render: (value) => (
                           <span className="font-semibold text-zinc-900">
                             {value}
                           </span>
                         ),
                       },
-                      {
-                        headingTitle: t('unit'),
-                        accessVar: 'unit',
-                      },
                     ]}
                     isHeaderVisible={true}
-                    messageWhenNoData={
-                      selectedOrder
-                        ? t('no_sub_products_order')
-                        : t('no_sub_products_planned')
-                    }
+                    messageWhenNoData={t('no_items_planned')}
                   />
                 ) : (
                   <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
                     <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
-                    {selectedOrder
-                      ? t('no_sub_products_order')
-                      : t('no_sub_products_planned')}
+                    {t('no_items_planned')}
                   </p>
                 )}
               </div>

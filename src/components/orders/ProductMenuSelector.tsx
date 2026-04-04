@@ -226,14 +226,18 @@ const ProductMenuSelector = ({
     updateItems(nextItems)
   }
 
-  const handleQuantityInputBlur = (productId: number, currentQuantity: number) => {
+  const handleQuantityInputBlur = (
+    productId: number,
+    currentQuantity: number
+  ) => {
     const draftValue = quantityDrafts[productId]
 
     if (draftValue == null) return
 
     const parsedQuantity = Number.parseInt(draftValue, 10)
     const isValidQuantity =
-      Number.isFinite(parsedQuantity) && parsedQuantity >= 1 &&
+      Number.isFinite(parsedQuantity) &&
+      parsedQuantity >= 1 &&
       /^\d+$/.test(draftValue)
 
     if (!isValidQuantity) {
@@ -280,6 +284,8 @@ const ProductMenuSelector = ({
         : (item.unitPrice ?? 0) * (item.quantity || 0)
     return sum + lineValue
   }, 0)
+
+  const pricePerPlate = totalProductCount > 0 ? totalProductCost : 0
 
   const summaryCards = safeItems
     .filter((line) => line.product)
@@ -463,7 +469,8 @@ const ProductMenuSelector = ({
                               {product.primaryName}
                             </p>
                             <p className="text-sm text-zinc-500">
-                              {product.secondaryName || t('orders_signature_dish')}
+                              {product.secondaryName ||
+                                t('orders_signature_dish')}
                             </p>
                           </div>
                           <span className="text-sm font-semibold text-zinc-900">
@@ -546,7 +553,8 @@ const ProductMenuSelector = ({
               {t('summary')}
             </p>
             <p className="text-base font-semibold text-zinc-900">
-              {totalProductCount} {t('items')} · {formatCurrency(totalProductCost)}
+              {totalProductCount} {t('items')} ·{' '}
+              {formatCurrency(totalProductCost)}
             </p>
           </div>
           <ButtonSm
@@ -571,6 +579,8 @@ const ProductMenuSelector = ({
           </h2>
           <p className="text-sm text-zinc-500">
             {t('orders_added_dishes')} · {totalProductCount} {t('items')}
+            {totalProductCount > 0 &&
+              ` · ${formatCurrency(pricePerPlate)} / plate`}
           </p>
         </header>
 

@@ -49,6 +49,10 @@ export interface RequiredSubProduct {
 export interface OrderAdditionalMenuItem {
   productId: number
   quantity: number
+  productPrimaryName?: string
+  productSecondaryName?: string
+  unitPrice?: number
+  totalPrice?: number
 }
 
 // Full order shape returned by GET endpoints (list/detail)
@@ -66,6 +70,8 @@ export interface Order {
   offerPercentage?: number
   totalAmount?: number
   advanceAmount: number
+  priceReducedPerPlate?: number
+  discountPercentage?: number
   balanceAmount: number
   paymentType: string
   status?: string
@@ -111,6 +117,9 @@ export interface OrderPayload {
   eventTime: string
   totalPlates: number
   offerPercentage?: number
+  priceReducedPerPlate?: number
+  discountAmount?: number
+  discountPercentage?: number
   totalAmount?: number
   status?: string
   returnableItemsChecked?: boolean

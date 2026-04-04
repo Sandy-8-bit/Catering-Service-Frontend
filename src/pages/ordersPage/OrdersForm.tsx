@@ -76,25 +76,62 @@ export const OrdersForm = () => {
   }, [existingOrder])
 
   useEffect(() => {
+    // 1. Menu Items Subtotal = (Price Per Plate - Price Reduced Per Plate) × Total Plates
     const menuItemsSubtotal = (() => {
-      const unitPriceSum =
+      const pricePerPlate =
         editData.items?.reduce((sum, item) => {
-          const unitPrice = item.unitPrice || (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+          const unitPrice =
+            item.unitPrice ||
+            (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
           return sum + unitPrice
         }, 0) || 0
-      return Math.round((editData.totalPlates || 1) * unitPriceSum)
+      const adjustedPrice = pricePerPlate - (editData.priceReducedPerPlate || 0)
+      return Math.round((editData.totalPlates || 1) * adjustedPrice)
     })()
 
-    const grossTotal =
-      menuItemsSubtotal +
-      (editData.additionalItems?.reduce(
+    // 2. Additional Menu Items Subtotal
+    const additionalMenuItemsSubtotal = (
+      editData.additionalMenuItems ?? []
+    ).reduce((sum, item) => {
+      const product = products.find((p) => p.id === item.productId)
+      return sum + (product?.price ?? 0) * item.quantity
+    }, 0)
+
+    // 3. Additional Items Subtotal
+    const additionalItemsSubtotal =
+      editData.additionalItems?.reduce(
         (sum, item) => sum + (item.lineTotal || 0),
         0
-      ) || 0) +
-      (editData.deliveredByUs ? editData.deliveryCharge || 0 : 0)
-    const offer = editData.offerPercentage || 0
-    const netTotal = Math.round(grossTotal * (1 - offer / 100))
+      ) || 0
+
+    // 4. Subtotal Before Delivery
+    const subtotalBeforeDelivery =
+      menuItemsSubtotal + additionalMenuItemsSubtotal + additionalItemsSubtotal
+
+    // 5. Delivery Charge
+    const deliveryCharge = editData.deliveredByUs
+      ? editData.deliveryCharge || 0
+      : 0
+
+    // 6. Gross Total
+    const grossTotal = subtotalBeforeDelivery + deliveryCharge
+
+    // 7. Discount Amount
+    let discountAmount = 0
+    if (editData.discountAmount && editData.discountAmount > 0) {
+      discountAmount = editData.discountAmount
+    } else if (editData.discountPercentage && editData.discountPercentage > 0) {
+      discountAmount = Math.round(
+        grossTotal * (editData.discountPercentage / 100)
+      )
+    }
+
+    // 8. Total Amount
+    const netTotal = Math.round(grossTotal - discountAmount)
+
+    // 9. Balance Amount
     const balance = netTotal - (editData.advanceAmount || 0)
+
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditData((prev) => ({
       ...prev,
@@ -103,13 +140,69 @@ export const OrdersForm = () => {
     }))
   }, [
     editData.items,
+    editData.additionalMenuItems,
     editData.additionalItems,
     editData.deliveredByUs,
     editData.deliveryCharge,
-    editData.offerPercentage,
+    editData.discountAmount,
+    editData.discountPercentage,
     editData.advanceAmount,
     editData.totalPlates,
+    editData.priceReducedPerPlate,
+    products,
   ])
+
+  // Helper to calculate subtotal before delivery
+  const getSubtotalBeforeDelivery = () => {
+    const pricePerPlate =
+      editData.items?.reduce((sum, item) => {
+        const unitPrice =
+          item.unitPrice ||
+          (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+        return sum + unitPrice
+      }, 0) || 0
+    const adjustedPrice = pricePerPlate - (editData.priceReducedPerPlate || 0)
+    const menuItemsSubtotal = Math.round(
+      (editData.totalPlates || 1) * adjustedPrice
+    )
+    const additionalMenuItemsSubtotal = (
+      editData.additionalMenuItems ?? []
+    ).reduce((sum, item) => {
+      const product = products.find((p) => p.id === item.productId)
+      return sum + (product?.price ?? 0) * item.quantity
+    }, 0)
+    const additionalItemsSubtotal =
+      editData.additionalItems?.reduce(
+        (sum, item) => sum + (item.lineTotal || 0),
+        0
+      ) || 0
+    return (
+      menuItemsSubtotal + additionalMenuItemsSubtotal + additionalItemsSubtotal
+    )
+  }
+
+  const handleDiscountPercentageChange = (value: string) => {
+    const percentage = Number(value)
+    const subtotal = getSubtotalBeforeDelivery()
+    const calculatedAmount = Math.round(subtotal * (percentage / 100))
+    setEditData((prev) => ({
+      ...prev,
+      discountPercentage: percentage,
+      discountAmount: calculatedAmount,
+    }))
+  }
+
+  const handleDiscountAmountChange = (value: string) => {
+    const amount = Number(value)
+    const subtotal = getSubtotalBeforeDelivery()
+    const calculatedPercentage =
+      subtotal > 0 ? Math.round((amount / subtotal) * 100 * 100) / 100 : 0
+    setEditData((prev) => ({
+      ...prev,
+      discountAmount: amount,
+      discountPercentage: calculatedPercentage,
+    }))
+  }
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -311,6 +404,19 @@ export const OrdersForm = () => {
                 }))
               }
             />
+
+            <Input
+              title="Price Reduced Per Plate"
+              prefixText="₹"
+              placeholder="0"
+              inputValue={editData.priceReducedPerPlate?.toString() || ''}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  priceReducedPerPlate: Number(value),
+                }))
+              }
+            />
           </div>
 
           {/* Menu items */}
@@ -362,12 +468,20 @@ export const OrdersForm = () => {
               <span className="font-regular text-zinc-900">
                 ₹
                 {(() => {
-                  const unitPriceSum =
+                  const pricePerPlate =
                     editData.items?.reduce((sum, item) => {
-                      const unitPrice = item.unitPrice || (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+                      const unitPrice =
+                        item.unitPrice ||
+                        (item.quantity > 0
+                          ? item.totalPrice / item.quantity
+                          : 0)
                       return sum + unitPrice
                     }, 0) || 0
-                  return Math.round((editData.totalPlates || 1) * unitPriceSum).toLocaleString()
+                  const adjustedPrice =
+                    pricePerPlate - (editData.priceReducedPerPlate || 0)
+                  return Math.round(
+                    (editData.totalPlates || 1) * adjustedPrice
+                  ).toLocaleString()
                 })()}
               </span>
             </div>
@@ -394,6 +508,46 @@ export const OrdersForm = () => {
                   .toLocaleString()}
               </span>
             </div>
+            <div className="mt-2 flex justify-between border-t border-zinc-200 pt-2 text-sm text-zinc-600">
+              <span className="font-semibold">Subtotal Before Delivery:</span>
+              <span className="font-semibold text-zinc-900">
+                ₹
+                {(() => {
+                  const pricePerPlate =
+                    editData.items?.reduce((sum, item) => {
+                      const unitPrice =
+                        item.unitPrice ||
+                        (item.quantity > 0
+                          ? item.totalPrice / item.quantity
+                          : 0)
+                      return sum + unitPrice
+                    }, 0) || 0
+                  const adjustedPrice =
+                    pricePerPlate - (editData.priceReducedPerPlate || 0)
+                  const menuItemsSubtotal = Math.round(
+                    (editData.totalPlates || 1) * adjustedPrice
+                  )
+                  const additionalMenuItemsSubtotal = (
+                    editData.additionalMenuItems ?? []
+                  ).reduce((sum, item) => {
+                    const product = products.find(
+                      (p) => p.id === item.productId
+                    )
+                    return sum + (product?.price ?? 0) * item.quantity
+                  }, 0)
+                  const additionalItemsSubtotal =
+                    editData.additionalItems?.reduce(
+                      (sum, item) => sum + (item.lineTotal || 0),
+                      0
+                    ) || 0
+                  return (
+                    menuItemsSubtotal +
+                    additionalMenuItemsSubtotal +
+                    additionalItemsSubtotal
+                  ).toLocaleString()
+                })()}
+              </span>
+            </div>
             {editData.deliveredByUs && (
               <div className="flex justify-between text-sm text-zinc-600">
                 <span>{t('delivery_charges')}:</span>
@@ -402,39 +556,57 @@ export const OrdersForm = () => {
                 </span>
               </div>
             )}
-            {(editData.offerPercentage ?? 0) > 0 &&
+            {((editData.discountAmount ?? 0) > 0 ||
+              (editData.discountPercentage ?? 0) > 0) &&
               (() => {
-                const menuItemsSubtotal = (() => {
-                  const unitPriceSum =
-                    editData.items?.reduce((sum, item) => {
-                      const unitPrice = item.unitPrice || (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
-                      return sum + unitPrice
-                    }, 0) || 0
-                  return Math.round((editData.totalPlates || 1) * unitPriceSum)
-                })()
+                // Calculate menu items subtotal
+                const pricePerPlate =
+                  editData.items?.reduce((sum, item) => {
+                    const unitPrice =
+                      item.unitPrice ||
+                      (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+                    return sum + unitPrice
+                  }, 0) || 0
+                const adjustedPrice =
+                  pricePerPlate - (editData.priceReducedPerPlate || 0)
+                const menuItemsSubtotal = Math.round(
+                  (editData.totalPlates || 1) * adjustedPrice
+                )
 
+                // Calculate additional menu items subtotal
+                const additionalMenuItemsSubtotal = (
+                  editData.additionalMenuItems ?? []
+                ).reduce((sum, item) => {
+                  const product = products.find((p) => p.id === item.productId)
+                  return sum + (product?.price ?? 0) * item.quantity
+                }, 0)
+
+                // Calculate gross total
                 const grossTotal =
                   menuItemsSubtotal +
+                  additionalMenuItemsSubtotal +
                   (editData.additionalItems?.reduce(
                     (sum, item) => sum + (item.lineTotal || 0),
                     0
                   ) || 0) +
                   (editData.deliveredByUs ? editData.deliveryCharge || 0 : 0)
-                const discountAmount = Math.round(
-                  grossTotal * ((editData.offerPercentage ?? 0) / 100)
-                )
-                return (
+
+                // Use discountAmount if available
+                const discountAmount = editData.discountAmount || 0
+                const discountLabel = editData.discountPercentage
+                  ? `Discount (${editData.discountPercentage}%)`
+                  : 'Discount'
+
+                return discountAmount > 0 ? (
                   <>
                     <div className="flex justify-between text-sm text-green-600">
-                      <span>
-                        {t('offer_discount')} ({editData.offerPercentage}%):
-                      </span>
+                      <span>{discountLabel}:</span>
                       <span className="font-regular">
                         - ₹{discountAmount.toLocaleString()}
                       </span>
                     </div>
                   </>
-                )
+                ) : null
               })()}
             <div className="flex justify-between border-t border-zinc-200 pt-3">
               <span className="font-semibold text-zinc-900">{t('total')}:</span>
@@ -444,18 +616,20 @@ export const OrdersForm = () => {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
             <Input
-              title={t('offer_percentage')}
-              placeholder={t('offer_percentage_placeholder')}
+              title="Discount Percentage"
+              placeholder="0"
               suffixText="%"
-              inputValue={editData.offerPercentage?.toString() || ''}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  offerPercentage: Number(value),
-                }))
-              }
+              inputValue={editData.discountPercentage?.toString() || ''}
+              onChange={handleDiscountPercentageChange}
+            />
+            <Input
+              title="Discount Amount"
+              placeholder="0"
+              prefixText="₹"
+              inputValue={editData.discountAmount?.toString() || ''}
+              onChange={handleDiscountAmountChange}
             />
             <Input
               title={t('advance_amount')}
