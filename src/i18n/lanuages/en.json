@@ -360,7 +360,6 @@
   "driver_pending_orders_dummy_note": "This is a dummy pending-orders page for now. API integration will be added next.",
   "driver_dummy": "Dummy",
   "driver_pending_amount": "Pending Amount",
-
   "date_time": "Date & Time",
   "delivery_charges": "Delivery Charges",
   "items_subtotal": "Items Subtotal",
@@ -372,7 +371,6 @@
   "back_to_day_view": "Back to day view",
   "overview_for_day": "Overview for the Day",
   "additional_item_with_id": "Additional {{id}}",
-
   "decrease_quantity": "Decrease quantity",
   "increase_quantity": "Increase quantity",
   "orders_product": "Product",
@@ -385,7 +383,7 @@
   "orders_nothing_matches_search": "Nothing matches your search right now.",
   "orders_signature_dish": "Signature dish",
   "orders_review_selection": "Review selection",
-  "orders_menu_items": "Menu Items",
+  "orders_menu_items": "Elai Items (Main Plate)",
   "orders_added_dishes": "Added dishes",
   "orders_add_more": "Add more +",
   "orders_no_dishes_added_yet": "No dishes have been added yet. Tap \"Add more +\" to start curating the menu.",

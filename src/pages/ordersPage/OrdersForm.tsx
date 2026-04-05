@@ -405,18 +405,7 @@ export const OrdersForm = () => {
               }
             />
 
-            <Input
-              title="Price Reduced Per Plate"
-              prefixText="₹"
-              placeholder="0"
-              inputValue={editData.priceReducedPerPlate?.toString() || ''}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  priceReducedPerPlate: Number(value),
-                }))
-              }
-            />
+           
           </div>
 
           {/* Menu items */}
@@ -617,6 +606,19 @@ export const OrdersForm = () => {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+             <Input
+              title="Price Reduced Per Plate"
+              prefixText="₹"
+              placeholder="0"
+              inputValue={editData.priceReducedPerPlate?.toString() || ''}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  priceReducedPerPlate: Number(value),
+                }))
+              }
+            />
+            
             <Input
               title="Discount Percentage"
               placeholder="0"

@@ -138,7 +138,7 @@ export const useCreateAdditionalItem = () => {
       }
 
       const res = await axiosInstance.post(
-        `${apiRoutes.additionalItems}/bulk/create`,
+        `${apiRoutes.additionalItems}/bulk`,
         payloads,
         {
           headers: {
@@ -188,7 +188,7 @@ export const useEditAdditionalItem = () => {
       })
 
       const res = await axiosInstance.put(
-        `${apiRoutes.additionalItems}/bulk/update`,
+        `${apiRoutes.additionalItems}/bulk`,
         updatePayload,
         {
           headers: {
