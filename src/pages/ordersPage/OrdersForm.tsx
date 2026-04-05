@@ -411,8 +411,6 @@ export const OrdersForm = () => {
                 }))
               }
             />
-
-           
           </div>
 
           {/* Menu items */}
@@ -603,6 +601,7 @@ export const OrdersForm = () => {
                 }, 0)
 
                 // Calculate gross total
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const grossTotal =
                   menuItemsSubtotal +
                   additionalMenuItemsSubtotal +
@@ -650,7 +649,7 @@ export const OrdersForm = () => {
                 }))
               }
             />
-            
+
             <Input
               title={t('discount_percentage')}
               placeholder="0"

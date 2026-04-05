@@ -15,7 +15,15 @@ import {
 } from '@/queries/rawMaterialsQueries'
 
 import { DeleteRawMaterialsDialog } from './DeleteRawMaterialsDialog'
-import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
+import {
+  Edit3,
+  Filter,
+  Plus,
+  SaveIcon,
+  UploadCloud,
+  X,
+  Trash2,
+} from 'lucide-react'
 import DropdownSelect from '@/components/common/DropDown'
 import type { RawMaterial, RawMaterialPayload } from '@/types/rawMaterial'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
@@ -27,7 +35,7 @@ const createEmptyRawMaterial = (id: number): RawMaterial => ({
   secondaryName: '',
   purchaseUnit: '',
   purchaseQuantity: '',
-  purchasePrice: 0,
+  purchasePricePerUnit: 0,
 })
 
 export const RawMaterialsPage = () => {
@@ -52,6 +60,7 @@ export const RawMaterialsPage = () => {
     null
   )
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [rowToDelete, setRowToDelete] = useState<RawMaterial | null>(null)
 
   const isEditMode = formState === 'edit'
   const isAddMode = formState === 'add'
@@ -77,7 +86,7 @@ export const RawMaterialsPage = () => {
         (original.secondaryName ?? '') !== (row.secondaryName ?? '') ||
         original.purchaseUnit !== row.purchaseUnit ||
         original.purchaseQuantity !== row.purchaseQuantity ||
-        original.purchasePricePerUnit !== row.purchasePrice
+        original.purchasePricePerUnit !== row.purchasePricePerUnit
       )
     })
   }, [editData, originalMap])
@@ -96,7 +105,7 @@ export const RawMaterialsPage = () => {
       primaryName: row.primaryName?.trim() ?? '',
       purchaseUnit: row.purchaseUnit?.trim() ?? '',
       purchaseQuantity: row.purchaseQuantity?.trim() ?? '',
-      purchasePrice: Number(row.purchasePricePerUnit ?? 0),
+      purchasePricePerUnit: Number(row.purchasePricePerUnit ?? 0),
     }
 
     return (
@@ -134,16 +143,9 @@ export const RawMaterialsPage = () => {
 
         const wasEmptyDraft = isDraftRow(item) && isRowEmpty(item)
 
-        const normalizedValue =
-          field === 'purchasePrice'
-            ? typeof value === 'number'
-              ? value
-              : Number(value) || 0
-            : value
-
         const nextItem = {
           ...item,
-          [field]: normalizedValue,
+          [field]: value,
         }
 
         if (wasEmptyDraft && !isRowEmpty(nextItem)) {
@@ -172,7 +174,7 @@ export const RawMaterialsPage = () => {
     secondaryName: row.secondaryName?.trim() ?? '',
     purchaseUnit: row.purchaseUnit,
     purchaseQuantity: row.purchaseQuantity,
-    purchasePrice: Number(row.purchasePrice) || 0,
+    purchasePricePerUnit: Number(row.purchasePricePerUnit) || 0,
   })
 
   const handleSaveChanges = async () => {
@@ -353,13 +355,6 @@ export const RawMaterialsPage = () => {
       accessVar: 'purchaseQuantity',
       className: 'w-42',
       render: (value, row) => {
-        const normalizedValue = String(value ?? '').trim()
-        const selectedOption = units.find(
-          (unit) => unit.label.toLowerCase() === normalizedValue.toLowerCase()
-        ) ?? {
-          id: 0,
-          label: normalizedValue,
-        }
         return (
           // <TableDropDown
           //   isEditMode={canEditRow(row.id)}
@@ -384,7 +379,7 @@ export const RawMaterialsPage = () => {
     },
     {
       headingTitle: t('purchase_price'),
-      accessVar: 'purchasePrice',
+      accessVar: 'purchasePricePerUnit',
       className: 'w-48',
       render: (value, row) => (
         <TableInput
@@ -395,12 +390,33 @@ export const RawMaterialsPage = () => {
           onChange={(val) =>
             updateRowField(
               row.id,
-              'purchasePrice',
+              'purchasePricePerUnit',
               typeof val === 'number' ? val : Number(val) || 0
             )
           }
         />
       ),
+    },
+    {
+      headingTitle: 'Actions',
+      accessVar: 'action',
+      className: 'w-20',
+      render: (_, row) => {
+        const isDraft = isDraftRow(row)
+        return !isDraft ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              setRowToDelete(row)
+              setIsDeleteDialogOpen(true)
+            }}
+            className="flex items-center justify-center rounded-md p-2 transition-all duration-200 ease-in-out hover:bg-red-50 active:scale-95"
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </button>
+        ) : null
+      },
     },
   ]
   const handleDeleteSelected = () => {
@@ -448,6 +464,19 @@ export const RawMaterialsPage = () => {
             {t('export_data')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
+          {!isAddMode && selectedRows.length > 0 && (
+            <>
+              <ButtonSm
+                className="font-medium"
+                state="outline"
+                onClick={handleDeleteSelected}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+                {t('delete')}
+              </ButtonSm>
+              <div className="divider min-h-full border border-[#F1F1F1]" />
+            </>
+          )}
           {isAddMode ? (
             <>
               <ButtonSm
@@ -536,22 +565,26 @@ export const RawMaterialsPage = () => {
       />
 
       <AnimatePresence>
-        {isDeleteDialogOpen && selectedRows.length > 0 && (
+        {isDeleteDialogOpen && (selectedRows.length > 0 || rowToDelete) && (
           <DialogBox setToggleDialogueBox={setIsDeleteDialogOpen}>
             <DeleteRawMaterialsDialog
-              materials={selectedRows}
+              materials={rowToDelete ? [rowToDelete] : selectedRows}
               onCancel={() => {
                 setIsDeleteDialogOpen(false)
+                setRowToDelete(null)
               }}
               onDeleted={() => {
                 const idsToDelete = new Set(
-                  selectedRows.map((material) => material.id)
+                  (rowToDelete ? [rowToDelete] : selectedRows).map(
+                    (material) => material.id
+                  )
                 )
                 setEditData((prev) =>
                   prev.filter((item) => !idsToDelete.has(item.id))
                 )
                 setSelectedRows([])
                 setIsDeleteDialogOpen(false)
+                setRowToDelete(null)
               }}
             />
           </DialogBox>

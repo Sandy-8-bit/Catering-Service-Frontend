@@ -8,7 +8,7 @@ export interface RawMaterial {
   secondaryName: string
   purchaseUnit: string
   purchaseQuantity: string
-  purchasePrice: number
+  purchasePricePerUnit: number
 }
 
 export type RawMaterialPayload = Omit<RawMaterial, 'id'>
