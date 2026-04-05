@@ -252,6 +252,8 @@ const DriverOrderPage = () => {
     navigate(fallbackPath, { replace: true })
   }
 
+  const balanceAmount = order ? order.orderTotalAmount - (order.amountReceived || 0) : 0
+
   // ── Guards ──────────────────────────────────────────────────────────────────
 
   if (isLoading)
@@ -404,37 +406,7 @@ const DriverOrderPage = () => {
           </div>
         </div>
 
-        {/* ── Payment Summary ── */}
-        <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
-          <p className="mb-3 text-xs font-semibold tracking-wide text-zinc-400 uppercase">
-            {t('payment')}
-          </p>
-          <div className="flex flex-col divide-y divide-zinc-100">
-            <div className="flex items-center justify-between py-2.5">
-              <span className="text-sm text-zinc-600">{t('driver_total_amount')}</span>
-              <span className="text-sm font-bold text-zinc-900">
-                ₹{order.orderTotalAmount.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between py-2.5">
-              <span className="text-sm text-zinc-600">{t('driver_advance_paid')}</span>
-              <span className="text-sm font-bold text-green-600">
-                ₹{order.orderAdvanceAmount.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex items-center justify-between py-2.5">
-              <span className="text-sm font-semibold text-zinc-900">
-                {t('balance')}
-              </span>
-              <span
-                className={`text-sm font-bold ${order.orderBalanceAmount < 0 ? 'text-green-600' : 'text-orange-600'}`}
-              >
-                ₹{Math.abs(order.orderBalanceAmount).toFixed(2)}
-                {order.orderBalanceAmount < 0 && ` (${t('driver_overpaid')})`}
-              </span>
-            </div>
-          </div>
-        </div>
+
 
         {/* ── Vessels ── */}
         <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
@@ -527,12 +499,9 @@ const DriverOrderPage = () => {
                 className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
               >
                 <option value="">{t('driver_select_vessel_type')}</option>
-                <option value="Vessel A">Vessel A</option>
-                <option value="Vessel B">Vessel B</option>
-                <option value="Vessel C">Vessel C</option>
-                <option value="Vessel D">Vessel D</option>
-                <option value="Vessel E">Vessel E</option>
-                <option value="Vessel F">Vessel F</option>
+                <option value="Drum">Drum</option>
+                <option value="Milk can">Milk can</option>
+                <option value="Drum Cap">Drum Cap</option>
               </select>
               <input
                 type="number"
@@ -661,6 +630,33 @@ const DriverOrderPage = () => {
               )}
             </div>
 
+            {/* Vessel Return Summary */}
+            {order?.vessels && order.vessels.length > 0 && (
+              <div className="flex flex-col gap-2 rounded-lg border border-blue-100 px-3 py-2.5">
+                <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  ✓ {t('driver_vessel_return_summary') || 'Vessel Return Status'}
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  {order.vessels.map((vessel) => {
+                    const returned = vesselReturns.find((v) => v.id === vessel.id)
+                      ?.quantityReturned || 0
+                    const pending = vessel.quantityGiven - returned
+                    return (
+                      <div key={vessel.id} className="flex items-center justify-between">
+                        <span className="text-sm text-black-900">
+                          {vessel.name}
+                        </span>
+                        <span className="text-xs font-medium text-blue-700">
+                          Returned: <span className="font-bold">{vessel.quantityReturned}</span> / {vessel.quantityGiven}
+                         
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Amount Collected */}
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-1.5 text-sm font-semibold text-zinc-800">
@@ -674,7 +670,7 @@ const DriverOrderPage = () => {
                   type="number"
                   min={0}
                   step={0.01}
-                  value={amountCollected || ''}
+                  value={balanceAmount || ''}
                   onChange={(e) => setAmountCollected(Number(e.target.value))}
                   className="w-full rounded-lg border border-zinc-300 py-2.5 pr-4 pl-7 text-sm focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   placeholder="0.00"
@@ -687,6 +683,44 @@ const DriverOrderPage = () => {
                 >
                   ₹{order?.orderBalanceAmount.toFixed(2)}
                 </span>
+              </div>
+            </div>
+
+            {/* Payment Summary */}
+            <div className="flex flex-col gap-2 rounded-lg border border-green-100 px-3 py-2.5">
+              <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                💰 {t('driver_payment_summary') || 'Payment Status'}
+              </p>
+              <div className="flex flex-col gap-1.5">
+
+                   <div className="flex items-center justify-between border-t border-green-200 pt-1.5">
+                  <span className="text-sm text-gray-900 font-medium">
+                    {t('driver_total_order_amount') || 'Total Order Amount'}
+                  </span>
+                  <span className="text-sm font-bold text-green-800">
+                    ₹{order?.orderTotalAmount.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-900">
+                    {t('driver_amount_already_received') || 'Amount Already Received'}
+                  </span>
+                  <span className="text-sm font-bold text-green-700">
+                    ₹{order?.amountReceived?.toFixed(2) || '0.00'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between border-t border-green-200 pt-1.5">
+                  <span className="text-sm text-gray-900 font-medium">
+                    {t('driver_balance_amount') || 'Balance Amount Due'}
+                  </span>
+                  <span
+                    className={`text-sm font-bold ${order?.orderTotalAmount - (order?.amountReceived || 0) > 0 ? 'text-orange-600' : 'text-green-700'}`}
+                  >
+                    ₹{Math.abs(order?.orderTotalAmount - (order?.amountReceived || 0)).toFixed(2)}
+                    {order?.orderTotalAmount - (order?.amountReceived || 0) < 0 && ` (${t('driver_overpaid') || 'Overpaid'})`}
+                  </span>
+                </div>
+             
               </div>
             </div>
 

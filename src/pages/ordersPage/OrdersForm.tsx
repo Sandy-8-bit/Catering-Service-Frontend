@@ -50,6 +50,8 @@ export const OrdersForm = () => {
   const { mutate: createOrder, isPending: isCreatePending } = useCreateOrder()
   const { mutate: updateOrder, isPending: isUpdatePending } = useUpdateOrder()
 
+
+  const isPaymentTypeRequired = (editData.advanceAmount || 0) > 0
   const handleCreateOrder = () => {
     createOrder(mapOrderToPayload(editData), {
       onSuccess: () => {
@@ -207,6 +209,11 @@ export const OrdersForm = () => {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
   }
+
+  const safeNumber = (value: string | number | undefined) => {
+  const num = Number(value)
+  return isNaN(num) ? 0 : num
+}
 
   if (isOrderLoading || isUserOptionLoading || isAdditionalLoading)
     return <SkeletonForm inputCount={12} />
@@ -385,7 +392,7 @@ export const OrdersForm = () => {
                   onChange={(value) =>
                     setEditData((prev) => ({
                       ...prev,
-                      deliveryCharge: Number(value),
+                      deliveryCharge: safeNumber(value),
                     }))
                   }
                 />
@@ -400,7 +407,7 @@ export const OrdersForm = () => {
               onChange={(value) =>
                 setEditData((prev) => ({
                   ...prev,
-                  totalPlates: Number(value),
+                  totalPlates: safeNumber(value),
                 }))
               }
             />
@@ -453,7 +460,29 @@ export const OrdersForm = () => {
           {/* Total Amount Display */}
           <div className="flex flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 p-4 sm:p-5">
             <div className="flex justify-between gap-3 text-sm text-zinc-600">
-              <span>Menu Items Subtotal:</span>
+  <span>{t('one_leaf_price')}:</span>
+  <span className="font-regular text-zinc-900">
+    ₹
+    {(() => {
+      const pricePerPlate =
+        editData.items?.reduce((sum, item) => {
+          const unitPrice =
+            item.unitPrice ||
+            (item.quantity > 0
+              ? item.totalPrice / item.quantity
+              : 0)
+          return sum + unitPrice
+        }, 0) || 0
+
+      const oneLeafPrice =
+        pricePerPlate - (editData.priceReducedPerPlate || 0)
+
+      return Math.round(oneLeafPrice).toLocaleString()
+    })()}
+  </span>
+</div>
+            <div className="flex justify-between gap-3 text-sm text-zinc-600">
+              <span>{t('total_leaf_items_subtotal')}:</span>
               <span className="font-regular text-zinc-900">
                 ₹
                 {(() => {
@@ -473,9 +502,12 @@ export const OrdersForm = () => {
                   ).toLocaleString()
                 })()}
               </span>
+
+              
             </div>
+            
             <div className="flex justify-between text-sm text-zinc-600">
-              <span>Additional Menu Items Subtotal:</span>
+              <span>{t('additional_menu_items_subtotal')}:</span>
               <span className="font-regular text-zinc-900">
                 ₹
                 {(editData.additionalMenuItems ?? [])
@@ -498,7 +530,7 @@ export const OrdersForm = () => {
               </span>
             </div>
             <div className="mt-2 flex justify-between border-t border-zinc-200 pt-2 text-sm text-zinc-600">
-              <span className="font-semibold">Subtotal Before Delivery:</span>
+              <span className="font-semibold">{t('subtotal_before_delivery')}:</span>
               <span className="font-semibold text-zinc-900">
                 ₹
                 {(() => {
@@ -607,27 +639,27 @@ export const OrdersForm = () => {
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
              <Input
-              title="Price Reduced Per Plate"
+              title={t('price_reduced_per_plate')}
               prefixText="₹"
               placeholder="0"
               inputValue={editData.priceReducedPerPlate?.toString() || ''}
               onChange={(value) =>
                 setEditData((prev) => ({
                   ...prev,
-                  priceReducedPerPlate: Number(value),
+                  priceReducedPerPlate: safeNumber(value),
                 }))
               }
             />
             
             <Input
-              title="Discount Percentage"
+              title={t('discount_percentage')}
               placeholder="0"
               suffixText="%"
               inputValue={editData.discountPercentage?.toString() || ''}
               onChange={handleDiscountPercentageChange}
             />
             <Input
-              title="Discount Amount"
+              title={t('discount_amount')}
               placeholder="0"
               prefixText="₹"
               inputValue={editData.discountAmount?.toString() || ''}
@@ -641,7 +673,7 @@ export const OrdersForm = () => {
               onChange={(value) =>
                 setEditData((prev) => ({
                   ...prev,
-                  advanceAmount: Number(value),
+                  advanceAmount: safeNumber(value),
                 }))
               }
             />
@@ -649,6 +681,7 @@ export const OrdersForm = () => {
               title={t('payment_type')}
               autoScroll={false}
               options={paymentTypeOptions}
+              required={isPaymentTypeRequired}
               selected={
                 paymentTypeOptions.find(
                   (option) =>

@@ -349,7 +349,7 @@
   "driver_complete_order": "ஆர்டரை முடிக்கவும்",
   "driver_vessel_returns": "பாத்திர திருப்பிகள்",
   "driver_no_vessels_order": "இந்த ஆர்டரில் பாத்திரங்கள் இல்லை",
-  "driver_amount_collected": "வசூலித்த தொகை",
+  "driver_amount_collected": "வசூலிக்கப்பட வேண்டிய தொகை",
   "driver_balance_to_collect": "வசூலிக்க வேண்டிய நிலுவை",
   "driver_payment_mode": "கட்டண முறை",
   "driver_cash": "பணம்",
@@ -361,7 +361,6 @@
   "driver_pending_orders_dummy_note": "இது தற்போது டம்மி நிலுவை-ஆர்டர்கள் பக்கம். அடுத்ததாக API இணைப்பு சேர்க்கப்படும்.",
   "driver_dummy": "டம்மி",
   "driver_pending_amount": "நிலுவை தொகை",
-
   "date_time": "தேதி மற்றும் நேரம்",
   "delivery_charges": "விநியோக கட்டணம்",
   "items_subtotal": "உருப்படி துணைமொத்தம்",
@@ -373,7 +372,6 @@
   "back_to_day_view": "நாள் பார்வைக்கு திரும்பு",
   "overview_for_day": "இன்றைய ஒட்டுமொத்தம்",
   "additional_item_with_id": "கூடுதல் {{id}}",
-
   "decrease_quantity": "அளவை குறை",
   "increase_quantity": "அளவை அதிகரி",
   "orders_product": "பொருள்",
@@ -412,7 +410,6 @@
   "bill_owner_desc": "உரிமையாளருக்கான ஒருங்கிணைந்த ஒட்டுமொத்தம்",
   "bill_downloaded_success": "{{billType}} பதிவிறக்கப்பட்டது",
   "bill_downloaded_error": "{{billType}} பெற முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
-
   "select_products_with_quantity": "கணக்கீட்டிற்கான பொருட்களைத் தேர்ந்தெடுக்கவும் மற்றும் அவற்றின் அளவுகளை வரையறுக்கவும்",
   "no_products_selected": "இன்னும் பொருட்கள் தேர்ந்தெடுக்கப்படவில்லை. தொடங்க 'பொருளையச் சேர்க்கவும்' என்பதைக் கிளிக் செய்யவும்.",
   "no_products_available": "பொருட்கள் கிடைக்கவில்லை.",
@@ -436,5 +433,18 @@
   "no_raw_materials_calculated": "இன்னும் மூலப்பொருட்கள் கணக்கிடப்படவில்லை.",
   "error_calculating_materials": "மூலப்பொருட்களைக் கணக்கிடுவதில் பிழை. மீண்டும் முயற்சிக்கவும்.",
   "print_bill": "பில் அச்சிடு",
-  "action": "நடவடிக்கை"
+  "action": "நடவடிக்கை",
+  "driver_vessel_return_summary": "பாத்திர திரும்பல் நிலை",
+  "driver_total_order_amount": "ஆர்டரின் மொத்த தொகை",
+  "driver_amount_already_received": "ஏற்கனவே பெறப்பட்ட தொகை",
+  "driver_balance_amount": "நிலுவை தொகை",
+  "total_plates": "மொத்த உணவுப் பட்டாளி",
+  "one_leaf_price": "ஒரு இலையின் விலை",
+  "total_leaf_items_subtotal": "மொத்த இலை பொருட்களின் உபயோகம்",
+  "additional_menu_items_subtotal": "கூடுதல் மெனு பொருட்களின் உபயோகம்",
+  "subtotal_before_delivery": "விநியோகத்திற்கு முன்பு உபயோகம்",
+  "discount_label": "தள்ளுபடி",
+  "price_reduced_per_plate": "பட்டாளிக்கு குறைக்கப்பட்ட விலை",
+  "discount_percentage": "தள்ளுபடி சதவீதம்",
+  "discount_amount": "தள்ளுபடி தொகை"
 }

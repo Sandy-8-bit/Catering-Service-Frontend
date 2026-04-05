@@ -433,5 +433,14 @@
   "no_raw_materials_calculated": "No raw materials calculated yet.",
   "error_calculating_materials": "Error calculating raw materials. Please try again.",
   "print_bill": "Print Bill",
-  "action": "Action"
+  "action": "Action",
+  "total_plates": "Total Plates",
+  "one_leaf_price": "One Leaf Price",
+  "total_leaf_items_subtotal": "Total Leaf Items Subtotal",
+  "additional_menu_items_subtotal": "Additional Menu Items Subtotal",
+  "subtotal_before_delivery": "Subtotal Before Delivery",
+  "discount_label": "Discount",
+  "price_reduced_per_plate": "Price Reduced Per Plate",
+  "discount_percentage": "Discount Percentage",
+  "discount_amount": "Discount Amount"
 }
