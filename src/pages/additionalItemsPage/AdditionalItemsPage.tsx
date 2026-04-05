@@ -19,7 +19,7 @@ import type {
 } from '@/types/additionalItem'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
-import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
+import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X, Trash2 } from 'lucide-react'
 
 import { DeleteAdditionalItemsDialog } from './DeleteAdditionalItemsDialog'
 
@@ -76,6 +76,7 @@ export const AdditionalItemsPage = () => {
     null
   )
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [rowToDelete, setRowToDelete] = useState<AdditionalItem | null>(null)
 
   const isEditMode = formState === 'edit'
   const isAddMode = formState === 'add'
@@ -480,6 +481,26 @@ export const AdditionalItemsPage = () => {
           }
         />
       ),
+    },    {
+      headingTitle: 'Actions',
+      accessVar: 'action',
+      className: 'w-20',
+      render: (_, row) => {
+        const isDraft = isDraftRow(row)
+        return !isDraft ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              setRowToDelete(row)
+              setIsDeleteDialogOpen(true)
+            }}
+            className="flex items-center justify-center rounded-md p-2 transition-all duration-200 ease-in-out hover:bg-red-50 active:scale-95"
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </button>
+        ) : null
+      },
     },
   ]
   const handleDeleteSelected = () => {
@@ -527,6 +548,19 @@ export const AdditionalItemsPage = () => {
             {t('export_data')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
+          {!isAddMode && selectedRows.length > 0 && (
+            <>
+              <ButtonSm
+                className="font-medium"
+                state="outline"
+                onClick={handleDeleteSelected}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+                {t('delete')}
+              </ButtonSm>
+              <div className="divider min-h-full border border-[#F1F1F1]" />
+            </>
+          )}
           {isAddMode ? (
             <>
               <ButtonSm
@@ -614,20 +648,26 @@ export const AdditionalItemsPage = () => {
       />
 
       <AnimatePresence>
-        {isDeleteDialogOpen && selectedRows.length > 0 && (
+        {isDeleteDialogOpen && (selectedRows.length > 0 || rowToDelete) && (
           <DialogBox setToggleDialogueBox={setIsDeleteDialogOpen}>
             <DeleteAdditionalItemsDialog
-              items={selectedRows}
+              items={rowToDelete ? [rowToDelete] : selectedRows}
               onCancel={() => {
                 setIsDeleteDialogOpen(false)
+                setRowToDelete(null)
               }}
               onDeleted={() => {
-                const idsToDelete = new Set(selectedRows.map((item) => item.id))
+                const idsToDelete = new Set(
+                  (rowToDelete ? [rowToDelete] : selectedRows).map(
+                    (item) => item.id
+                  )
+                )
                 setEditData((prev) =>
                   prev.filter((item) => !idsToDelete.has(item.id))
                 )
                 setSelectedRows([])
                 setIsDeleteDialogOpen(false)
+                setRowToDelete(null)
               }}
             />
           </DialogBox>

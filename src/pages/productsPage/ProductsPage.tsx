@@ -18,7 +18,7 @@ import {
 import type { Product, ProductPayload } from '@/types/product'
 
 import { DeleteProductsDialog } from './DeleteProductsDialog'
-import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
+import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X, Trash2 } from 'lucide-react'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 
@@ -56,6 +56,7 @@ export const ProductsPage = () => {
     null
   )
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [rowToDelete, setRowToDelete] = useState<Product | null>(null)
 
   const isEditMode = formState === 'edit'
   const isAddMode = formState === 'add'
@@ -430,6 +431,27 @@ export const ProductsPage = () => {
         />
       ),
     },
+    {
+      headingTitle: 'Actions',
+      accessVar: 'action',
+      className: 'w-20',
+      render: (_, row) => {
+        const isDraft = isDraftRow(row)
+        return !isDraft ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              setRowToDelete(row)
+              setIsDeleteDialogOpen(true)
+            }}
+            className="flex items-center justify-center rounded-md p-2 transition-all duration-200 ease-in-out hover:bg-red-50 active:scale-95"
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </button>
+        ) : null
+      },
+    },
   ]
 
   const handleDeleteSelected = () => {
@@ -564,20 +586,26 @@ export const ProductsPage = () => {
       />
 
       <AnimatePresence>
-        {isDeleteDialogOpen && selectedRows.length > 0 && (
+        {isDeleteDialogOpen && (selectedRows.length > 0 || rowToDelete) && (
           <DialogBox setToggleDialogueBox={setIsDeleteDialogOpen}>
             <DeleteProductsDialog
-              products={selectedRows}
+              products={rowToDelete ? [rowToDelete] : selectedRows}
               onCancel={() => {
                 setIsDeleteDialogOpen(false)
+                setRowToDelete(null)
               }}
               onDeleted={() => {
-                const idsToDelete = new Set(selectedRows.map((item) => item.id))
+                const idsToDelete = new Set(
+                  (rowToDelete ? [rowToDelete] : selectedRows).map(
+                    (product) => product.id
+                  )
+                )
                 setEditData((prev) =>
                   prev.filter((item) => !idsToDelete.has(item.id))
                 )
                 setSelectedRows([])
                 setIsDeleteDialogOpen(false)
+                setRowToDelete(null)
               }}
             />
           </DialogBox>
