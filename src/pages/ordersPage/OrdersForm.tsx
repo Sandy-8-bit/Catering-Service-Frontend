@@ -404,8 +404,6 @@ export const OrdersForm = () => {
                 }))
               }
             />
-
-           
           </div>
 
           {/* Menu items */}
@@ -571,6 +569,7 @@ export const OrdersForm = () => {
                 }, 0)
 
                 // Calculate gross total
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const grossTotal =
                   menuItemsSubtotal +
                   additionalMenuItemsSubtotal +
@@ -606,7 +605,7 @@ export const OrdersForm = () => {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-             <Input
+            <Input
               title="Price Reduced Per Plate"
               prefixText="₹"
               placeholder="0"
@@ -618,7 +617,7 @@ export const OrdersForm = () => {
                 }))
               }
             />
-            
+
             <Input
               title="Discount Percentage"
               placeholder="0"

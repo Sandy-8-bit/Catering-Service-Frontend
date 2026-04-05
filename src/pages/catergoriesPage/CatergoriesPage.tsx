@@ -14,14 +14,22 @@ import {
 } from '@/queries/categoryQueries'
 import type { Category, CategoryPayload } from '@/types/category'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
-import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
+import {
+  Edit3,
+  Filter,
+  Plus,
+  SaveIcon,
+  UploadCloud,
+  X,
+  Trash2,
+} from 'lucide-react'
 
 import { DeleteCategoriesDialog } from './DeleteCatergoriesDialog'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 
 export const CategoriesPage = () => {
   const { t } = useTranslation()
-  
+
   const createEmptyCategory = (id: number): Category => ({
     id,
     primaryName: '',
@@ -43,6 +51,7 @@ export const CategoriesPage = () => {
     null
   )
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [rowToDelete, setRowToDelete] = useState<Category | null>(null)
 
   const isEditMode = formState === 'edit'
   const isAddMode = formState === 'add'
@@ -288,6 +297,27 @@ export const CategoriesPage = () => {
         />
       ),
     },
+    {
+      headingTitle: 'Actions',
+      accessVar: 'action',
+      className: 'w-20',
+      render: (_, row) => {
+        const isDraft = isDraftRow(row)
+        return !isDraft ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              setRowToDelete(row)
+              setIsDeleteDialogOpen(true)
+            }}
+            className="flex items-center justify-center rounded-md p-2 transition-all duration-200 ease-in-out hover:bg-red-50 active:scale-95"
+          >
+            <Trash2 className="h-4 w-4 text-red-500" />
+          </button>
+        ) : null
+      },
+    },
   ]
 
   const handleDeleteSelected = () => {
@@ -335,6 +365,19 @@ export const CategoriesPage = () => {
             {t('upload')}
           </ButtonSm>
           <div className="divider min-h-full border border-[#F1F1F1]" />
+          {!isAddMode && selectedRows.length > 0 && (
+            <>
+              <ButtonSm
+                className="font-medium"
+                state="outline"
+                onClick={handleDeleteSelected}
+              >
+                <Trash2 className="h-4 w-4 text-red-500" />
+                {t('delete')}
+              </ButtonSm>
+              <div className="divider min-h-full border border-[#F1F1F1]" />
+            </>
+          )}
           {isAddMode ? (
             <>
               <ButtonSm
@@ -422,22 +465,26 @@ export const CategoriesPage = () => {
       />
 
       <AnimatePresence>
-        {isDeleteDialogOpen && selectedRows.length > 0 && (
+        {isDeleteDialogOpen && (selectedRows.length > 0 || rowToDelete) && (
           <DialogBox setToggleDialogueBox={setIsDeleteDialogOpen}>
             <DeleteCategoriesDialog
-              categories={selectedRows}
+              categories={rowToDelete ? [rowToDelete] : selectedRows}
               onCancel={() => {
                 setIsDeleteDialogOpen(false)
+                setRowToDelete(null)
               }}
               onDeleted={() => {
                 const idsToDelete = new Set(
-                  selectedRows.map((category) => category.id)
+                  (rowToDelete ? [rowToDelete] : selectedRows).map(
+                    (category) => category.id
+                  )
                 )
                 setEditData((prev) =>
                   prev.filter((item) => !idsToDelete.has(item.id))
                 )
                 setSelectedRows([])
                 setIsDeleteDialogOpen(false)
+                setRowToDelete(null)
               }}
             />
           </DialogBox>
