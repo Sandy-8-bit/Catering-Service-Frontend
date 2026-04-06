@@ -14,7 +14,7 @@ export const apiRoutes = {
   recipes: '/api/admin/recipes',
 
   // audio orders
-  audioOrderUpload: '/api/orders/audio/upload',
+  audioOrderUpload: '/api/orders/audio',
 
   //driver routes
   driverdashboard: '/api/driver/dashboard',

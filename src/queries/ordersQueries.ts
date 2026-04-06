@@ -192,9 +192,12 @@ export const useDeleteOrder = () => {
     try {
       const token = authHandler()
 
-      const res = await axiosInstance.delete(`${apiRoutes.orders}/${orderId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await axiosInstance.delete(
+        `${apiRoutes.orders}/${orderId}/delete`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      )
 
       if (res.status !== 204) {
         throw new Error(res.data?.message || 'Failed to delete order')
@@ -217,8 +220,11 @@ export const useDeleteOrder = () => {
 }
 
 export const useUploadVoiceOrder = () => {
+  const queryClient = useQueryClient()
+
   const uploadVoiceOrder = async (payload: {
     file: Blob
+    customerName: string
     eventDate: string
   }) => {
     try {
@@ -236,6 +242,7 @@ export const useUploadVoiceOrder = () => {
 
       const formData = new FormData()
       formData.append('file', audioFile)
+      formData.append('customerName', payload.customerName)
       formData.append('eventDate', payload.eventDate)
 
       // Use native fetch to avoid axios transforming FormData
@@ -270,6 +277,7 @@ export const useUploadVoiceOrder = () => {
     mutationFn: uploadVoiceOrder,
     onSuccess: () => {
       toast.success('Voice order uploaded successfully!')
+      queryClient.invalidateQueries({ queryKey: ORDERS_KEY })
     },
   })
 }
@@ -291,11 +299,24 @@ export interface BillRawMaterial {
   unit?: string
 }
 
+export interface BillCustomer {
+  customerId?: number
+  customerName?: string
+  customerPhone?: string
+  customerAddress?: string
+  totalPlates?: number
+}
+
 export interface BillData {
   orderId?: number
+  customer?: BillCustomer | null
   customerItems?: BillCustomerItem[] | null
   rawMaterials?: BillRawMaterial[] | null
   totalAmount?: number | null
+  customerItemsTotal?: number | null
+  totalRawMaterialCost?: number | null
+  totalSubProductCost?: number | null
+  profit?: number | null
   [key: string]: unknown
 }
 

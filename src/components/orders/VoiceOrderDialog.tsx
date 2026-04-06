@@ -13,6 +13,9 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
   onClose,
   eventDate,
 }) => {
+  const [customerName, setCustomerName] = useState('')
+  const [selectedEventDate, setSelectedEventDate] = useState(eventDate)
+  const [formError, setFormError] = useState<string | null>(null)
   const [status, setStatus] = useState<RecordingStatus>('idle')
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -160,14 +163,46 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
   /* ── Upload ────────────────────────────────── */
   const handleUpload = async () => {
     if (!audioBlob) return
+    if (!customerName.trim()) {
+      setFormError('Customer name is required')
+      return
+    }
+    if (!selectedEventDate) {
+      setFormError('Event date is required')
+      return
+    }
+
+    setFormError(null)
 
     try {
       const wavBlob = await convertToWav(audioBlob)
-      uploadVoiceOrder({ file: wavBlob, eventDate })
+      uploadVoiceOrder(
+        {
+          file: wavBlob,
+          customerName: customerName.trim(),
+          eventDate: selectedEventDate,
+        },
+        {
+          onSuccess: () => {
+            handleCancel()
+          },
+        }
+      )
     } catch (error) {
       console.error('Audio conversion failed:', error)
       // Fallback: upload original webm if conversion fails
-      uploadVoiceOrder({ file: audioBlob, eventDate })
+      uploadVoiceOrder(
+        {
+          file: audioBlob,
+          customerName: customerName.trim(),
+          eventDate: selectedEventDate,
+        },
+        {
+          onSuccess: () => {
+            handleCancel()
+          },
+        }
+      )
     }
   }
 
@@ -213,12 +248,40 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
         <h2 className="text-lg font-bold text-zinc-900">Create Voice Order</h2>
       </div>
 
-      {/* ── Event date pill ── */}
-      <div className="rounded-xl bg-zinc-50 px-4 py-3 ring-1 ring-zinc-200">
-        <p className="text-xs font-semibold tracking-wider text-zinc-400 uppercase">
-          Event Date
-        </p>
-        <p className="text-base font-bold text-zinc-900">{eventDate}</p>
+      {/* ── Customer + event inputs ── */}
+      <div className="grid grid-cols-1 gap-3 rounded-xl bg-zinc-50 px-4 py-3 ring-1 ring-zinc-200">
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="voice-order-customer-name"
+            className="text-xs font-semibold tracking-wider text-zinc-400 uppercase"
+          >
+            Customer Name
+          </label>
+          <input
+            id="voice-order-customer-name"
+            type="text"
+            value={customerName}
+            onChange={(event) => setCustomerName(event.target.value)}
+            placeholder="Enter customer name"
+            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 outline-none focus:border-orange-400"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="voice-order-event-date"
+            className="text-xs font-semibold tracking-wider text-zinc-400 uppercase"
+          >
+            Event Date
+          </label>
+          <input
+            id="voice-order-event-date"
+            type="date"
+            value={selectedEventDate}
+            onChange={(event) => setSelectedEventDate(event.target.value)}
+            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 outline-none focus:border-orange-400"
+          />
+        </div>
       </div>
 
       {/* ── Visualiser / timer ── */}
@@ -314,6 +377,11 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
       {isError && (
         <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-200">
           Upload failed. Please try again.
+        </p>
+      )}
+      {formError && (
+        <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 ring-1 ring-red-200">
+          {formError}
         </p>
       )}
 

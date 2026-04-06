@@ -1,7 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Archive, ArrowLeft, Edit3, Mic, Plus } from 'lucide-react'
+import {
+  Archive,
+  ArrowLeft,
+  Edit3,
+  Mic,
+  Plus,
+  Trash2,
+  X,
+  ChevronDown,
+} from 'lucide-react'
 import InlineCalendar from '@/components/common/InlineCalendar'
 import ButtonSm from '@/components/common/Buttons'
 import GenericTable from '@/components/common/GenericTable'
@@ -9,7 +18,7 @@ import DialogBox from '@/components/common/DialogBox'
 import VoiceOrderDialog from '@/components/orders/VoiceOrderDialog'
 import DownloadBillButton from '@/components/orders/DownloadBillButton'
 import { appRoutes } from '@/routes/appRoutes'
-import { useFetchOrders } from '@/queries/ordersQueries'
+import { useFetchOrders, useDeleteOrder } from '@/queries/ordersQueries'
 import type { Order } from '@/types/order'
 
 const DetailCell = ({
@@ -153,13 +162,86 @@ const buildQuantitySummary = <T,>(
 const detailSectionTitleClass =
   'text-xs font-bold uppercase tracking-[0.2em] text-orange-500'
 
+interface ActionDropdownProps {
+  actions: Array<{
+    id: string
+    label: string
+    icon: React.ReactNode
+    color?: string
+    onClick: () => void
+  }>
+  disabled?: boolean
+}
+
+const ActionDropdown = ({ actions, disabled = false }: ActionDropdownProps) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        disabled={disabled}
+        className={`flex cursor-pointer flex-row items-center gap-2 rounded-[9px] border-2 border-[#F1F1F1] bg-white px-3 py-1.5 text-[12px] font-semibold text-black shadow-sm outline-0 transition-colors duration-200 select-none hover:bg-gray-100 active:bg-gray-200 lg:py-3 lg:text-sm ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+      >
+        Actions
+        <ChevronDown
+          className={`h-3.5 w-3.5 text-zinc-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute top-full left-0 z-40 mt-1.5 w-60 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg ring-1 ring-zinc-100">
+            <p className="border-b border-zinc-100 px-4 py-2 text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
+              Actions
+            </p>
+            <ul className="py-1">
+              {actions.map((action) => (
+                <li key={action.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      action.onClick()
+                      setIsOpen(false)
+                    }}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-orange-50 ${action.color || 'text-zinc-900'}`}
+                  >
+                    <span
+                      className={
+                        action.color === 'text-red-600'
+                          ? 'text-red-600'
+                          : 'text-orange-500'
+                      }
+                    >
+                      {action.icon}
+                    </span>
+                    {action.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export const OrdersPage = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { mutateAsync: deleteOrder, isPending: isDeletePending } =
+    useDeleteOrder()
 
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   const selectedDateISO = selectedDate.toLocaleDateString('en-CA') // YYYY-MM-DD
 
@@ -290,6 +372,17 @@ export const OrdersPage = () => {
     navigate(`/driver/pending-orders/${staffUserId}`)
   }
 
+  const handleDeleteOrder = async () => {
+    if (!selectedOrderId) return
+    try {
+      await deleteOrder(selectedOrderId)
+      setSelectedOrderId(null)
+      setIsDeleteDialogOpen(false)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   return (
     <main className="layout-container flex min-h-[95vh] flex-col overflow-hidden rounded-[12px] border border-zinc-200 bg-zinc-50 shadow-sm">
       <header className="flex flex-col gap-3 border-b border-zinc-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
@@ -301,37 +394,40 @@ export const OrdersPage = () => {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {selectedOrder && (
-            <>
-              <ButtonSm
-                state="outline"
-                disabled={!selectedOrderId}
-                onClick={() => handleNavigateToForm('edit', selectedOrderId)}
-                className="hidden font-medium lg:flex"
-              >
-                <Edit3 className="mr-2 h-4 w-4 text-black" /> {t('edit_order')}
-              </ButtonSm>
-              <div className="hidden lg:block">
-                <DownloadBillButton orderId={selectedOrder.id} />
-              </div>
-            </>
+            <ActionDropdown
+              actions={[
+                {
+                  id: 'edit',
+                  label: 'Edit Order',
+                  icon: <Edit3 className="h-4 w-4" />,
+                  onClick: () => handleNavigateToForm('edit', selectedOrderId),
+                },
+                {
+                  id: 'delete',
+                  label: 'Delete',
+                  icon: <Trash2 className="h-4 w-4" />,
+                  color: 'text-red-600',
+                  onClick: () => setIsDeleteDialogOpen(true),
+                },
+                {
+                  id: 'status',
+                  label: 'Update Status',
+                  icon: <Edit3 className="h-4 w-4" />,
+                  onClick: () => navigate(`/driver/order/${selectedOrder.id}`),
+                },
+              ]}
+              disabled={!selectedOrderId}
+            />
           )}
           {selectedOrder && (
-            <>
-              <ButtonSm
-                state="outline"
-                disabled={!selectedOrderId}
-                onClick={() => navigate(`/driver/order/${selectedOrder.id}`)}
-                className="hidden font-medium lg:flex"
-              >
-                <Edit3 className="mr-2 h-4 w-4 text-black" />{' '}
-                {t('update_status')}
-              </ButtonSm>
-            </>
+            <div className="hidden lg:block">
+              <DownloadBillButton orderId={selectedOrder.id} />
+            </div>
           )}
           <ButtonSm
             state="outline"
             onClick={() => setShowVoiceDialog(true)}
-            className="font-medium"
+            className="hidden font-medium lg:flex"
           >
             <Mic className="mr-2 h-4 w-4 text-zinc-700" />{' '}
             {t('create_voice_order')}
@@ -340,7 +436,7 @@ export const OrdersPage = () => {
             state="outline"
             onClick={handleNavigateToPendingOrders}
             disabled={!staffUserId}
-            className="font-medium"
+            className="hidden font-medium lg:flex"
           >
             Pending Orders
           </ButtonSm>
@@ -394,7 +490,7 @@ export const OrdersPage = () => {
               )}
             </header>
 
-            <div className="flex max-h-52 flex-col gap-2 overflow-y-auto sm:max-h-[300px]">
+            <div className="flex max-h-52 flex-col gap-2">
               {isLoading ? (
                 <div className="flex animate-pulse flex-col gap-2">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -429,49 +525,52 @@ export const OrdersPage = () => {
                           : 'border border-zinc-100 bg-zinc-50 hover:bg-zinc-100'
                       }`}
                     >
-                      <p
-                        className={`text-base font-bold ${isActive ? 'text-white' : 'text-zinc-800'}`}
-                      >
-                        {order.customerName}
-                      </p>
-                      <span
-                        className={`text-xs ${isActive ? 'text-orange-100' : 'text-zinc-400'}`}
-                      >
-                        #{order.id} · {order.eventType}
-                      </span>
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5 lg:hidden">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleNavigateToForm('edit', order.id)
-                          }}
-                          className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
-                            isActive
-                              ? 'bg-white/20 text-white hover:bg-white/30'
-                              : 'bg-orange-50 text-orange-600 hover:bg-orange-100'
-                          }`}
-                        >
-                          <Edit3 className="h-3 w-3" />
-                          {t('edit_order')}
-                        </button>
-                        <div onClick={(e) => e.stopPropagation()}>
-                          <DownloadBillButton orderId={order.id} compact />
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p
+                            className={`text-base font-bold ${isActive ? 'text-white' : 'text-zinc-800'}`}
+                          >
+                            {order.customerName}
+                          </p>
+                          <span
+                            className={`text-xs ${isActive ? 'text-orange-100' : 'text-zinc-400'}`}
+                          >
+                            #{order.id} · {order.eventType}
+                          </span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/driver/order/${order.id}`)
-                          }}
-                          className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${
-                            isActive
-                              ? 'bg-white/20 text-white hover:bg-white/30'
-                              : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                          }`}
-                        >
-                          {t('update_status')}
-                        </button>
+                        <div className="flex flex-wrap items-center gap-1.5 lg:hidden">
+                          <ActionDropdown
+                            actions={[
+                              {
+                                id: 'edit',
+                                label: 'Edit',
+                                icon: <Edit3 className="h-3 w-3" />,
+                                onClick: () =>
+                                  handleNavigateToForm('edit', order.id),
+                              },
+                              {
+                                id: 'delete',
+                                label: 'Delete',
+                                icon: <Trash2 className="h-3 w-3" />,
+                                color: 'text-red-600',
+                                onClick: () => {
+                                  setSelectedOrderId(order.id)
+                                  setIsDeleteDialogOpen(true)
+                                },
+                              },
+                              {
+                                id: 'status',
+                                label: 'Status',
+                                icon: <Edit3 className="h-3 w-3" />,
+                                onClick: () =>
+                                  navigate(`/driver/order/${order.id}`),
+                              },
+                            ]}
+                          />
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <DownloadBillButton orderId={order.id} compact />
+                          </div>
+                        </div>
                       </div>
                     </button>
                   )
@@ -766,6 +865,61 @@ export const OrdersPage = () => {
           </div>
         </div>
       </section>
+
+      {isDeleteDialogOpen && selectedOrder && (
+        <DialogBox setToggleDialogueBox={setIsDeleteDialogOpen}>
+          <form
+            className="flex w-full flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void handleDeleteOrder()
+            }}
+          >
+            <header className="flex w-full items-center justify-between text-lg font-semibold text-red-600">
+              Delete Order
+              <button
+                type="button"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                className="cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-zinc-600">
+                Are you sure you want to delete order{' '}
+                <span className="font-bold">#{selectedOrder.id}</span> for{' '}
+                <span className="font-bold">{selectedOrder.customerName}</span>?
+              </p>
+              <p className="text-xs text-zinc-400">
+                This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex w-full gap-3">
+              <ButtonSm
+                type="button"
+                state="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                disabled={isDeletePending}
+                className="flex-1"
+              >
+                Cancel
+              </ButtonSm>
+              <ButtonSm
+                type="submit"
+                state="default"
+                disabled={isDeletePending}
+                isPending={isDeletePending}
+                className="flex-1 bg-red-600 hover:bg-red-700"
+              >
+                Delete
+              </ButtonSm>
+            </div>
+          </form>
+        </DialogBox>
+      )}
     </main>
   )
 }

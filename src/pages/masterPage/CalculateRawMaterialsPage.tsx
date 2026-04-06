@@ -119,7 +119,7 @@ const buildRawMaterialsPdf = (
 
   // ── Business header ──────────────────────────────────────────────────────
   doc.setFont('courier', 'bold')
-  centeredText(doc, 'CATERING SERVICE', y, 11, true)
+  centeredText(doc, 'VENKATESHWARA MESS & CATTERING', y, 11, true)
   y += 6
   doc.setFont('courier', 'normal')
   centeredText(doc, 'Raw Materials Bill', y, 8, false, [100, 100, 100])

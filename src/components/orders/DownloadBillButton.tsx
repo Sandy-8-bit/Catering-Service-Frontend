@@ -32,6 +32,22 @@ interface BillMeta {
   date?: string
 }
 
+interface BillCustomerInfo {
+  customerId?: number
+  customerName?: string
+  customerPhone?: string
+  customerAddress?: string
+  totalPlates?: number
+}
+
+interface BillSummary {
+  totalAmount?: number | null
+  customerItemsTotal?: number | null
+  totalRawMaterialCost?: number | null
+  totalSubProductCost?: number | null
+  profit?: number | null
+}
+
 // ─── PDF Layout Constants ─────────────────────────────────────────────────────
 
 const PAGE_W = 148 // A5 width in mm (close to the physical bill aspect ratio)
@@ -91,11 +107,42 @@ const txt = (
   doc.text(text, x, y, { align })
 }
 
+const formatMoney = (value?: number | null) => {
+  if (value == null) {
+    return '--'
+  }
+  return value.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+}
+
+const resolveBillTitle = (type: BillType) => {
+  if (type === 'STAFF') {
+    return 'STAFF BILL'
+  }
+  if (type === 'OWNER') {
+    return 'OWNER BILL'
+  }
+  return 'CUSTOMER BILL'
+}
+
 // ─── Main PDF Builder ─────────────────────────────────────────────────────────
 
 const buildPdf = (data: BillData, type: BillType, meta: BillMeta): jsPDF => {
   const customerItems: BillCustomerItem[] = data.customerItems ?? []
   const rawMaterials: BillRawMaterial[] = data.rawMaterials ?? []
+  const customer = (data.customer ?? {}) as BillCustomerInfo
+  const summary = data as BillSummary
+  const billTitle = resolveBillTitle(type)
+  const totalValue =
+    summary.totalAmount ??
+    (type === 'STAFF'
+      ? summary.customerItemsTotal
+      : (customerItems ?? []).reduce(
+          (acc, item) => acc + (item.lineTotal ?? 0),
+          0
+        ))
 
   const doc = new jsPDF({ unit: 'mm', format: [PAGE_W, PAGE_H] })
 
@@ -156,10 +203,10 @@ const buildPdf = (data: BillData, type: BillType, meta: BillMeta): jsPDF => {
   rect(doc, tagX, y + 0.5, tagW, 5, 0.3)
   txt(
     doc,
-    'CASH BILL',
+    billTitle,
     tagX + tagW / 2,
     y + 4.2,
-    6.5,
+    5.8,
     'bold',
     [30, 30, 30],
     'center'
@@ -204,14 +251,14 @@ const buildPdf = (data: BillData, type: BillType, meta: BillMeta): jsPDF => {
     val ? val : '..............................'
 
   const infoRows: [string, string][] = [
-    ['To', dotLeader(meta.to)],
-    ['M/s', dotLeader(meta.ms)],
+    ['To', dotLeader(meta.to ?? customer.customerName)],
+    ['M/s', dotLeader(meta.ms ?? customer.customerAddress)],
     [
       `Place  :  ${dotLeader(meta.place)}   Time : ${meta.time ?? '........'}   No: ${meta.no ?? '........'}`,
       '',
     ],
     [
-      `Cell No  :  ${dotLeader(meta.cellNo)}   Advance: ${meta.advance ?? '........'}`,
+      `Cell No  :  ${dotLeader(meta.cellNo ?? customer.customerPhone)}   Advance: ${meta.advance ?? '........'}`,
       '',
     ],
   ]
@@ -495,7 +542,18 @@ const buildPdf = (data: BillData, type: BillType, meta: BillMeta): jsPDF => {
   if (data.totalAmount != null) {
     txt(
       doc,
-      `Rs. ${(data.totalAmount as number).toLocaleString()}`,
+      `Rs. ${formatMoney(totalValue)}`,
+      footerMidX + (PAGE_W - MR - footerMidX) / 2,
+      y + 11,
+      9,
+      'bold',
+      [10, 10, 10],
+      'center'
+    )
+  } else {
+    txt(
+      doc,
+      `Rs. ${formatMoney(totalValue)}`,
       footerMidX + (PAGE_W - MR - footerMidX) / 2,
       y + 11,
       9,
@@ -508,11 +566,51 @@ const buildPdf = (data: BillData, type: BillType, meta: BillMeta): jsPDF => {
   hLine(doc, y + footerH, ML - 2, ML + CW + 2, 0.4)
   y += footerH
 
-  // ── Materials row ────────────────────────────────────────────────────────────
+  // ── Summary row (bill-type specific) ───────────────────────────────────────
   const matH = 14
   vLine(doc, footerMidX, y, y + matH)
 
-  txt(doc, 'Materials :', ML, y + 5, 7.5, 'normal', [40, 40, 40])
+  if (type === 'OWNER') {
+    txt(
+      doc,
+      `Raw: Rs. ${formatMoney(summary.totalRawMaterialCost)}  Sub: Rs. ${formatMoney(summary.totalSubProductCost)}`,
+      ML,
+      y + 5,
+      7,
+      'normal',
+      [40, 40, 40]
+    )
+    txt(
+      doc,
+      `Profit: Rs. ${formatMoney(summary.profit)}`,
+      ML,
+      y + 10,
+      7.5,
+      'bold',
+      [30, 30, 100]
+    )
+  } else if (type === 'STAFF') {
+    txt(
+      doc,
+      `Plates: ${customer.totalPlates ?? '--'}  Items: ${customerItems.length}`,
+      ML,
+      y + 5,
+      7.5,
+      'normal',
+      [40, 40, 40]
+    )
+    txt(doc, 'Internal copy', ML, y + 10, 7.5, 'bold', [30, 30, 100])
+  } else {
+    txt(
+      doc,
+      `Plates: ${customer.totalPlates ?? '--'}  Items: ${customerItems.length}`,
+      ML,
+      y + 5,
+      7.5,
+      'normal',
+      [40, 40, 40]
+    )
+  }
 
   txt(
     doc,
@@ -612,7 +710,7 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
         onClick={() => setIsOpen((prev) => !prev)}
         className={`flex cursor-pointer flex-row items-center border-2 border-[#F1F1F1] bg-white font-semibold text-black shadow-sm outline-0 transition-colors duration-200 select-none hover:bg-gray-100 active:bg-gray-200 ${
           compact
-            ? 'gap-1 rounded-lg px-2 py-1 text-xs'
+            ? 'gap-1 rounded-lg px-2 py-1.5 text-xs'
             : 'gap-2 rounded-[9px] px-3 py-3 text-sm'
         } ${isAnyLoading ? 'cursor-not-allowed opacity-70' : ''}`}
       >
