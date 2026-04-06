@@ -427,7 +427,7 @@ export const OrdersPage = () => {
           <ButtonSm
             state="outline"
             onClick={() => setShowVoiceDialog(true)}
-            className="hidden font-medium lg:flex"
+            className=" font-medium lg:flex"
           >
             <Mic className="mr-2 h-4 w-4 text-zinc-700" />{' '}
             {t('create_voice_order')}
