@@ -638,9 +638,7 @@ const DriverOrderPage = () => {
                 </p>
                 <div className="flex flex-col gap-1.5">
                   {order.vessels.map((vessel) => {
-                    const returned = vesselReturns.find((v) => v.id === vessel.id)
-                      ?.quantityReturned || 0
-                    const pending = vessel.quantityGiven - returned
+                 
                     return (
                       <div key={vessel.id} className="flex items-center justify-between">
                         <span className="text-sm text-black-900">

@@ -12,7 +12,6 @@ export type ConfigCardType = {
 }
 
 const ConfigCard: React.FC<ConfigCardType> = ({
-  icon,
   title,
   desc,
   label,

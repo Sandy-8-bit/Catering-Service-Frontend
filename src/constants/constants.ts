@@ -41,6 +41,7 @@ export const defaultOrderData: Order = {
   id: 0,
   customerName: '',
   customerPhone: '',
+  balanceAmount:0,
   customerAddress: '',
   eventType: '',
   eventDate: '',

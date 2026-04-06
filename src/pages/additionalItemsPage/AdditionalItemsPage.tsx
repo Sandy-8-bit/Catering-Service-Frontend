@@ -262,7 +262,7 @@ export const AdditionalItemsPage = () => {
   useHandleCancelHook(formState, handleDiscardChanges)
   useHandleSaveHook(formState, handleSaveChanges)
 
-  const handleSelectionChange = (indices: number[], rows: AdditionalItem[]) => {
+  const handleSelectionChange = (_: unknown, rows: AdditionalItem[]) => {
     setSelectedRows(rows)
   }
 

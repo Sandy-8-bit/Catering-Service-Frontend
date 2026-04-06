@@ -201,8 +201,8 @@ export const CategoriesPage = () => {
   useHandleCancelHook(formState, handleDiscardChanges)
   useHandleSaveHook(formState, handleSaveChanges)
 
-  const handleSelectionChange = (rows: Category[]) => {
-    setSelectedRows(rows)
+  const handleSelectionChange = (_selectedIndices: number[], selectedRows: any[]) => {
+    setSelectedRows(selectedRows as Category[])
   }
 
   const handleAddCategoryRow = () => {

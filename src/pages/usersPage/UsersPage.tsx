@@ -268,7 +268,7 @@ export const UsersPage = () => {
   useHandleCancelHook(formState, handleDiscardChanges)
   useHandleSaveHook(formState, handleSaveChanges)
 
-  const handleSelectionChange = (indices: number[], rows: EditableUser[]) => {
+  const handleSelectionChange = (_: number[], rows: EditableUser[]) => {
     setSelectedRows(rows)
   }
 

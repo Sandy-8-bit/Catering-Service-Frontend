@@ -6,7 +6,6 @@ import { TopNav } from './TopNav'
 const MainLayout: React.FC = () => {
   // TODO: Replace with user context or auth
   const userName = 'John Doe'
-  const role = localStorage.getItem('CATERING_ROLE')
 
   // TODO: Replace with utility function or Date-fns/Day.js
   const formattedDate = 'Saturday, 11th November 2022'

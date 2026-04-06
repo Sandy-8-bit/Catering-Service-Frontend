@@ -3,46 +3,6 @@ import { useTranslation } from 'react-i18next'
 
 type TimeRange = 'today' | 'week' | 'month'
 
-const timeFilters: { id: TimeRange; label: string }[] = [
-  { id: 'today', label: 'Today' },
-  { id: 'week', label: 'This Week' },
-  { id: 'month', label: 'This Month' },
-]
-
-const metricHighlights = [
-  {
-    id: 'orders',
-    title: 'Open Orders',
-    value: '48',
-    subtitle: 'Serving 3120 guests',
-    delta: '+12%',
-    trend: 'up',
-  },
-  {
-    id: 'prep',
-    title: 'Kitchen Prep Progress',
-    value: '76%',
-    subtitle: '12 menus underway',
-    delta: '+6%',
-    trend: 'up',
-  },
-  {
-    id: 'inventory',
-    title: 'Critical Inventory Alerts',
-    value: '5 items',
-    subtitle: 'Needs attention today',
-    delta: '-2',
-    trend: 'down',
-  },
-  {
-    id: 'feedback',
-    title: 'Client Feedback Score',
-    value: '4.8 / 5',
-    subtitle: 'Last 30 services',
-    delta: '+0.2',
-    trend: 'up',
-  },
-]
 
 const ordersInProgress = [
   {

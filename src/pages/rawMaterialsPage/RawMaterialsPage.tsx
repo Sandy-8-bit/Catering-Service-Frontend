@@ -229,7 +229,7 @@ export const RawMaterialsPage = () => {
   useHandleCancelHook(formState, handleDiscardChanges)
   useHandleSaveHook(formState, handleSaveChanges)
 
-  const handleSelectionChange = (indices: number[], rows: RawMaterial[]) => {
+  const handleSelectionChange = (_: number[], rows: RawMaterial[]) => {
     setSelectedRows(rows)
   }
 

@@ -33,7 +33,7 @@ const DriverDashboardPage = () => {
     () => new Date().toISOString().split('T')[0]
   )
   const [showLogoutModal, setShowLogoutModal] = useState(false)
-  const [orderFilter, setOrderFilter] = useState<'all' | 'pending'>('all')
+  const [orderFilter] = useState<'all' | 'pending'>('all')
 
   const { data, isLoading, isError } = useFetchDriverDashboard({
     driverId,

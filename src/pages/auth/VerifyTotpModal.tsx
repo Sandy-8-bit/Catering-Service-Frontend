@@ -1,6 +1,6 @@
 import ButtonSm from '@/components/common/Buttons'
 import Input from '@/components/common/Input'
-import { useVerifyTotp } from '@/queries/authQueries'
+import { useVerifyTotp } from '@/queries/AuthQueries'
 import { type FormEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -59,7 +59,6 @@ const VerifyTotpModal = ({
             onChange={setCode}
             name="totp-code"
             type="str"
-            maxLength={6}
             required
             inputRef={codeInputRef}
           />

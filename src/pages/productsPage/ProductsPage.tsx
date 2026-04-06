@@ -242,7 +242,7 @@ export const ProductsPage = () => {
   useHandleCancelHook(formState, handleDiscardChanges)
   useHandleSaveHook(formState, handleSaveChanges)
 
-  const handleSelectionChange = (indices: number[], rows: Product[]) => {
+  const handleSelectionChange = (_: number[], rows: Product[]) => {
     setSelectedRows(rows)
   }
 

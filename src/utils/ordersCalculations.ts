@@ -22,7 +22,7 @@ export const calculateOrderTotals = (
   productsMap: Map<number, Product>
 ): CalculationBreakdown => {
   // Step 1: Calculate menu items subtotal
-  const menuItemsSubtotal = calculateMenuItemsSubtotal(order, productsMap)
+  const menuItemsSubtotal = calculateMenuItemsSubtotal(order)
 
   // Step 2: Calculate additional menu items subtotal
   const additionalMenuItemsSubtotal = calculateAdditionalMenuItemsSubtotal(
@@ -88,7 +88,6 @@ export const calculateOrderTotals = (
  */
 export const calculateMenuItemsSubtotal = (
   order: Order,
-  productsMap: Map<number, Product>
 ): number => {
   const items = order.items || []
   const totalPlates = order.totalPlates || 1

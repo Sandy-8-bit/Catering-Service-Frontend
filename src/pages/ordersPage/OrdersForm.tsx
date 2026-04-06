@@ -579,38 +579,8 @@ export const OrdersForm = () => {
               (editData.discountPercentage ?? 0) > 0) &&
               (() => {
                 // Calculate menu items subtotal
-                const pricePerPlate =
-                  editData.items?.reduce((sum, item) => {
-                    const unitPrice =
-                      item.unitPrice ||
-                      (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
-                    return sum + unitPrice
-                  }, 0) || 0
-                const adjustedPrice =
-                  pricePerPlate - (editData.priceReducedPerPlate || 0)
-                const menuItemsSubtotal = Math.round(
-                  (editData.totalPlates || 1) * adjustedPrice
-                )
-
-                // Calculate additional menu items subtotal
-                const additionalMenuItemsSubtotal = (
-                  editData.additionalMenuItems ?? []
-                ).reduce((sum, item) => {
-                  const product = products.find((p) => p.id === item.productId)
-                  return sum + (product?.price ?? 0) * item.quantity
-                }, 0)
-
-                // Calculate gross total
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                const grossTotal =
-                  menuItemsSubtotal +
-                  additionalMenuItemsSubtotal +
-                  (editData.additionalItems?.reduce(
-                    (sum, item) => sum + (item.lineTotal || 0),
-                    0
-                  ) || 0) +
-                  (editData.deliveredByUs ? editData.deliveryCharge || 0 : 0)
-
+            
+                
                 // Use discountAmount if available
                 const discountAmount = editData.discountAmount || 0
                 const discountLabel = editData.discountPercentage
