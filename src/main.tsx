@@ -6,6 +6,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import './index.css'
 import './i18n'
 import { Toaster } from 'react-hot-toast'
+// @ts-ignore - virtual module
+import { registerSW } from 'virtual:pwa-register'
+
 // Optional: Include React Scan only in development
 if (!import.meta.env.PROD) {
   const script = document.createElement('script')
@@ -13,6 +16,9 @@ if (!import.meta.env.PROD) {
   script.async = true
   document.head.appendChild(script)
 }
+
+// Register Service Worker for PWA
+registerSW({ immediate: true })
 
 createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={new QueryClient()}>
