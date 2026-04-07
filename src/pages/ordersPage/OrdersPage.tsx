@@ -361,6 +361,9 @@ export const OrdersPage = () => {
     params.set('mode', mode)
     if (mode === 'edit' && orderId) {
       params.set('orderId', String(orderId))
+    } else if (mode === 'create') {
+      // Pass selected date for create mode
+      params.set('selectedDate', selectedDateISO)
     }
     navigate(`${appRoutes.ordersForm.path}?${params.toString()}`)
   }
@@ -438,7 +441,7 @@ export const OrdersPage = () => {
             disabled={!staffUserId}
             className="hidden font-medium lg:flex"
           >
-            Pending Orders
+          {t('pending_order')}
           </ButtonSm>
           <ButtonSm
             state="default"

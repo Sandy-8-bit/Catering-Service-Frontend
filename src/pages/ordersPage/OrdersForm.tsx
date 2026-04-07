@@ -29,12 +29,15 @@ import { appRoutes } from '@/routes/appRoutes'
 import { useFetchUsers } from '@/queries/usersQueries'
 import { useFetchProducts } from '@/queries/productQueries'
 import VoiceInput from '@/components/common/VoiceInput'
+import { useOrderFormContext } from '@/context/OrderFormContext'
+
 
 export const OrdersForm = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isEditMode = searchParams.get('mode') === 'edit'
+  const selectedDateParam = searchParams.get('selectedDate') // Get selected date from query
   const orderIdParam = Number(searchParams.get('orderId'))
   const orderId = Number.isFinite(orderIdParam) ? orderIdParam : undefined
   const { data: user = [], isLoading: isUserOptionLoading } = useFetchUsers()
@@ -45,23 +48,72 @@ export const OrdersForm = () => {
   const { data: additionalItems = [], isLoading: isAdditionalLoading } =
     useFetchAdditionalItems()
 
+  const { saveFormData, clearFormData, restoreFormData } = useOrderFormContext()
   const [editData, setEditData] = useState<Order>(defaultOrderData)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   const { mutate: createOrder, isPending: isCreatePending } = useCreateOrder()
   const { mutate: updateOrder, isPending: isUpdatePending } = useUpdateOrder()
 
+  // Restore form data on mount if not in edit mode
+  useEffect(() => {
+    if (isEditMode || isInitialized) return
+
+    let initialData = defaultOrderData
+
+    // If a date was selected in calendar, use it first
+    if (selectedDateParam) {
+      initialData = {
+        ...defaultOrderData,
+        eventDate: selectedDateParam,
+      }
+    } else {
+      // Otherwise, restore previously saved data
+      const savedData = restoreFormData()
+      if (savedData) {
+        initialData = savedData
+      }
+    }
+
+    setEditData(initialData)
+    setIsInitialized(true)
+  }, [isEditMode, isInitialized, restoreFormData, selectedDateParam])
+
+  // Auto-save form data to context whenever it changes (with debounce)
+  useEffect(() => {
+    if (!isInitialized || isEditMode) return
+
+    const timer = setTimeout(() => {
+      saveFormData(editData)
+    }, 500) // Debounce for 500ms to avoid too frequent saves
+
+    return () => clearTimeout(timer)
+  }, [editData, saveFormData, isEditMode, isInitialized])
+
+  // Clear session flag on component unmount (when navigating away intentionally)
+  useEffect(() => {
+    return () => {
+      // Only clear if we're navigating away naturally (not on refresh)
+      // The refresh detection happens in the context
+    }
+  }, [])
 
   const isPaymentTypeRequired = (editData.advanceAmount || 0) > 0
   const handleCreateOrder = () => {
     createOrder(mapOrderToPayload(editData), {
       onSuccess: () => {
+        clearFormData() // Clear saved data on successful submission
         navigate(appRoutes.orders.path)
       },
     })
   }
 
   const handleUpdateOrder = () => {
-    updateOrder(mapOrderToUpdatePayload(editData, existingOrder))
+    updateOrder(mapOrderToUpdatePayload(editData, existingOrder), {
+      onSuccess: () => {
+        clearFormData() // Clear saved data on successful submission
+      },
+    })
   }
 
   const driverOptions = user!
@@ -210,6 +262,12 @@ export const OrdersForm = () => {
     event.preventDefault()
   }
 
+  const TIME_PRESETS = [
+  { label: t('tiffin'), value: '07:00:00' },
+  { label: t('lunch'), value: '11:00:00' },
+  { label: t('dinner'), value: '19:00:00' },
+];
+
   const safeNumber = (value: string | number | undefined) => {
   const num = Number(value)
   return isNaN(num) ? 0 : num
@@ -319,17 +377,43 @@ export const OrdersForm = () => {
                 setEditData((prev) => ({ ...prev, eventDate: value }))
               }
             />
-            <TimeInput
-              title={t('event_time')}
-              name="time"
-              value={editData.eventTime}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  eventTime: value.length === 5 ? `${value}:00` : value,
-                }))
-              }
-            />
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-zinc-700">
+                {t('event_time')}
+              </label>
+              <div className="grid grid-cols-3   gap-2 sm:grid-cols-3">
+                {TIME_PRESETS.map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() =>
+                      setEditData((prev) => ({
+                        ...prev,
+                        eventTime: preset.value,
+                      }))
+                    }
+                    className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                      editData.eventTime === preset.value
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <TimeInput
+                title=""
+                name="time"
+                value={editData.eventTime}
+                onChange={(value) =>
+                  setEditData((prev) => ({
+                    ...prev,
+                    eventTime: value.length === 5 ? `${value}:00` : value,
+                  }))
+                }
+              />
+            </div>
 
             <Input
               title={t('location_url')}
@@ -400,7 +484,7 @@ export const OrdersForm = () => {
             )}
 
             <Input
-              title="Total Plates"
+              title={t('total_plates')}
               prefixText={t('count')}
               placeholder="Enter total plates"
               inputValue={editData.totalPlates?.toString() || ''}
@@ -707,6 +791,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   isUpdatePending,
 }) => {
   const { t } = useTranslation()
+  const { clearFormData } = useOrderFormContext()
 
   return (
     <div className="flex flex-wrap justify-end gap-3">
@@ -717,7 +802,10 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         disabled={isEditMode ? lodash.isEqual(editData, existingOrder) : false}
         onClick={() => {
           if (isEditMode) setEditData(existingOrder || defaultOrderData)
-          else navigate(-1)
+          else {
+            clearFormData() // Clear saved data when canceling form
+            navigate(-1)
+          }
         }}
       >
         {isEditMode ? t('discard_changes') : t('cancel')}

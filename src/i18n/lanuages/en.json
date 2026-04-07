@@ -385,6 +385,8 @@
   "orders_review_selection": "Review selection",
   "orders_menu_items": "Elai Items (Main Plate)",
   "orders_added_dishes": "Added dishes",
+  "pending_order": "Pending Order",
+  "extra_menu": "Extra Menu Item (Add-on)",
   "orders_add_more": "Add more +",
   "orders_no_dishes_added_yet": "No dishes have been added yet. Tap \"Add more +\" to start curating the menu.",
   "orders_perfect_add_on": "Perfect add-on",
@@ -443,4 +445,6 @@
   "price_reduced_per_plate": "Price Reduced Per Plate",
   "discount_percentage": "Discount Percentage",
   "discount_amount": "Discount Amount"
+
+  
 }

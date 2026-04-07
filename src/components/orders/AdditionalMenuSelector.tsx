@@ -496,7 +496,7 @@ const AdditionalMenuSelector = ({
       <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <header className="mt-6 space-y-1">
           <h2 className="text-base font-semibold text-zinc-800">
-            Additional Menu Items
+            {t('extra_menu')}
           </h2>
           <p className="text-sm text-zinc-500">
             {t('orders_added_dishes')} · {totalProductCount} {t('items')}
