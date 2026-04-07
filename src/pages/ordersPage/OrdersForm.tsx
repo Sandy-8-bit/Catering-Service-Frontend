@@ -28,9 +28,17 @@ import { ArrowLeft } from 'lucide-react'
 import { appRoutes } from '@/routes/appRoutes'
 import { useFetchUsers } from '@/queries/usersQueries'
 import { useFetchProducts } from '@/queries/productQueries'
+import {
+  calculateMenuItemsSubtotal,
+  calculateOneLeafPrice,
+  calculateAdditionalMenuItemsSubtotal,
+  calculateAdditionalItemsSubtotal,
+  calculateSubtotalBeforeDelivery,
+  calculateDiscountFromPercentage,
+  calculateDiscountPercentageFromAmount,
+} from '@/utils/ordersCalculations'
 import VoiceInput from '@/components/common/VoiceInput'
 import { useOrderFormContext } from '@/context/OrderFormContext'
-
 
 export const OrdersForm = () => {
   const { t } = useTranslation()
@@ -131,17 +139,7 @@ export const OrdersForm = () => {
 
   useEffect(() => {
     // 1. Menu Items Subtotal = (Price Per Plate - Price Reduced Per Plate) × Total Plates
-    const menuItemsSubtotal = (() => {
-      const pricePerPlate =
-        editData.items?.reduce((sum, item) => {
-          const unitPrice =
-            item.unitPrice ||
-            (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
-          return sum + unitPrice
-        }, 0) || 0
-      const adjustedPrice = pricePerPlate - (editData.priceReducedPerPlate || 0)
-      return Math.round((editData.totalPlates || 1) * adjustedPrice)
-    })()
+    const menuItemsSubtotal = calculateMenuItemsSubtotal(editData)
 
     // 2. Additional Menu Items Subtotal
     const additionalMenuItemsSubtotal = (
@@ -208,37 +206,16 @@ export const OrdersForm = () => {
 
   // Helper to calculate subtotal before delivery
   const getSubtotalBeforeDelivery = () => {
-    const pricePerPlate =
-      editData.items?.reduce((sum, item) => {
-        const unitPrice =
-          item.unitPrice ||
-          (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
-        return sum + unitPrice
-      }, 0) || 0
-    const adjustedPrice = pricePerPlate - (editData.priceReducedPerPlate || 0)
-    const menuItemsSubtotal = Math.round(
-      (editData.totalPlates || 1) * adjustedPrice
-    )
-    const additionalMenuItemsSubtotal = (
-      editData.additionalMenuItems ?? []
-    ).reduce((sum, item) => {
-      const product = products.find((p) => p.id === item.productId)
-      return sum + (product?.price ?? 0) * item.quantity
-    }, 0)
-    const additionalItemsSubtotal =
-      editData.additionalItems?.reduce(
-        (sum, item) => sum + (item.lineTotal || 0),
-        0
-      ) || 0
-    return (
-      menuItemsSubtotal + additionalMenuItemsSubtotal + additionalItemsSubtotal
-    )
+    return calculateSubtotalBeforeDelivery(editData, products)
   }
 
   const handleDiscountPercentageChange = (value: string) => {
     const percentage = Number(value)
     const subtotal = getSubtotalBeforeDelivery()
-    const calculatedAmount = Math.round(subtotal * (percentage / 100))
+    const calculatedAmount = calculateDiscountFromPercentage(
+      subtotal,
+      percentage
+    )
     setEditData((prev) => ({
       ...prev,
       discountPercentage: percentage,
@@ -249,8 +226,10 @@ export const OrdersForm = () => {
   const handleDiscountAmountChange = (value: string) => {
     const amount = Number(value)
     const subtotal = getSubtotalBeforeDelivery()
-    const calculatedPercentage =
-      subtotal > 0 ? Math.round((amount / subtotal) * 100 * 100) / 100 : 0
+    const calculatedPercentage = calculateDiscountPercentageFromAmount(
+      subtotal,
+      amount
+    )
     setEditData((prev) => ({
       ...prev,
       discountAmount: amount,
@@ -263,15 +242,15 @@ export const OrdersForm = () => {
   }
 
   const TIME_PRESETS = [
-  { label: t('tiffin'), value: '07:00:00' },
-  { label: t('lunch'), value: '11:00:00' },
-  { label: t('dinner'), value: '19:00:00' },
-];
+    { label: t('tiffin'), value: '07:00:00' },
+    { label: t('lunch'), value: '11:00:00' },
+    { label: t('dinner'), value: '19:00:00' },
+  ]
 
   const safeNumber = (value: string | number | undefined) => {
-  const num = Number(value)
-  return isNaN(num) ? 0 : num
-}
+    const num = Number(value)
+    return isNaN(num) ? 0 : num
+  }
 
   if (isOrderLoading || isUserOptionLoading || isAdditionalLoading)
     return <SkeletonForm inputCount={12} />
@@ -381,7 +360,7 @@ export const OrdersForm = () => {
               <label className="text-sm font-medium text-zinc-700">
                 {t('event_time')}
               </label>
-              <div className="grid grid-cols-3   gap-2 sm:grid-cols-3">
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-3">
                 {TIME_PRESETS.map((preset) => (
                   <button
                     key={preset.value}
@@ -392,7 +371,7 @@ export const OrdersForm = () => {
                         eventTime: preset.value,
                       }))
                     }
-                    className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                    className={`rounded-lg border-2 px-3 py-2 text-sm font-medium transition-all ${
                       editData.eventTime === preset.value
                         ? 'border-orange-500 bg-orange-50 text-orange-700'
                         : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300'
@@ -414,8 +393,6 @@ export const OrdersForm = () => {
                 }
               />
             </div>
-
-            
           </div>
           {/* Delivery & Payment */}
           <header className="mt-6 space-y-1">
@@ -470,17 +447,17 @@ export const OrdersForm = () => {
                   }
                 />
                 <Input
-              title={t('location_url')}
-              name="Location Url"
-              placeholder={t('location_url_placeholder')}
-              inputValue={editData.locationUrl}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  locationUrl: value,
-                }))
-              }
-            />
+                  title={t('location_url')}
+                  name="Location Url"
+                  placeholder={t('location_url_placeholder')}
+                  inputValue={editData.locationUrl}
+                  onChange={(value) =>
+                    setEditData((prev) => ({
+                      ...prev,
+                      locationUrl: value,
+                    }))
+                  }
+                />
               </>
             )}
 
@@ -541,158 +518,91 @@ export const OrdersForm = () => {
           </header>
 
           {/* Total Amount Display */}
-          <div className="flex flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 p-4 sm:p-5">
-            <div className="flex justify-between gap-3 text-sm text-zinc-600">
-  <span>{t('one_leaf_price')}:</span>
-  <span className="font-regular text-zinc-900">
-    ₹
-    {(() => {
-      const pricePerPlate =
-        editData.items?.reduce((sum, item) => {
-          const unitPrice =
-            item.unitPrice ||
-            (item.quantity > 0
-              ? item.totalPrice / item.quantity
-              : 0)
-          return sum + unitPrice
-        }, 0) || 0
+          {(() => {
+            // Calculate display values using utility functions
+            const menuItemsSubtotal = calculateMenuItemsSubtotal(editData)
+            const additionalMenuItemsSubtotal =
+              calculateAdditionalMenuItemsSubtotal(editData, products)
+            const additionalItemsSubtotal =
+              calculateAdditionalItemsSubtotal(editData)
+            const oneLeafPrice = calculateOneLeafPrice(editData)
 
-      const oneLeafPrice =
-        pricePerPlate - (editData.priceReducedPerPlate || 0)
+            return (
+              <div className="flex flex-col gap-3 rounded-xl border border-zinc-100 bg-zinc-50 p-4 sm:p-5">
+                <div className="flex justify-between gap-3 text-sm text-zinc-600">
+                  <span>{t('one_leaf_price')}:</span>
+                  <span className="font-regular text-zinc-900">
+                    ₹{Math.round(oneLeafPrice).toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between gap-3 text-sm text-zinc-600">
+                  <span>{t('total_leaf_items_subtotal')}:</span>
+                  <span className="font-regular text-zinc-900">
+                    ₹{menuItemsSubtotal.toLocaleString()}
+                  </span>
+                </div>
 
-      return Math.round(oneLeafPrice).toLocaleString()
-    })()}
-  </span>
-</div>
-            <div className="flex justify-between gap-3 text-sm text-zinc-600">
-              <span>{t('total_leaf_items_subtotal')}:</span>
-              <span className="font-regular text-zinc-900">
-                ₹
-                {(() => {
-                  const pricePerPlate =
-                    editData.items?.reduce((sum, item) => {
-                      const unitPrice =
-                        item.unitPrice ||
-                        (item.quantity > 0
-                          ? item.totalPrice / item.quantity
-                          : 0)
-                      return sum + unitPrice
-                    }, 0) || 0
-                  const adjustedPrice =
-                    pricePerPlate - (editData.priceReducedPerPlate || 0)
-                  return Math.round(
-                    (editData.totalPlates || 1) * adjustedPrice
-                  ).toLocaleString()
-                })()}
-              </span>
+                <div className="flex justify-between text-sm text-zinc-600">
+                  <span>{t('additional_menu_items_subtotal')}:</span>
+                  <span className="font-regular text-zinc-900">
+                    ₹{additionalMenuItemsSubtotal.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm text-zinc-600">
+                  <span>{t('additional_items_subtotal')}:</span>
+                  <span className="font-regular text-zinc-900">
+                    ₹{additionalItemsSubtotal.toLocaleString()}
+                  </span>
+                </div>
+                <div className="mt-2 flex justify-between border-t border-zinc-200 pt-2 text-sm text-zinc-600">
+                  <span className="font-semibold">
+                    {t('subtotal_before_delivery')}:
+                  </span>
+                  <span className="font-semibold text-zinc-900">
+                    ₹{getSubtotalBeforeDelivery().toLocaleString()}
+                  </span>
+                </div>
+                {editData.deliveredByUs && (
+                  <div className="flex justify-between text-sm text-zinc-600">
+                    <span>{t('delivery_charges')}:</span>
+                    <span className="font-regular text-zinc-900">
+                      ₹{(editData.deliveryCharge || 0).toLocaleString()}
+                    </span>
+                  </div>
+                )}
+                {((editData.discountAmount ?? 0) > 0 ||
+                  (editData.discountPercentage ?? 0) > 0) &&
+                  (() => {
+                    const discountAmount = editData.discountAmount || 0
+                    const discountLabel = editData.discountPercentage
+                      ? `Discount (${editData.discountPercentage}%)`
+                      : 'Discount'
 
-              
-            </div>
-            
-            <div className="flex justify-between text-sm text-zinc-600">
-              <span>{t('additional_menu_items_subtotal')}:</span>
-              <span className="font-regular text-zinc-900">
-                ₹
-                {(editData.additionalMenuItems ?? [])
-                  .reduce((sum, item) => {
-                    const product = products.find(
-                      (p) => p.id === item.productId
-                    )
-                    return sum + (product?.price ?? 0) * item.quantity
-                  }, 0)
-                  .toLocaleString()}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm text-zinc-600">
-              <span>{t('additional_items_subtotal')}:</span>
-              <span className="font-regular text-zinc-900">
-                ₹
-                {editData.additionalItems
-                  ?.reduce((sum, item) => sum + (item.lineTotal || 0), 0)
-                  .toLocaleString()}
-              </span>
-            </div>
-            <div className="mt-2 flex justify-between border-t border-zinc-200 pt-2 text-sm text-zinc-600">
-              <span className="font-semibold">{t('subtotal_before_delivery')}:</span>
-              <span className="font-semibold text-zinc-900">
-                ₹
-                {(() => {
-                  const pricePerPlate =
-                    editData.items?.reduce((sum, item) => {
-                      const unitPrice =
-                        item.unitPrice ||
-                        (item.quantity > 0
-                          ? item.totalPrice / item.quantity
-                          : 0)
-                      return sum + unitPrice
-                    }, 0) || 0
-                  const adjustedPrice =
-                    pricePerPlate - (editData.priceReducedPerPlate || 0)
-                  const menuItemsSubtotal = Math.round(
-                    (editData.totalPlates || 1) * adjustedPrice
-                  )
-                  const additionalMenuItemsSubtotal = (
-                    editData.additionalMenuItems ?? []
-                  ).reduce((sum, item) => {
-                    const product = products.find(
-                      (p) => p.id === item.productId
-                    )
-                    return sum + (product?.price ?? 0) * item.quantity
-                  }, 0)
-                  const additionalItemsSubtotal =
-                    editData.additionalItems?.reduce(
-                      (sum, item) => sum + (item.lineTotal || 0),
-                      0
-                    ) || 0
-                  return (
-                    menuItemsSubtotal +
-                    additionalMenuItemsSubtotal +
-                    additionalItemsSubtotal
-                  ).toLocaleString()
-                })()}
-              </span>
-            </div>
-            {editData.deliveredByUs && (
-              <div className="flex justify-between text-sm text-zinc-600">
-                <span>{t('delivery_charges')}:</span>
-                <span className="font-regular text-zinc-900">
-                  ₹{(editData.deliveryCharge || 0).toLocaleString()}
-                </span>
+                    return discountAmount > 0 ? (
+                      <>
+                        <div className="flex justify-between text-sm text-green-600">
+                          <span>{discountLabel}:</span>
+                          <span className="font-regular">
+                            - ₹{discountAmount.toLocaleString()}
+                          </span>
+                        </div>
+                      </>
+                    ) : null
+                  })()}
+                <div className="flex justify-between border-t border-zinc-200 pt-3">
+                  <span className="font-semibold text-zinc-900">
+                    {t('total')}:
+                  </span>
+                  <span className="text-lg font-bold text-zinc-900">
+                    ₹{(editData.totalAmount ?? 0).toLocaleString()}
+                  </span>
+                </div>
               </div>
-            )}
-            {((editData.discountAmount ?? 0) > 0 ||
-              (editData.discountPercentage ?? 0) > 0) &&
-              (() => {
-                // Calculate menu items subtotal
-            
-                
-                // Use discountAmount if available
-                const discountAmount = editData.discountAmount || 0
-                const discountLabel = editData.discountPercentage
-                  ? `Discount (${editData.discountPercentage}%)`
-                  : 'Discount'
-
-                return discountAmount > 0 ? (
-                  <>
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>{discountLabel}:</span>
-                      <span className="font-regular">
-                        - ₹{discountAmount.toLocaleString()}
-                      </span>
-                    </div>
-                  </>
-                ) : null
-              })()}
-            <div className="flex justify-between border-t border-zinc-200 pt-3">
-              <span className="font-semibold text-zinc-900">{t('total')}:</span>
-              <span className="text-lg font-bold text-zinc-900">
-                ₹{(editData.totalAmount ?? 0).toLocaleString()}
-              </span>
-            </div>
-          </div>
+            )
+          })()}
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-             <Input
+            <Input
               title={t('price_reduced_per_plate')}
               prefixText="₹"
               placeholder="0"

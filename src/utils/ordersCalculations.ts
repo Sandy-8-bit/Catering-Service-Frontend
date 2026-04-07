@@ -74,6 +74,36 @@ export const calculateOrderTotals = (
 }
 
 /**
+ * Calculate price per plate (sum of all menu item line prices)
+ * 
+ * USED IN:
+ * - OrdersForm.tsx: Display "one_leaf_price" value
+ * - calculateMenuItemsSubtotal: Base calculation
+ */
+export const calculatePricePerPlate = (order: Order): number => {
+  const items = order.items || []
+  
+  if (items.length === 0) return 0
+
+  return items.reduce((sum, item) => {
+    const linePrice = item.totalPrice || item.unitPrice * item.quantity
+    return sum + linePrice
+  }, 0)
+}
+
+/**
+ * Calculate one leaf price after reduction
+ * 
+ * USED IN:
+ * - OrdersForm.tsx: Display "one_leaf_price" in payment summary
+ */
+export const calculateOneLeafPrice = (order: Order): number => {
+  const pricePerPlate = calculatePricePerPlate(order)
+  const priceReducedPerPlate = order.priceReducedPerPlate || 0
+  return Math.max(0, pricePerPlate - priceReducedPerPlate)
+}
+
+/**
  * Menu Items Subtotal = (pricePerPlate - priceReducedPerPlate) × totalPlates
  *
  * Where:
@@ -85,6 +115,12 @@ export const calculateOrderTotals = (
  * 1. Sum all item prices: Σ(unitPrice × quantity)
  * 2. Subtract priceReducedPerPlate from that sum (once)
  * 3. Multiply by totalPlates
+ * 
+ * USED IN:
+ * - OrdersForm.tsx: useEffect for calculating totalAmount
+ * - OrdersForm.tsx: Display "total_leaf_items_subtotal" in payment summary
+ * - OrdersForm.tsx: getSubtotalBeforeDelivery helper
+ * - ordersCalculations.ts: calculateOrderTotals
  */
 export const calculateMenuItemsSubtotal = (
   order: Order,
@@ -96,13 +132,7 @@ export const calculateMenuItemsSubtotal = (
   if (items.length === 0) return 0
 
   // Step 1: Calculate price per plate (sum of all items)
-  const pricePerPlate = items.reduce((sum, item) => {
-    const unitPrice =
-      item.unitPrice ||
-      (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
-
-    return sum + unitPrice * item.quantity
-  }, 0)
+  const pricePerPlate = calculatePricePerPlate(order)
 
   // Step 2: Apply reduction to price per plate
   const reducedPricePerPlate = Math.max(0, pricePerPlate - priceReducedPerPlate)
@@ -113,24 +143,44 @@ export const calculateMenuItemsSubtotal = (
 
 /**
  * Additional Menu Items Subtotal = Sum of (product.price × quantity)
+ * 
+ * USED IN:
+ * - OrdersForm.tsx: Display "additional_menu_items_subtotal" in payment summary
+ * - OrdersForm.tsx: getSubtotalBeforeDelivery helper
+ * - ordersCalculations.ts: calculateOrderTotals, calculateSubtotalBeforeDelivery
  */
 export const calculateAdditionalMenuItemsSubtotal = (
   order: Order,
-  productsMap: Map<number, Product>
+  productsMapOrArray: Map<number, Product> | Product[]
 ): number => {
   const additionalMenuItems = order.additionalMenuItems || []
 
   if (additionalMenuItems.length === 0) return 0
 
-  return additionalMenuItems.reduce((sum, item) => {
-    const product = productsMap.get(item.productId)
-    const price = product?.price || 0
-    return sum + price * item.quantity
-  }, 0)
+  if (Array.isArray(productsMapOrArray)) {
+    // Handle products array (from OrdersForm)
+    return additionalMenuItems.reduce((sum, item) => {
+      const product = productsMapOrArray.find((p) => p.id === item.productId)
+      const price = product?.price ?? 0
+      return sum + price * item.quantity
+    }, 0)
+  } else {
+    // Handle products Map (from other places)
+    return additionalMenuItems.reduce((sum, item) => {
+      const product = productsMapOrArray.get(item.productId)
+      const price = product?.price || 0
+      return sum + price * item.quantity
+    }, 0)
+  }
 }
 
 /**
- * Additional Items Subtotal = Sum of (priceAtOrder × quantity)
+ * Additional Items Subtotal = Sum of (lineTotal for each item)
+ * 
+ * USED IN:
+ * - OrdersForm.tsx: Display "additional_items_subtotal" in payment summary
+ * - OrdersForm.tsx: getSubtotalBeforeDelivery helper
+ * - ordersCalculations.ts: calculateOrderTotals, calculateSubtotalBeforeDelivery
  */
 export const calculateAdditionalItemsSubtotal = (order: Order): number => {
   const additionalItems = order.additionalItems || []
@@ -138,17 +188,64 @@ export const calculateAdditionalItemsSubtotal = (order: Order): number => {
   if (additionalItems.length === 0) return 0
 
   return additionalItems.reduce((sum, item) => {
-    const price = item.priceAtOrder || 0
-    return sum + price * item.quantity
+    const price = item.lineTotal || 0
+    return sum + price
   }, 0)
+}
+
+/**
+ * Calculate discount amount from percentage
+ * 
+ * USED IN:
+ * - OrdersForm.tsx: handleDiscountPercentageChange handler
+ */
+export const calculateDiscountFromPercentage = (
+  subtotal: number,
+  percentage: number
+): number => {
+  if (percentage <= 0) return 0
+  return Math.round(subtotal * (percentage / 100))
+}
+
+/**
+ * Calculate discount percentage from amount
+ * 
+ * USED IN:
+ * - OrdersForm.tsx: handleDiscountAmountChange handler
+ */
+export const calculateDiscountPercentageFromAmount = (
+  subtotal: number,
+  amount: number
+): number => {
+  if (subtotal <= 0 || amount <= 0) return 0
+  return Math.round((amount / subtotal) * 100 * 100) / 100
+}
+
+/**
+ * Subtotal Before Delivery = menuItemsSubtotal + additionalMenuItemsSubtotal + additionalItemsSubtotal
+ * 
+ * USED IN:
+ * - OrdersForm.tsx: Display "subtotal_before_delivery" in payment summary
+ * - OrdersForm.tsx: Helper for discount calculations
+ * - OrdersForm.tsx: useEffect for calculating totalAmount
+ * - ordersCalculations.ts: calculateOrderTotals
+ */
+export const calculateSubtotalBeforeDelivery = (
+  order: Order,
+  productsMapOrArray?: Map<number, Product> | Product[]
+): number => {
+  const menuItemsSubtotal = calculateMenuItemsSubtotal(order)
+  const additionalMenuItemsSubtotal = productsMapOrArray
+    ? calculateAdditionalMenuItemsSubtotal(order, productsMapOrArray)
+    : 0
+  const additionalItemsSubtotal = calculateAdditionalItemsSubtotal(order)
+
+  return (
+    menuItemsSubtotal + additionalMenuItemsSubtotal + additionalItemsSubtotal
+  )
 }
 
 /**
  * Format currency for display
  */
-export const formatCurrency = (value: number): string =>
-  new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 2,
-  }).format(value || 0)
+export const formatCurrency = (value: number): string =>\n  new Intl.NumberFormat('en-IN', {\n    style: 'currency',\n    currency: 'INR',\n    maximumFractionDigits: 2,\n  }).format(value || 0)
