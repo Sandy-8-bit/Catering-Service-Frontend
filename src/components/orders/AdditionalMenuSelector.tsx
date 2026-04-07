@@ -373,7 +373,7 @@ const AdditionalMenuSelector = ({
                     {group.categoryName}
                   </p>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <div className="grid gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {group.products.map((product) => {
                     const selectedLine = safeItems.find(
                       (item) => item.productId === product.id
@@ -390,7 +390,7 @@ const AdditionalMenuSelector = ({
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="truncate text-base font-semibold text-zinc-900">
+                            <p className=" text-base font-semibold text-zinc-900">
                               {product.primaryName}
                             </p>
                             <p className="text-sm text-zinc-500">
@@ -398,10 +398,11 @@ const AdditionalMenuSelector = ({
                                 t('orders_signature_dish')}
                             </p>
                           </div>
-                          <span className="text-sm font-semibold text-zinc-900">
+                          
+                        </div>
+                        <span className="text-sm font-semibold text-zinc-900">
                             {formatCurrency(product.price ?? 0)}
                           </span>
-                        </div>
                         {isSelected ? (
                           <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white px-4 py-2">
                             <button

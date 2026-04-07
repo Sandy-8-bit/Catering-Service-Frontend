@@ -345,7 +345,7 @@ const AdditionalItemsSelector = ({
               {t('orders_no_add_ons_match_search')}
             </div>
           ) : (
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {filteredItems.map((item) => {
                 const existing = safeItems.find(
                   (line) => line.additionalItemId === item.id
@@ -360,21 +360,22 @@ const AdditionalItemsSelector = ({
                         : 'border-[#E4E4E7]/50 bg-white shadow-sm hover:border-zinc-900'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between ">
                       <div className="min-w-0">
-                        <p className="truncate text-base font-semibold text-zinc-900">
+                        <p className=" text-base font-semibold text-zinc-900">
                           {item.primaryName}
                         </p>
                         <p className="text-sm text-zinc-500">
                           {item.secondaryName || t('orders_perfect_pairing')}
                         </p>
                       </div>
-                      <span className="text-sm font-semibold text-zinc-900">
+                     
+                    </div>
+                     <span className="text-sm font-semibold text-zinc-900">
                         {formatCurrency(item.pricePerUnit)}
                       </span>
-                    </div>
                     {isSelected ? (
-                      <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white px-4 py-2">
+                      <div className="flex items-center mt-auto justify-between rounded-md border border-[#E4E4E7] bg-white px-4 py-2">
                         <button
                           type="button"
                           aria-label={t('decrease_quantity')}
