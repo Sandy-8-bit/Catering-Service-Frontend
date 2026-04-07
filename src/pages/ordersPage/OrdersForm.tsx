@@ -415,18 +415,7 @@ export const OrdersForm = () => {
               />
             </div>
 
-            <Input
-              title={t('location_url')}
-              name="Location Url"
-              placeholder={t('location_url_placeholder')}
-              inputValue={editData.locationUrl}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  locationUrl: value,
-                }))
-              }
-            />
+            
           </div>
           {/* Delivery & Payment */}
           <header className="mt-6 space-y-1">
@@ -480,6 +469,18 @@ export const OrdersForm = () => {
                     }))
                   }
                 />
+                <Input
+              title={t('location_url')}
+              name="Location Url"
+              placeholder={t('location_url_placeholder')}
+              inputValue={editData.locationUrl}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  locationUrl: value,
+                }))
+              }
+            />
               </>
             )}
 
