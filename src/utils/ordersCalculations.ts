@@ -75,14 +75,14 @@ export const calculateOrderTotals = (
 
 /**
  * Calculate price per plate (sum of all menu item line prices)
- * 
+ *
  * USED IN:
  * - OrdersForm.tsx: Display "one_leaf_price" value
  * - calculateMenuItemsSubtotal: Base calculation
  */
 export const calculatePricePerPlate = (order: Order): number => {
   const items = order.items || []
-  
+
   if (items.length === 0) return 0
 
   return items.reduce((sum, item) => {
@@ -93,7 +93,7 @@ export const calculatePricePerPlate = (order: Order): number => {
 
 /**
  * Calculate one leaf price after reduction
- * 
+ *
  * USED IN:
  * - OrdersForm.tsx: Display "one_leaf_price" in payment summary
  */
@@ -115,16 +115,14 @@ export const calculateOneLeafPrice = (order: Order): number => {
  * 1. Sum all item prices: Σ(unitPrice × quantity)
  * 2. Subtract priceReducedPerPlate from that sum (once)
  * 3. Multiply by totalPlates
- * 
+ *
  * USED IN:
  * - OrdersForm.tsx: useEffect for calculating totalAmount
  * - OrdersForm.tsx: Display "total_leaf_items_subtotal" in payment summary
  * - OrdersForm.tsx: getSubtotalBeforeDelivery helper
  * - ordersCalculations.ts: calculateOrderTotals
  */
-export const calculateMenuItemsSubtotal = (
-  order: Order,
-): number => {
+export const calculateMenuItemsSubtotal = (order: Order): number => {
   const items = order.items || []
   const totalPlates = order.totalPlates || 1
   const priceReducedPerPlate = order.priceReducedPerPlate || 0
@@ -143,7 +141,7 @@ export const calculateMenuItemsSubtotal = (
 
 /**
  * Additional Menu Items Subtotal = Sum of (product.price × quantity)
- * 
+ *
  * USED IN:
  * - OrdersForm.tsx: Display "additional_menu_items_subtotal" in payment summary
  * - OrdersForm.tsx: getSubtotalBeforeDelivery helper
@@ -176,7 +174,7 @@ export const calculateAdditionalMenuItemsSubtotal = (
 
 /**
  * Additional Items Subtotal = Sum of (lineTotal for each item)
- * 
+ *
  * USED IN:
  * - OrdersForm.tsx: Display "additional_items_subtotal" in payment summary
  * - OrdersForm.tsx: getSubtotalBeforeDelivery helper
@@ -195,7 +193,7 @@ export const calculateAdditionalItemsSubtotal = (order: Order): number => {
 
 /**
  * Calculate discount amount from percentage
- * 
+ *
  * USED IN:
  * - OrdersForm.tsx: handleDiscountPercentageChange handler
  */
@@ -209,7 +207,7 @@ export const calculateDiscountFromPercentage = (
 
 /**
  * Calculate discount percentage from amount
- * 
+ *
  * USED IN:
  * - OrdersForm.tsx: handleDiscountAmountChange handler
  */
@@ -223,7 +221,7 @@ export const calculateDiscountPercentageFromAmount = (
 
 /**
  * Subtotal Before Delivery = menuItemsSubtotal + additionalMenuItemsSubtotal + additionalItemsSubtotal
- * 
+ *
  * USED IN:
  * - OrdersForm.tsx: Display "subtotal_before_delivery" in payment summary
  * - OrdersForm.tsx: Helper for discount calculations
@@ -248,4 +246,9 @@ export const calculateSubtotalBeforeDelivery = (
 /**
  * Format currency for display
  */
-export const formatCurrency = (value: number): string =>\n  new Intl.NumberFormat('en-IN', {\n    style: 'currency',\n    currency: 'INR',\n    maximumFractionDigits: 2,\n  }).format(value || 0)
+export const formatCurrency = (value: number): string =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 2,
+  }).format(value || 0)
