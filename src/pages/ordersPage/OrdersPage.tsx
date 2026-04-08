@@ -430,7 +430,7 @@ export const OrdersPage = () => {
           <ButtonSm
             state="outline"
             onClick={() => setShowVoiceDialog(true)}
-            className=" font-medium lg:flex"
+            className="font-medium lg:flex"
           >
             <Mic className="mr-2 h-4 w-4 text-zinc-700" />{' '}
             {t('create_voice_order')}
@@ -441,7 +441,7 @@ export const OrdersPage = () => {
             disabled={!staffUserId}
             className="hidden font-medium lg:flex"
           >
-          {t('pending_order')}
+            {t('pending_order')}
           </ButtonSm>
           <ButtonSm
             state="default"
@@ -462,7 +462,8 @@ export const OrdersPage = () => {
         </DialogBox>
       )}
 
-      <section className="flex flex-1 flex-col gap-0 overflow-hidden lg:flex-row">
+      <section className="flex max-h-full flex-1 flex-col gap-0 overflow-hidden lg:flex-row">
+        {/* left section */}
         <div className="flex w-full flex-col gap-5 border-b border-zinc-200 bg-zinc-50 p-4 lg:w-[360px] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0">
           <InlineCalendar
             className="min-w-full!"
@@ -476,7 +477,7 @@ export const OrdersPage = () => {
             }}
           />
 
-          <div className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
             <header className="mb-3 flex items-center justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold tracking-widest text-zinc-400 uppercase">
@@ -493,7 +494,7 @@ export const OrdersPage = () => {
               )}
             </header>
 
-            <div className="flex max-h-52 flex-col gap-2">
+            <div className="flex max-h-52 flex-col gap-2 overflow-x-scroll">
               {isLoading ? (
                 <div className="flex animate-pulse flex-col gap-2">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -582,8 +583,8 @@ export const OrdersPage = () => {
             </div>
           </div>
         </div>
-
-        <div className="flex w-full flex-col gap-6 overflow-y-auto bg-white p-4 shadow-[-1px_0_0_0_#e4e4e7] sm:p-6">
+        {/* right section */}
+        <div className="flex w-full flex-col gap-6 overflow-hidden bg-white p-4 shadow-[-1px_0_0_0_#e4e4e7] sm:p-6">
           <div className="flex flex-col items-start gap-1">
             {selectedOrder ? (
               <button
@@ -605,7 +606,7 @@ export const OrdersPage = () => {
 
           {selectedOrder && <OrderDetailsCard order={selectedOrder} />}
 
-          <div className="flex flex-col gap-10 overflow-hidden">
+          <div className="flex min-h-0 flex-1 flex-col gap-10 overflow-y-auto">
             <div className="flex flex-col gap-4 overflow-hidden">
               <div className="flex items-center gap-2">
                 <span className="h-4 w-0.5 rounded-full bg-orange-500" />
