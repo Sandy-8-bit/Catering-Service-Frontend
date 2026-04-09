@@ -279,6 +279,8 @@
   "select_payment_type": "Select Payment Type",
   "payment_text": "Decides how the order will be paid for.",
   "create_new_order": "Create New Order",
+  "clear_order": "Clear Order",
+  "clear_form": "Clear Form",
   "availability": "Availability",
   "logout": "Logout",
   "all": "All",

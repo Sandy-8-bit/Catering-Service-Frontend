@@ -20,6 +20,7 @@ import DownloadBillButton from '@/components/orders/DownloadBillButton'
 import { appRoutes } from '@/routes/appRoutes'
 import { useFetchOrders, useDeleteOrder } from '@/queries/ordersQueries'
 import type { Order } from '@/types/order'
+import toast from 'react-hot-toast'
 
 const DetailCell = ({
   label,
@@ -45,6 +46,20 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
 
   const eventDate = new Date(order.eventDate)
 
+  const formatTime = (time: string) => {
+  const [hour, minute] = time.split(':');
+
+  return new Date(0, 0, 0, +hour, +minute).toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const handleCopy = (text: string) => {
+  navigator.clipboard.writeText(text);
+  toast.success('Copied!');
+};
+  
   return (
     <article className="overflow-hidden rounded-xl border-2 border-zinc-200/80 bg-white">
       <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50 px-5 py-3">
@@ -60,8 +75,29 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
       </div>
       <div className="p-5">
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <DetailCell label={t('customer')} value={order.customerName} />
-          <DetailCell label={t('phone')} value={order.customerPhone} />
+       <DetailCell
+  label={t('customer')}
+  value={
+    <span
+      className="cursor-pointer hover:text-blue-500"
+      onClick={() => handleCopy(order.customerName)}
+    >
+      {order.customerName}
+    </span>
+  }
+/>
+
+<DetailCell
+  label={t('phone')}
+  value={
+    <span
+      className="cursor-pointer hover:text-blue-500"
+      onClick={() => handleCopy(order.customerPhone)}
+    >
+      {order.customerPhone}
+    </span>
+  }
+/>
           <DetailCell label={t('event')} value={order.eventType} />
           <DetailCell
             label={t('date_time')}
@@ -74,10 +110,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
                 })}
                 {' | '}
                 <span className="">
-                  {eventDate.toLocaleTimeString(undefined, {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {formatTime(order.eventTime)}
                 </span>
               </span>
             }
@@ -364,6 +397,8 @@ export const OrdersPage = () => {
     } else if (mode === 'create') {
       // Pass selected date for create mode
       params.set('selectedDate', selectedDateISO)
+      // Mark as new order to clear localStorage
+      params.set('new', 'true')
     }
     navigate(`${appRoutes.ordersForm.path}?${params.toString()}`)
   }

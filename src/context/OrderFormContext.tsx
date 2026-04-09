@@ -5,14 +5,13 @@ interface OrderFormContextType {
   savedFormData: Order | null
   saveFormData: (data: Order) => void
   clearFormData: () => void
-  restoreFormData: () => Order | null
+  getInitialFormData: (isNewOrder?: boolean) => Order | null
 }
 
 const OrderFormContext = createContext<OrderFormContextType | undefined>(
   undefined
 )
 
-const SESSION_FLAG = 'orderFormSessionActive'
 const FORM_DATA_KEY = 'orderFormData'
 
 export const OrderFormProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -20,59 +19,53 @@ export const OrderFormProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [savedFormData, setSavedFormData] = useState<Order | null>(null)
 
-  // Load saved data from localStorage on mount
-  // Clear data if it's a manual refresh (F5, Ctrl+R) or new session
+  // ✅ Load from localStorage on mount
   useEffect(() => {
-    const isActiveSession = sessionStorage.getItem(SESSION_FLAG)
-    
-    // Detect if page was manually refreshed by checking navigation type
-    const isPageRefresh = 
-      performance.navigation.type === 1 || // Legacy API: reload type
-      ((performance.getEntriesByType('navigation')[0] as any)?.type === 'reload') // Modern API with type assertion
-    
-    if (!isActiveSession || isPageRefresh) {
-      // New session or manual refresh detected - clear form data
-      localStorage.removeItem(FORM_DATA_KEY)
-      setSavedFormData(null)
-    } else {
-      // Continuing from in-app navigation, restore saved data
+    try {
       const storedData = localStorage.getItem(FORM_DATA_KEY)
       if (storedData) {
-        try {
-          setSavedFormData(JSON.parse(storedData))
-        } catch (error) {
-          console.error('Failed to parse stored order form data:', error)
-        }
+        setSavedFormData(JSON.parse(storedData))
       }
+    } catch (error) {
+      console.error('Error loading form data:', error)
     }
-    
-    // Mark this session as active for subsequent navigations
-    sessionStorage.setItem(SESSION_FLAG, 'true')
   }, [])
 
+  // ✅ Save
   const saveFormData = (data: Order) => {
     setSavedFormData(data)
-    localStorage.setItem(FORM_DATA_KEY, JSON.stringify(data))
+    try {
+      localStorage.setItem(FORM_DATA_KEY, JSON.stringify(data))
+    } catch (error) {
+      console.error('Error saving form data:', error)
+    }
   }
 
+  // ✅ Clear
   const clearFormData = () => {
     setSavedFormData(null)
-    localStorage.removeItem(FORM_DATA_KEY)
+    try {
+      localStorage.removeItem(FORM_DATA_KEY)
+    } catch (error) {
+      console.error('Error clearing form data:', error)
+    }
   }
 
-  const restoreFormData = (): Order | null => {
+  // ✅ Get initial form data - use localStorage as initial data
+  const getInitialFormData = (isNewOrder?: boolean): Order | null => {
+    // If new order, clear and return null to use default
+    if (isNewOrder) {
+      clearFormData()
+      return null
+    }
+    // Otherwise return saved data from localStorage
     return savedFormData
   }
 
-  const value: OrderFormContextType = {
-    savedFormData,
-    saveFormData,
-    clearFormData,
-    restoreFormData,
-  }
-
   return (
-    <OrderFormContext.Provider value={value}>
+    <OrderFormContext.Provider
+      value={{ savedFormData, saveFormData, clearFormData, getInitialFormData }}
+    >
       {children}
     </OrderFormContext.Provider>
   )
@@ -82,7 +75,7 @@ export const useOrderFormContext = () => {
   const context = useContext(OrderFormContext)
   if (!context) {
     throw new Error(
-      'useOrderFormContext must be used within an OrderFormProvider'
+      'useOrderFormContext must be used within OrderFormProvider'
     )
   }
   return context

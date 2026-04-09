@@ -45,7 +45,7 @@ export const OrdersForm = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isEditMode = searchParams.get('mode') === 'edit'
-  const selectedDateParam = searchParams.get('selectedDate') // Get selected date from query
+  const selectedDateParam = searchParams.get('selectedDate')
   const orderIdParam = Number(searchParams.get('orderId'))
   const orderId = Number.isFinite(orderIdParam) ? orderIdParam : undefined
   const { data: user = [], isLoading: isUserOptionLoading } = useFetchUsers()
@@ -56,57 +56,54 @@ export const OrdersForm = () => {
   const { data: additionalItems = [], isLoading: isAdditionalLoading } =
     useFetchAdditionalItems()
 
-  const { saveFormData, clearFormData, restoreFormData } = useOrderFormContext()
+  const { saveFormData, clearFormData } = useOrderFormContext()
   const [editData, setEditData] = useState<Order>(defaultOrderData)
-  const [isInitialized, setIsInitialized] = useState(false)
 
   const { mutate: createOrder, isPending: isCreatePending } = useCreateOrder()
   const { mutate: updateOrder, isPending: isUpdatePending } = useUpdateOrder()
 
-  // Restore form data on mount if not in edit mode
-  useEffect(() => {
-    if (isEditMode || isInitialized) return
-
-    let initialData = defaultOrderData
-
-    // If a date was selected in calendar, use it first
-    if (selectedDateParam) {
-      initialData = {
-        ...defaultOrderData,
-        eventDate: selectedDateParam,
-      }
-    } else {
-      // Otherwise, restore previously saved data
-      const savedData = restoreFormData()
-      if (savedData) {
-        initialData = savedData
-      }
+useEffect(() => {
+  if (isEditMode) {
+    if (existingOrder) {
+      setEditData(existingOrder)
     }
+    return
+  }
 
-    setEditData(initialData)
-    setIsInitialized(true)
-  }, [isEditMode, isInitialized, restoreFormData, selectedDateParam])
+  // Create mode
+  let initialData: Order = defaultOrderData
 
-  // Auto-save form data to context whenever it changes (with debounce)
+  try {
+    const stored = localStorage.getItem('orderFormData')
+    if (stored) {
+      initialData = JSON.parse(stored)
+    }
+  } catch (err) {
+    console.error("Failed to load from localStorage", err)
+  }
+
+  if (selectedDateParam) {
+    initialData = {
+      ...initialData,
+      eventDate: selectedDateParam,
+    }
+  }
+
+  setEditData(initialData)
+}, [isEditMode, existingOrder, selectedDateParam])
+  // Auto-save form data to localStorage whenever it changes (only in create mode)
   useEffect(() => {
-    if (!isInitialized || isEditMode) return
+    if (isEditMode ) return
 
     const timer = setTimeout(() => {
       saveFormData(editData)
-    }, 500) // Debounce for 500ms to avoid too frequent saves
+    }, 500) // Debounce for 500ms
 
     return () => clearTimeout(timer)
-  }, [editData, saveFormData, isEditMode, isInitialized])
-
-  // Clear session flag on component unmount (when navigating away intentionally)
-  useEffect(() => {
-    return () => {
-      // Only clear if we're navigating away naturally (not on refresh)
-      // The refresh detection happens in the context
-    }
-  }, [])
+  }, [editData, saveFormData, isEditMode])
 
   const isPaymentTypeRequired = (editData.advanceAmount || 0) > 0
+
   const handleCreateOrder = () => {
     createOrder(mapOrderToPayload(editData), {
       onSuccess: () => {
@@ -120,28 +117,22 @@ export const OrdersForm = () => {
     updateOrder(mapOrderToUpdatePayload(editData, existingOrder), {
       onSuccess: () => {
         clearFormData() // Clear saved data on successful submission
+        navigate(appRoutes.orders.path)
       },
     })
   }
 
-  const driverOptions = user!
+  const driverOptions = user
     .filter((user) => user.role === 'DRIVER')
     .map((driver) => ({
       id: driver.userId,
       label: driver.name,
     }))
 
+  // Calculate totals
   useEffect(() => {
-    if (!existingOrder) return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEditData(existingOrder)
-  }, [existingOrder])
-
-  useEffect(() => {
-    // 1. Menu Items Subtotal = (Price Per Plate - Price Reduced Per Plate) × Total Plates
     const menuItemsSubtotal = calculateMenuItemsSubtotal(editData)
 
-    // 2. Additional Menu Items Subtotal
     const additionalMenuItemsSubtotal = (
       editData.additionalMenuItems ?? []
     ).reduce((sum, item) => {
@@ -149,26 +140,21 @@ export const OrdersForm = () => {
       return sum + (product?.price ?? 0) * item.quantity
     }, 0)
 
-    // 3. Additional Items Subtotal
     const additionalItemsSubtotal =
       editData.additionalItems?.reduce(
         (sum, item) => sum + (item.lineTotal || 0),
         0
       ) || 0
 
-    // 4. Subtotal Before Delivery
     const subtotalBeforeDelivery =
       menuItemsSubtotal + additionalMenuItemsSubtotal + additionalItemsSubtotal
 
-    // 5. Delivery Charge
     const deliveryCharge = editData.deliveredByUs
       ? editData.deliveryCharge || 0
       : 0
 
-    // 6. Gross Total
     const grossTotal = subtotalBeforeDelivery + deliveryCharge
 
-    // 7. Discount Amount
     let discountAmount = 0
     if (editData.discountAmount && editData.discountAmount > 0) {
       discountAmount = editData.discountAmount
@@ -178,13 +164,9 @@ export const OrdersForm = () => {
       )
     }
 
-    // 8. Total Amount
     const netTotal = Math.round(grossTotal - discountAmount)
-
-    // 9. Balance Amount
     const balance = netTotal - (editData.advanceAmount || 0)
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditData((prev) => ({
       ...prev,
       totalAmount: netTotal,
@@ -204,7 +186,6 @@ export const OrdersForm = () => {
     products,
   ])
 
-  // Helper to calculate subtotal before delivery
   const getSubtotalBeforeDelivery = () => {
     return calculateSubtotalBeforeDelivery(editData, products)
   }
@@ -241,6 +222,11 @@ export const OrdersForm = () => {
     event.preventDefault()
   }
 
+  const handleClearForm = () => {
+    setEditData(defaultOrderData)
+    clearFormData()
+  }
+
   const TIME_PRESETS = [
     { label: t('tiffin'), value: '07:00:00' },
     { label: t('lunch'), value: '11:00:00' },
@@ -250,6 +236,13 @@ export const OrdersForm = () => {
   const safeNumber = (value: string | number | undefined) => {
     const num = Number(value)
     return isNaN(num) ? 0 : num
+  }
+
+  // Check if form is valid for submission
+  const isFormValidForSubmit = (): boolean => {
+    const hasName = !!(editData.customerName && editData.customerName.trim() !== '')
+    const hasPhone = !!(editData.customerPhone && editData.customerPhone.trim() !== '')
+    return hasName && hasPhone
   }
 
   if (isOrderLoading || isUserOptionLoading || isAdditionalLoading)
@@ -277,8 +270,13 @@ export const OrdersForm = () => {
           navigate={navigate}
           onCreateOrder={handleCreateOrder}
           onUpdateOrder={handleUpdateOrder}
+          onClearForm={() => {
+            clearFormData()
+            setEditData(defaultOrderData)
+          }}
           isCreatePending={isCreatePending}
           isUpdatePending={isUpdatePending}
+          isFormValid={isFormValidForSubmit()}
         />
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
@@ -320,6 +318,7 @@ export const OrdersForm = () => {
                   customerPhone: value,
                 }))
               }
+              required
             />
 
             <Input
@@ -393,6 +392,18 @@ export const OrdersForm = () => {
                 }
               />
             </div>
+            <Input
+              title={t('total_plates')}
+              prefixText={t('count')}
+              placeholder=""
+              inputValue={editData.totalPlates?.toString() || ''}
+              onChange={(value) =>
+                setEditData((prev) => ({
+                  ...prev,
+                  totalPlates: safeNumber(value),
+                }))
+              }
+            />
           </div>
           {/* Delivery & Payment */}
           <header className="mt-6 space-y-1">
@@ -460,19 +471,6 @@ export const OrdersForm = () => {
                 />
               </>
             )}
-
-            <Input
-              title={t('total_plates')}
-              prefixText={t('count')}
-              placeholder="Enter total plates"
-              inputValue={editData.totalPlates?.toString() || ''}
-              onChange={(value) =>
-                setEditData((prev) => ({
-                  ...prev,
-                  totalPlates: safeNumber(value),
-                }))
-              }
-            />
           </div>
 
           {/* Menu items */}
@@ -519,7 +517,6 @@ export const OrdersForm = () => {
 
           {/* Total Amount Display */}
           {(() => {
-            // Calculate display values using utility functions
             const menuItemsSubtotal = calculateMenuItemsSubtotal(editData)
             const additionalMenuItemsSubtotal =
               calculateAdditionalMenuItemsSubtotal(editData, products)
@@ -647,11 +644,11 @@ export const OrdersForm = () => {
               options={paymentTypeOptions}
               required={isPaymentTypeRequired}
               selected={
-                paymentTypeOptions.find(
+                (editData.paymentType && paymentTypeOptions.find(
                   (option) =>
-                    option.label.toLocaleLowerCase() ===
-                    editData.paymentType.toLocaleLowerCase()
-                ) || { id: 0, label: t('select_payment_type') }
+                    option.label.toLowerCase() ===
+                    editData.paymentType.toLowerCase()
+                )) || { id: 0, label: t('select_payment_type') }
               }
               onChange={(option) =>
                 setEditData((prev) => ({ ...prev, paymentType: option.label }))
@@ -667,8 +664,10 @@ export const OrdersForm = () => {
             navigate={navigate}
             onCreateOrder={handleCreateOrder}
             onUpdateOrder={handleUpdateOrder}
+            onClearForm={handleClearForm}
             isCreatePending={isCreatePending}
             isUpdatePending={isUpdatePending}
+            isFormValid={isFormValidForSubmit()}
           />
         </form>
       </section>
@@ -685,8 +684,10 @@ interface ActionButtonsProps {
   navigate: ReturnType<typeof useNavigate>
   onCreateOrder: () => void
   onUpdateOrder: () => void
+  onClearForm: () => void
   isCreatePending: boolean
   isUpdatePending: boolean
+  isFormValid: boolean
 }
 
 const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -698,23 +699,45 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
   navigate,
   onCreateOrder,
   onUpdateOrder,
+  onClearForm,
   isCreatePending,
   isUpdatePending,
+  isFormValid,
 }) => {
   const { t } = useTranslation()
-  const { clearFormData } = useOrderFormContext()
+
+  const isSubmitDisabled = (): boolean => {
+    if (!isFormValid) return true
+    
+    if (isEditMode) {
+      return lodash.isEqual(editData, existingOrder)
+    } else {
+      return lodash.isEqual(editData, defaultOrderData)
+    }
+  }
 
   return (
     <div className="flex flex-wrap justify-end gap-3">
+      {!isEditMode && !lodash.isEqual(editData, defaultOrderData) && (
+        <ButtonSm
+          state="outline"
+          className="border-red-300 text-red-600 hover:bg-red-50"
+          type="button"
+          onClick={onClearForm}
+        >
+          {t('clear_form') || 'Clear Form'}
+        </ButtonSm>
+      )}
       <ButtonSm
         state="outline"
         className="disabled:cursor-not-allowed disabled:opacity-80!"
         type="button"
         disabled={isEditMode ? lodash.isEqual(editData, existingOrder) : false}
         onClick={() => {
-          if (isEditMode) setEditData(existingOrder || defaultOrderData)
-          else {
-            clearFormData() // Clear saved data when canceling form
+          if (isEditMode) {
+            setEditData(existingOrder || defaultOrderData)
+          } else {
+            // Don't clear data when going back - just navigate
             navigate(-1)
           }
         }}
@@ -724,11 +747,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
       <ButtonSm
         className="disabled:cursor-not-allowed disabled:opacity-80!"
         type="submit"
-        disabled={
-          isEditMode
-            ? lodash.isEqual(editData, existingOrder)
-            : lodash.isEqual(editData, defaultOrderData)
-        }
+        disabled={isSubmitDisabled()}
         state="default"
         isPending={isCreatePending || isUpdatePending}
         onClick={() => {
