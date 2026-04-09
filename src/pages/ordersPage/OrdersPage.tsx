@@ -547,73 +547,119 @@ export const OrdersPage = () => {
                   {infoMessage}
                 </p>
               ) : (
-                ordersForDate.map((order) => {
-                  const isActive = order.id === selectedOrderId
-                  return (
-                    <button
-                      type="button"
-                      key={order.id}
-                      onClick={() =>
-                        setSelectedOrderId((prev) =>
-                          prev === order.id ? null : order.id
-                        )
-                      }
-                      className={`w-full cursor-pointer rounded-xl px-4 py-3 text-left transition-all ${
-                        isActive
-                          ? 'bg-orange-500 shadow-md shadow-orange-200'
-                          : 'border border-zinc-100 bg-zinc-50 hover:bg-zinc-100'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p
-                            className={`text-base font-bold ${isActive ? 'text-white' : 'text-zinc-800'}`}
-                          >
-                            {order.customerName}
-                          </p>
-                          <span
-                            className={`text-xs ${isActive ? 'text-orange-100' : 'text-zinc-400'}`}
-                          >
-                            #{order.id} · {order.eventType}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-1.5 lg:hidden">
-                          <ActionDropdown
-                            actions={[
-                              {
-                                id: 'edit',
-                                label: 'Edit',
-                                icon: <Edit3 className="h-3 w-3" />,
-                                onClick: () =>
-                                  handleNavigateToForm('edit', order.id),
-                              },
-                              {
-                                id: 'delete',
-                                label: 'Delete',
-                                icon: <Trash2 className="h-3 w-3" />,
-                                color: 'text-red-600',
-                                onClick: () => {
-                                  setSelectedOrderId(order.id)
-                                  setIsDeleteDialogOpen(true)
-                                },
-                              },
-                              {
-                                id: 'status',
-                                label: 'Status',
-                                icon: <Edit3 className="h-3 w-3" />,
-                                onClick: () =>
-                                  navigate(`/driver/order/${order.id}`),
-                              },
-                            ]}
-                          />
-                          <div onClick={(e) => e.stopPropagation()}>
-                            <DownloadBillButton orderId={order.id} compact />
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  )
-                })
+             ordersForDate.map((order, index) => {
+  const isActive = order.id === selectedOrderId
+
+  let pressTimer: any = null
+
+  const handleCopy = () => {
+    const text = `Name: ${order.customerName}
+Phone: ${order.customerPhone}
+Address: ${order.customerAddress}`
+
+    navigator.clipboard.writeText(text)
+    toast.success('Details copied!')
+  }
+
+  const handleMouseDown = () => {
+    pressTimer = setTimeout(() => {
+      handleCopy()
+    }, 600) // long press duration
+  }
+
+  const handleMouseUp = () => {
+    clearTimeout(pressTimer)
+  }
+
+  return (
+    <button
+      type="button"
+      key={order.id}
+      onClick={() =>
+        setSelectedOrderId((prev) =>
+          prev === order.id ? null : order.id
+        )
+      }
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onTouchStart={handleMouseDown}
+      onTouchEnd={handleMouseUp}
+      className={`w-full cursor-pointer rounded-xl px-4 py-3 text-left transition-all ${
+        isActive
+          ? 'bg-orange-500 shadow-md shadow-orange-200'
+          : 'border border-zinc-100 bg-zinc-50 hover:bg-zinc-100'
+      }`}
+    >
+      <div className="flex  items-start justify-between gap-2">
+        <div>
+          {/* 🔢 Number + Name */}
+          <p
+            className={`text-base font-bold ${
+              isActive ? 'text-white' : 'text-zinc-800'
+            }`}
+          >
+            {index + 1}. {order.customerName}
+          </p>
+
+          {/* 📞 Phone number */}
+          <p
+            className={`text-sm ${
+              isActive ? 'text-orange-100' : 'text-zinc-600'
+            }`}
+          >
+          {order.customerPhone}
+          </p>
+
+          {/* Order meta */}
+          <span
+            className={`text-[11px] ${
+              isActive ? 'text-orange-100' : 'text-zinc-400'
+            }`}
+          >
+            #{order.id} · {order.eventType}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap justify-end items-center gap-1.5 lg:hidden">
+          <ActionDropdown
+            actions={[
+              {
+                id: 'edit',
+                label: 'Edit',
+                icon: <Edit3 className="h-3 w-3" />,
+                onClick: () =>
+                  handleNavigateToForm('edit', order.id),
+              },
+              {
+                id: 'delete',
+                label: 'Delete',
+                icon: <Trash2 className="h-3 w-3" />,
+                color: 'text-red-600',
+                onClick: () => {
+                  setSelectedOrderId(order.id)
+                  setIsDeleteDialogOpen(true)
+                },
+              },
+              {
+                id: 'status',
+                label: 'Status',
+                icon: <Edit3 className="h-3 w-3" />,
+                onClick: () =>
+                  navigate(`/driver/order/${order.id}`),
+              },
+            ]}
+          />
+
+          {/* prevent triggering long press */}
+          <div onClick={(e) => e.stopPropagation()}>
+            <DownloadBillButton orderId={order.id} compact />
+          </div>
+        </div>
+      </div>
+    </button>
+  )
+})
               )}
             </div>
           </div>
