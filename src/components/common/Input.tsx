@@ -170,22 +170,7 @@ const Input = <T extends string | number>({
           } ${className} text-start ${viewMode ? 'text-base font-medium text-slate-900' : 'overflow-clip px-3 py-3 text-sm font-medium text-slate-600 autofill:text-black focus:outline-none'} shadow-sm read-only:cursor-default read-only:bg-white`}
         />
 
-        {!viewMode && !disabled && (
-          <button
-            type="button"
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onTouchStart={handleMouseDown}
-            onTouchEnd={handleMouseUp}
-            onClick={handleClick}
-            className={`mr-3 transition ${
-              isListening ? 'scale-110 text-red-500' : 'text-slate-500'
-            }`}
-          >
-            <Mic size={20} />
-          </button>
-        )}
+      
         {suffixText && (
           <div className="bg-slate-100 px-3 py-3 text-sm font-medium text-slate-700">
             {suffixText}

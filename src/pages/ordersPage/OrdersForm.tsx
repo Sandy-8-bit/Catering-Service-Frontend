@@ -37,7 +37,6 @@ import {
   calculateDiscountFromPercentage,
   calculateDiscountPercentageFromAmount,
 } from '@/utils/ordersCalculations'
-import VoiceInput from '@/components/common/VoiceInput'
 import { useOrderFormContext } from '@/context/OrderFormContext'
 
 export const OrdersForm = () => {
@@ -292,7 +291,7 @@ useEffect(() => {
           </header>
 
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
-            <VoiceInput
+            <Input
               title={t('name')}
               name="customerName"
               placeholder={t('eg_name')}

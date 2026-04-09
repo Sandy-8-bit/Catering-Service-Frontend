@@ -513,23 +513,22 @@ export const OrdersPage = () => {
           />
 
           <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-            <header className="mb-3 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold tracking-widest text-zinc-400 uppercase">
+            <header className="mb-3 flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-semibold tracking-widest text-zinc-400 uppercase">
                   {t('orders_on')}
                 </p>
-                <h3 className="text-base font-bold text-zinc-900">
+                <h3 className="truncate text-base font-bold text-zinc-900">
                   {formattedDateLabel}
                 </h3>
               </div>
               {ordersForDate.length > 0 && (
-                <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-500 ring-1 ring-orange-200">
+                <span className="whitespace-nowrap rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-500 ring-1 ring-orange-200">
                   {ordersForDate.length} {t('total')}
                 </span>
               )}
             </header>
-
-            <div className="flex max-h-52 flex-col gap-2 overflow-x-scroll">
+<div className="flex relative z-10 max-h-52 flex-col gap-2 overflow-visible">
               {isLoading ? (
                 <div className="flex animate-pulse flex-col gap-2">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -550,26 +549,8 @@ export const OrdersPage = () => {
              ordersForDate.map((order, index) => {
   const isActive = order.id === selectedOrderId
 
-  let pressTimer: any = null
 
-  const handleCopy = () => {
-    const text = `Name: ${order.customerName}
-Phone: ${order.customerPhone}
-Address: ${order.customerAddress}`
 
-    navigator.clipboard.writeText(text)
-    toast.success('Details copied!')
-  }
-
-  const handleMouseDown = () => {
-    pressTimer = setTimeout(() => {
-      handleCopy()
-    }, 600) // long press duration
-  }
-
-  const handleMouseUp = () => {
-    clearTimeout(pressTimer)
-  }
 
   return (
     <button
@@ -580,12 +561,7 @@ Address: ${order.customerAddress}`
           prev === order.id ? null : order.id
         )
       }
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
-      onTouchStart={handleMouseDown}
-      onTouchEnd={handleMouseUp}
-      className={`w-full cursor-pointer rounded-xl px-4 py-3 text-left transition-all ${
+      className={`w-full  cursor-pointer rounded-xl px-4 py-3 text-left transition-all ${
         isActive
           ? 'bg-orange-500 shadow-md shadow-orange-200'
           : 'border border-zinc-100 bg-zinc-50 hover:bg-zinc-100'
@@ -621,7 +597,7 @@ Address: ${order.customerAddress}`
           </span>
         </div>
 
-        <div className="flex flex-wrap justify-end items-center gap-1.5 lg:hidden">
+        <div className="flex  z-10 relative flex-wrap justify-end items-center gap-1.5 lg:hidden">
           <ActionDropdown
             actions={[
               {
@@ -665,7 +641,7 @@ Address: ${order.customerAddress}`
           </div>
         </div>
         {/* right section */}
-        <div className="flex w-full flex-col gap-6 overflow-hidden bg-white p-4 shadow-[-1px_0_0_0_#e4e4e7] sm:p-6">
+        <div className="flex w-full flex-col gap-6 overflow-visible bg-white p-4 shadow-[-1px_0_0_0_#e4e4e7] sm:p-6">
           <div className="flex flex-col items-start gap-1">
             {selectedOrder ? (
               <button
