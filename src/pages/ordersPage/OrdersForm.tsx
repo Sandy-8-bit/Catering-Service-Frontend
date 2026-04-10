@@ -57,7 +57,7 @@ export const OrdersForm = () => {
 
   const { data: additionalItems = [], isLoading: isAdditionalLoading } =
     useFetchAdditionalItems()
-
+  const [isNegative, setIsNegative] = useState(false);
   const { saveFormData, clearFormData } = useOrderFormContext()
   const [editData, setEditData] = useState<Order>(defaultOrderData)
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
@@ -946,18 +946,50 @@ useEffect(() => {
               })()}
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
-                <Input
-                  title={t('price_reduced_per_plate')}
-                  prefixText="₹"
-                  placeholder="0"
-                  inputValue={editData.priceReducedPerPlate?.toString() || ''}
-                  onChange={(value) =>
-                    setEditData((prev) => ({
-                      ...prev,
-                      priceReducedPerPlate: safeNumber(value),
-                    }))
-                  }
-                />
+            
+<div className="flex flex-col gap-2">
+  <Input
+    title={t('price_reduced_per_plate')}
+    prefixText="₹"
+    placeholder="0"
+    inputValue={
+      editData.priceReducedPerPlate?.toString().replace('-', '') || ''
+    }
+    onChange={(value) => {
+      const num = safeNumber(value);
+
+      setEditData((prev) => ({
+        ...prev,
+        priceReducedPerPlate: isNegative ? -num : num,
+      }));
+    }}
+  />
+
+  {/* Plus / Minus Toggle */}
+  <div className="flex gap-2">
+    <button
+      type="button"
+      onClick={() => setIsNegative(false)}
+      className={`px-4 py-1 rounded-md text-sm font-medium transition 
+        ${!isNegative 
+          ? "bg-green-500 text-white" 
+          : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+    >
+      +
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setIsNegative(true)}
+      className={`px-4 py-1 rounded-md text-sm font-medium transition 
+        ${isNegative 
+          ? "bg-red-500 text-white" 
+          : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
+    >
+      −
+    </button>
+  </div>
+</div>
 
                 <Input
                   title={t('discount_percentage')}

@@ -210,7 +210,7 @@ const AdditionalItemsSelector = ({
           {t('orders_no_items_available')}
         </div>
       ) : (
-        <div className="grid gap-3 sm:gap-4">
+        <div className="grid grid-cols-2  sm:grid-cols-3 lg:grid-cols-4  gap-3 sm:gap-4">
           {displayItems.map((item) => {
             const existing = safeItems.find(
               (line) => line.additionalItemId === item.id

@@ -58,6 +58,7 @@ const ProductMenuSelector = ({
   const [quantityDrafts, setQuantityDrafts] = useState<Record<number, string>>(
     {}
   )
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
 
   const groupedProducts = useMemo<GroupedProducts[]>(() => {
     const collection = new Map<number, GroupedProducts>()
@@ -83,6 +84,11 @@ const ProductMenuSelector = ({
     )
   }, [products, t])
 
+  const displayGroups = useMemo(() => {
+    if (selectedCategory === null) return groupedProducts
+    return groupedProducts.filter((group) => group.categoryId === selectedCategory)
+  }, [groupedProducts, selectedCategory])
+
   const productsById = useMemo(() => {
     const map = new Map<number, Product>()
     products.forEach((product) => {
@@ -90,8 +96,6 @@ const ProductMenuSelector = ({
     })
     return map
   }, [products])
-
-  const displayGroups = groupedProducts
 
   useEffect(() => {
     setQuantityDrafts((prev) => {
@@ -213,7 +217,40 @@ const ProductMenuSelector = ({
           <Spinner />
         </div>
       ) : (
-        <div className="grid gap-3 sm:gap-4">
+        <div className="space-y-4 sm:space-y-6">
+          {/* Category Filter Chips */}
+          <div className="flex flex-wrap gap-2">
+            {/* "All" chip */}
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(null)}
+              className={`whitespace-nowrap  mb-3 rounded-full px-3 py-1 text-xs font-medium transition ${
+                selectedCategory === null
+                  ? 'bg-zinc-900 text-white shadow-sm'
+                  : 'border border-zinc-300 bg-white text-zinc-700 hover:border-zinc-900'
+              }`}
+            >
+              {t('all')}
+            </button>
+
+            {/* Category chips */}
+            {groupedProducts.map((group) => (
+              <button
+                key={group.categoryId}
+                type="button"
+                onClick={() => setSelectedCategory(group.categoryId)}
+                className={`whitespace-nowrap rounded-full px-3 py-1 mb-3 text-xs font-medium transition ${
+                  selectedCategory === group.categoryId
+                    ? 'bg-zinc-900 text-white shadow-sm'
+                    : 'border border-zinc-300 bg-white text-zinc-700 hover:border-zinc-900'
+                }`}
+              >
+                {group.categoryName}
+              </button>
+            ))}
+          </div>
+
+          {/* Products Grid */}
           {displayGroups.map((group) => (
             <div key={group.categoryId}>
               <p className="mb-3 text-[10px] font-semibold tracking-[0.3em] text-zinc-500 uppercase sm:text-[12px]">
@@ -249,16 +286,19 @@ const ProductMenuSelector = ({
                         {formatCurrency(product.price ?? 0)}
                       </span>
                       {isSelected ? (
-                        <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white px-2 py-1.5">
+                        <div 
+                          className="flex items-center gap-2 rounded-lg p-2 shadow-sm"
+                          style={{ background: 'linear-gradient(to right, rgb(245, 245, 245), rgb(228, 228, 231))' }}
+                        >
                           <button
                             type="button"
                             aria-label={t('decrease_quantity')}
                             onClick={() =>
                               product.id && handleQuantityChange(product.id, -1)
                             }
-                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
+                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-red-500 text-white transition hover:bg-red-600 active:scale-95"
                           >
-                            <Minus size={12} />
+                            <Minus size={14} strokeWidth={2.5} />
                           </button>
                           <input
                             type="number"
@@ -282,7 +322,7 @@ const ProductMenuSelector = ({
                                 selectedLine?.quantity ?? 1
                               )
                             }
-                            className="h-7 w-12 rounded-md border border-[#E4E4E7] text-center text-xs font-semibold text-zinc-900 outline-none focus:border-zinc-900"
+                            className="h-8 w-12 rounded-md border-2 border-zinc-200 bg-white text-center text-sm font-bold text-zinc-900 outline-none transition focus:border-zinc-900 focus:shadow-md"
                           />
                           <button
                             type="button"
@@ -290,9 +330,9 @@ const ProductMenuSelector = ({
                             onClick={() =>
                               product.id && handleQuantityChange(product.id, 1)
                             }
-                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
+                            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-green-500 text-white transition hover:bg-green-600 active:scale-95"
                           >
-                            <Plus size={12} />
+                            <Plus size={14} strokeWidth={2.5} />
                           </button>
                         </div>
                       ) : (

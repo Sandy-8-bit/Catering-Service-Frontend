@@ -100,7 +100,7 @@ export const calculatePricePerPlate = (order: Order): number => {
 export const calculateOneLeafPrice = (order: Order): number => {
   const pricePerPlate = calculatePricePerPlate(order)
   const priceReducedPerPlate = order.priceReducedPerPlate || 0
-  return Math.max(0, pricePerPlate - priceReducedPerPlate)
+  return Math.max(0, pricePerPlate + priceReducedPerPlate)
 }
 
 /**
@@ -133,7 +133,7 @@ export const calculateMenuItemsSubtotal = (order: Order): number => {
   const pricePerPlate = calculatePricePerPlate(order)
 
   // Step 2: Apply reduction to price per plate
-  const reducedPricePerPlate = Math.max(0, pricePerPlate - priceReducedPerPlate)
+  const reducedPricePerPlate = Math.max(0, pricePerPlate + priceReducedPerPlate)
 
   // Step 3: Multiply by total plates
   return Math.round(reducedPricePerPlate * totalPlates)

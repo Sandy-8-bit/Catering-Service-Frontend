@@ -9,6 +9,7 @@ export interface Product {
   secondaryName: string
   description: string
   price: number
+  isRecipe: boolean
   category: Category
   available: boolean
 }

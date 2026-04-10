@@ -20,6 +20,8 @@ const RecipesPage = () => {
     navigate(detailPath)
   }
 
+  const recipeProducts = products.filter((product) => product.isRecipe)
+
   const recipeTableColumns: DataCell[] = [
     {
       headingTitle: 'Product',
@@ -79,7 +81,7 @@ const RecipesPage = () => {
 
       <section className="flex flex-col gap-6 p-6">
         <GenericTable
-          data={products}
+          data={recipeProducts}
           dataCell={recipeTableColumns}
           isLoading={isProductsLoading}
           tableTitle="Product Recipes"

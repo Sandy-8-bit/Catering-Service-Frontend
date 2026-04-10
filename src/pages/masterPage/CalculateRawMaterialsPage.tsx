@@ -215,6 +215,8 @@ export const CalculateRawMaterialsPage = () => {
     isError: isCalculationError,
   } = useCalculateRawMaterials()
 
+  const isRecipeProducts = allProducts.filter((p) => p.isRecipe)
+
   // Calculate request payload - only products with quantity > 0
   const calculatePayload = useMemo(
     (): CalculateRawMaterialsRequest[] =>
@@ -393,7 +395,7 @@ export const CalculateRawMaterialsPage = () => {
                     />
                   ))}
                 </div>
-              ) : allProducts.length > 0 ? (
+              ) : isRecipeProducts.length > 0 ? (
                 <div className="w-full overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -413,7 +415,7 @@ export const CalculateRawMaterialsPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {allProducts.map((product) => (
+                      {isRecipeProducts.map((product) => (
                         <tr
                           key={product.id}
                           className="border-b border-zinc-200 transition-colors hover:bg-orange-50"

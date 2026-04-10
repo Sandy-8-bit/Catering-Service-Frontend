@@ -35,6 +35,7 @@ export const ProductsPage = () => {
     secondaryName: '',
     description: '',
     price: 0,
+    isRecipe: false,
     category: { id: 0, primaryName: '', secondaryName: '' },
     available: false,
   })
@@ -187,6 +188,7 @@ export const ProductsPage = () => {
     description: row.description?.trim() ?? '',
     price: Number(row.price) || 0,
     categoryId: Number(row.category.id) || 0,
+    isRecipe: row.isRecipe,
     available: Boolean(row.available),
   })
 

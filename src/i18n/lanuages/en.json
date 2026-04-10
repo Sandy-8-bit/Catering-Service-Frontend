@@ -361,6 +361,7 @@
   "driver_pending_orders_page_title": "Pending Orders",
   "driver_pending_orders_dummy_note": "This is a dummy pending-orders page for now. API integration will be added next.",
   "driver_dummy": "Dummy",
+  "Menu Selection": "Menu Selection",
   "driver_pending_amount": "Pending Amount",
   "date_time": "Date & Time",
   "delivery_charges": "Delivery Charges",
