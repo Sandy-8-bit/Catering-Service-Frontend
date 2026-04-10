@@ -433,7 +433,7 @@ export const OrdersPage = () => {
             className="font-medium lg:flex"
           >
             <Mic className="mr-2 h-4 w-4 text-zinc-700" />{' '}
-            {t('create_voice_order')}
+            {t('create_Voice Order')}
           </ButtonSm>
           <ButtonSm
             state="outline"

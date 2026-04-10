@@ -367,7 +367,7 @@
   "total_price": "Total Price",
   "item_name": "Item Name",
   "update_status": "Update Status",
-  "create_voice_order": "Create Voice Order",
+  "create_Voice Order": "Create Voice Order",
   "back_to_day_view": "Back to day view",
   "overview_for_day": "Overview for the Day",
   "additional_item_with_id": "Additional {{id}}",
@@ -446,6 +446,4 @@
   "price_reduced_per_plate": "Price Reduced Per Plate",
   "discount_percentage": "Discount Percentage",
   "discount_amount": "Discount Amount"
-
-  
 }

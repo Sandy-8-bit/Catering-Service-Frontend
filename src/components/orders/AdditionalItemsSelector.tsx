@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Spinner from '@/components/common/Spinner'
-import DialogBox from '@/components/common/DialogBox'
 import type { AdditionalItem } from '@/types/additionalItem'
 import type { OrderAdditionalItem } from '@/types/order'
-import { Minus, Plus, Search, X } from 'lucide-react'
+import { Minus, Plus } from 'lucide-react'
 import ButtonSm from '@/components/common/Buttons'
 
 interface AdditionalItemsSelectorProps {
@@ -29,8 +28,6 @@ const AdditionalItemsSelector = ({
 }: AdditionalItemsSelectorProps) => {
   const { t } = useTranslation()
   const safeItems = selectedItems || []
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
   const [quantityDrafts, setQuantityDrafts] = useState<Record<number, string>>(
     {}
   )
@@ -49,15 +46,7 @@ const AdditionalItemsSelector = ({
     [availableItems]
   )
 
-  const filteredItems = useMemo(() => {
-    const normalized = searchTerm.trim().toLowerCase()
-    if (!normalized) return sortedItems
-    return sortedItems.filter((item) =>
-      `${item.primaryName} ${item.secondaryName ?? ''}`
-        .toLowerCase()
-        .includes(normalized)
-    )
-  }, [sortedItems, searchTerm])
+  const displayItems = sortedItems
 
   useEffect(() => {
     setQuantityDrafts((prev) => {
@@ -210,294 +199,98 @@ const AdditionalItemsSelector = ({
     }))
   }
 
-  const selectedDetails = safeItems.map((item) => ({
-    record: item,
-    catalog: additionalItemMap.get(item.additionalItemId),
-  }))
-
-  const totalExtrasCount = safeItems.reduce(
-    (sum, line) => sum + (line.quantity || 0),
-    0
-  )
-  const totalExtrasCost = safeItems.reduce((sum, line) => {
-    const lineTotal =
-      typeof line.lineTotal === 'number'
-        ? line.lineTotal
-        : (line.priceAtOrder ?? 0) * (line.quantity || 0)
-    return sum + lineTotal
-  }, 0)
-
-  const summaryCards = selectedDetails.map(({ record, catalog }) => {
-    const displayName =
-      record.itemPrimaryName || catalog?.primaryName || t('orders_extra')
-    const description =
-      catalog?.secondaryName ||
-      catalog?.description ||
-      record.itemSecondaryName ||
-      t('orders_perfect_add_on')
-    const unitPrice = record.priceAtOrder ?? catalog?.pricePerUnit ?? 0
-
-    return (
-      <article
-        key={record.additionalItemId}
-        className="flex flex-col gap-4 rounded-md border border-[#E4E4E7] bg-[#F9F9F9] p-4 text-zinc-900"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-zinc-900">
-              {displayName}
-            </p>
-            <p className="text-xs text-zinc-500">{description}</p>
-          </div>
-          <span className="text-sm font-semibold text-zinc-900">
-            {formatCurrency(unitPrice * record.quantity)}
-          </span>
-        </div>
-        <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white p-2">
-          <div className="flex w-full items-center justify-between gap-3">
-            <button
-              type="button"
-              aria-label={t('decrease_quantity')}
-              onClick={() => handleQuantityChange(record.additionalItemId, -1)}
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-            >
-              <Minus size={12} />
-            </button>
-            <input
-              type="number"
-              min={1}
-              step={1}
-              inputMode="numeric"
-              value={
-                quantityDrafts[record.additionalItemId] ??
-                String(record.quantity)
-              }
-              onChange={(event) =>
-                handleQuantityInputChange(
-                  record.additionalItemId,
-                  event.target.value
-                )
-              }
-              onBlur={() =>
-                handleQuantityInputBlur(
-                  record.additionalItemId,
-                  record.quantity
-                )
-              }
-              className="h-8 w-14 rounded-md border border-[#E4E4E7] text-center text-sm font-semibold outline-none focus:border-zinc-900"
-            />
-            <button
-              type="button"
-              aria-label={t('increase_quantity')}
-              onClick={() => handleQuantityChange(record.additionalItemId, 1)}
-              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-            >
-              <Plus size={12} />
-            </button>
-          </div>
-        </div>
-      </article>
-    )
-  })
-
-  const drawerContent = (
-    <div className="flex h-full w-full flex-col bg-white">
-      <header className="flex items-center justify-between border-b border-[#F1F1F1] pb-4">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.3em] text-zinc-500 uppercase">
-            {t('orders_extras_cart')}
-          </p>
-          <h2 className="text-xl font-semibold text-zinc-900">
-            {t('orders_additional_items_selector')}
-          </h2>
-        </div>
-        <button
-          type="button"
-          aria-label={t('orders_close_additional_items_drawer')}
-          onClick={() => setIsDrawerOpen(false)}
-          className="flex h-10 w-10 items-center justify-center border border-[#E4E4E7] text-zinc-500 transition hover:bg-zinc-100"
-        >
-          <X size={18} />
-        </button>
-      </header>
-
-      <div className="mt-4 flex flex-1 flex-col overflow-hidden">
-        <div className="flex flex-col gap-3 border-b border-[#F1F1F1] pb-4">
-          <div className="flex items-center gap-2 rounded-md border border-[#E4E4E7] bg-gray-50 px-4 py-2">
-            <Search className="h-4 w-4 text-zinc-400" />
-            <input
-              type="text"
-              placeholder={t('orders_search_add_ons')}
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-full border-none bg-transparent text-sm text-zinc-700 outline-none placeholder:text-zinc-400"
-            />
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto pr-1 pb-32">
-          {isLoading ? (
-            <div className="flex min-h-[200px] items-center justify-center">
-              <Spinner />
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="border border-dashed border-[#E4E4E7] bg-white p-6 text-center text-sm text-zinc-500">
-              {t('orders_no_add_ons_match_search')}
-            </div>
-          ) : (
-            <div className="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filteredItems.map((item) => {
-                const existing = safeItems.find(
-                  (line) => line.additionalItemId === item.id
-                )
-                const isSelected = Boolean(existing)
-                return (
-                  <div
-                    key={item.id}
-                    className={`flex flex-col gap-4 rounded-md border p-4 transition ${
-                      isSelected
-                        ? 'border-zinc-300 bg-white shadow-sm'
-                        : 'border-[#E4E4E7]/50 bg-white shadow-sm hover:border-zinc-900'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between ">
-                      <div className="min-w-0">
-                        <p className=" text-base font-semibold text-zinc-900">
-                          {item.primaryName}
-                        </p>
-                        <p className="text-sm text-zinc-500">
-                          {item.secondaryName || t('orders_perfect_pairing')}
-                        </p>
-                      </div>
-                     
-                    </div>
-                     <span className="text-sm font-semibold text-zinc-900">
-                        {formatCurrency(item.pricePerUnit)}
-                      </span>
-                    {isSelected ? (
-                      <div className="flex items-center mt-auto justify-between rounded-md border border-[#E4E4E7] bg-white px-4 py-2">
-                        <button
-                          type="button"
-                          aria-label={t('decrease_quantity')}
-                          onClick={() => handleQuantityChange(item.id, -1)}
-                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <input
-                          type="number"
-                          min={1}
-                          step={1}
-                          inputMode="numeric"
-                          value={
-                            quantityDrafts[item.id] ??
-                            String(existing?.quantity ?? 1)
-                          }
-                          onChange={(event) =>
-                            handleQuantityInputChange(
-                              item.id,
-                              event.target.value
-                            )
-                          }
-                          onBlur={() =>
-                            handleQuantityInputBlur(
-                              item.id,
-                              existing?.quantity ?? 1
-                            )
-                          }
-                          className="h-9 w-16 rounded-md border border-[#E4E4E7] text-center text-sm font-semibold text-zinc-900 outline-none focus:border-zinc-900"
-                        />
-                        <button
-                          type="button"
-                          aria-label={t('increase_quantity')}
-                          onClick={() => handleQuantityChange(item.id, 1)}
-                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                    ) : (
-                      <ButtonSm
-                        type="button"
-                        state="default"
-                        onClick={() => handleAddItem(item.id)}
-                        className="rounded-sm border border-[#E4E4E7] px-5 py-2 text-xs font-semibold tracking-wide uppercase"
-                      >
-                        {t('add')}
-                      </ButtonSm>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="sticky right-0 bottom-0 left-0 mt-auto border-t border-[#E4E4E7] bg-white p-2">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.3em] text-zinc-500 uppercase">
-              {t('orders_extras_bag')}
-            </p>
-            <p className="text-base font-semibold text-zinc-900">
-              {totalExtrasCount} {t('items')} ·{' '}
-              {formatCurrency(totalExtrasCost)}
-            </p>
-          </div>
-          <ButtonSm
-            type="button"
-            state="default"
-            className="w-full rounded-sm border border-[#E4E4E7] px-6 py-3 text-sm font-semibold tracking-wide uppercase sm:w-auto"
-            onClick={() => setIsDrawerOpen(false)}
-          >
-            {t('orders_review_extras')}
-          </ButtonSm>
-        </div>
-      </div>
-    </div>
-  )
-
   return (
     <section className="">
-      <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="mt-6 space-y-1">
-          <h2 className="text-base font-semibold text-zinc-800">
-            {t('additional_items')}
-          </h2>
-          <p className="text-sm text-zinc-500">
-            {t('orders_added_extras')} · {totalExtrasCount} {t('items')}
-          </p>
+      {isLoading ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <Spinner />
         </div>
-
-        <ButtonSm
-          type="button"
-          state="default"
-          className="rounded-md border border-[#E4E4E7] px-4 py-2 text-xs font-semibold tracking-wide uppercase"
-          onClick={() => setIsDrawerOpen(true)}
-        >
-          {t('orders_add_more')}
-        </ButtonSm>
-      </header>
-
-      {safeItems.length === 0 ? (
-        <div className="border border-dashed border-[#E4E4E7] bg-[#F9F9F9] px-4 py-8 text-center text-sm text-zinc-500">
-          {t('orders_no_extras_yet')}
+      ) : displayItems.length === 0 ? (
+        <div className="border border-dashed border-[#E4E4E7] bg-white p-6 text-center text-xs text-zinc-500 sm:text-sm">
+          {t('orders_no_items_available')}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {summaryCards}
+        <div className="grid gap-3 sm:gap-4">
+          {displayItems.map((item) => {
+            const existing = safeItems.find(
+              (line) => line.additionalItemId === item.id
+            )
+            const isSelected = Boolean(existing)
+            return (
+              <div
+                key={item.id}
+                className={`flex flex-col gap-3 rounded-md border p-3 transition ${
+                  isSelected
+                    ? 'border-zinc-300 bg-white shadow-sm'
+                    : 'border-[#E4E4E7]/50 bg-white shadow-sm hover:border-zinc-900'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold text-zinc-900 sm:text-sm">
+                      {item.primaryName}
+                    </p>
+                    <p className="text-[10px] text-zinc-500 sm:text-xs">
+                      {item.secondaryName || t('orders_perfect_pairing')}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-zinc-900 sm:text-sm">
+                  {formatCurrency(item.pricePerUnit)}
+                </span>
+                {isSelected ? (
+                  <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white px-2 py-1.5">
+                    <button
+                      type="button"
+                      aria-label={t('decrease_quantity')}
+                      onClick={() => handleQuantityChange(item.id, -1)}
+                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
+                    >
+                      <Minus size={12} />
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      step={1}
+                      inputMode="numeric"
+                      value={
+                        quantityDrafts[item.id] ??
+                        String(existing?.quantity ?? 1)
+                      }
+                      onChange={(event) =>
+                        handleQuantityInputChange(item.id, event.target.value)
+                      }
+                      onBlur={() =>
+                        handleQuantityInputBlur(
+                          item.id,
+                          existing?.quantity ?? 1
+                        )
+                      }
+                      className="h-7 w-12 rounded-md border border-[#E4E4E7] text-center text-xs font-semibold text-zinc-900 outline-none focus:border-zinc-900"
+                    />
+                    <button
+                      type="button"
+                      aria-label={t('increase_quantity')}
+                      onClick={() => handleQuantityChange(item.id, 1)}
+                      className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <ButtonSm
+                    type="button"
+                    state="default"
+                    onClick={() => handleAddItem(item.id)}
+                    className="rounded-sm border border-[#E4E4E7] px-3 py-1.5 text-[10px] font-semibold tracking-wide uppercase sm:text-xs"
+                  >
+                    {t('add')}
+                  </ButtonSm>
+                )}
+              </div>
+            )
+          })}
         </div>
-      )}
-
-      {isDrawerOpen && (
-        <DialogBox
-          isSideDrawer
-          width="100vw"
-          setToggleDialogueBox={setIsDrawerOpen}
-        >
-          {drawerContent}
-        </DialogBox>
       )}
     </section>
   )

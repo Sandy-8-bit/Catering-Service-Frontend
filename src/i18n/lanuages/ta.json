@@ -368,7 +368,7 @@
   "total_price": "மொத்த விலை",
   "item_name": "உருப்படி பெயர்",
   "update_status": "நிலையைப் புதுப்பிக்கவும்",
-  "create_voice_order": "குரல் ஆர்டர் உருவாக்கு",
+  "create_Voice Order": "குரல் ஆர்டர் உருவாக்கு",
   "back_to_day_view": "நாள் பார்வைக்கு திரும்பு",
   "overview_for_day": "இன்றைய ஒட்டுமொத்தம்",
   "additional_item_with_id": "கூடுதல் {{id}}",
@@ -386,7 +386,7 @@
   "orders_signature_dish": "சிறப்பு உணவு",
   "orders_review_selection": "கன்ஃபார்ம்",
   "orders_menu_items": "மெனு ஐட்டம்ஸ்",
-  "extra_menu":"கூடுதல் மெனு ஐட்டம்",
+  "extra_menu": "கூடுதல் மெனு ஐட்டம்",
   "orders_added_dishes": "சேர்க்கப்பட்ட உணவுகள்",
   "orders_add_more": " சேர்க்கவும் +",
   "orders_no_dishes_added_yet": "இன்னும் உணவுகள் சேர்க்கப்படவில்லை. மெனுவை தொடங்க \"மேலும் சேர்க்கவும் +\" ஐத் தட்டவும்.",
@@ -449,5 +449,5 @@
   "price_reduced_per_plate": "இலை டிஸ்கவுண்ட்",
   "discount_percentage": "தள்ளுபடி சதவீதம்",
   "discount_amount": "தள்ளுபடி தொகை",
-  "pending_order":"நிலுவை ஆர்டர்"
+  "pending_order": "நிலுவை ஆர்டர்"
 }
