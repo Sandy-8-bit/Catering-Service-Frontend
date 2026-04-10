@@ -154,18 +154,6 @@ export const OrdersForm = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [expandedMenuItems])
 
-  // Handle accordion behavior for menu items - close others when one is opened
-  const toggleMenuItemSection = (section: keyof typeof expandedMenuItems) => {
-    setExpandedMenuItems((prev) => {
-      const newState = {
-        productMenu: false,
-        additionalMenu: false,
-        additionalItems: false,
-      }
-      newState[section] = !prev[section]
-      return newState
-    })
-  }
 
   // Handle click outside for menu items
   useEffect(() => {
@@ -443,7 +431,9 @@ useEffect(() => {
             existingOrder={existingOrder}
             defaultOrderData={defaultOrderData}
             setEditData={setEditData}
+            onClearForm={handleClearForm}
             navigate={navigate}
+            isFormValid={isFormValidForSubmit()}
             onCreateOrder={handleCreateOrder}
             onUpdateOrder={handleUpdateOrder}
             isCreatePending={isCreatePending}
@@ -470,9 +460,7 @@ useEffect(() => {
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
                 {t('customer_information')}
               </h2>
-              <p className="text-xs text-zinc-500 sm:text-xs md:text-sm">
-                {t('form_intro_text')}
-              </p>
+           
             </div>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
@@ -482,7 +470,7 @@ useEffect(() => {
           </button>
           {expandedSections.customer && (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
-              <VoiceInput
+              <Input
                 title={t('name')}
                 name="customerName"
                 placeholder={t('eg_name')}
@@ -581,6 +569,18 @@ useEffect(() => {
                   }
                 />
               </div>
+               <Input
+                title={t('total_plates')}
+                prefixText={t('count')}
+                placeholder="Enter total plates"
+                inputValue={editData.totalPlates?.toString() || ''}
+                onChange={(value) =>
+                  setEditData((prev) => ({
+                    ...prev,
+                    totalPlates: safeNumber(value),
+                  }))
+                }
+              />
             </div>
           )}
           {/* Delivery & Payment */}
@@ -598,9 +598,7 @@ useEffect(() => {
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
                 {t('delivery_payment')}
               </h2>
-              <p className="text-xs text-zinc-500 sm:text-xs md:text-sm">
-                {t('delivery_payment_text')}
-              </p>
+         
             </div>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
@@ -616,7 +614,7 @@ useEffect(() => {
                 onChange={(checked) =>
                   setEditData((prev) => ({ ...prev, deliveredByUs: checked }))
                 }
-                label={t('delivery_preference')}
+                
               />
               {editData.deliveredByUs && (
                 <>
@@ -667,18 +665,7 @@ useEffect(() => {
                 </>
               )}
 
-              <Input
-                title={t('total_plates')}
-                prefixText={t('count')}
-                placeholder="Enter total plates"
-                inputValue={editData.totalPlates?.toString() || ''}
-                onChange={(value) =>
-                  setEditData((prev) => ({
-                    ...prev,
-                    totalPlates: safeNumber(value),
-                  }))
-                }
-              />
+             
             </div>
           )}
 
@@ -694,9 +681,7 @@ useEffect(() => {
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
                 {t('Menu Selection')}
               </h2>
-              <p className="text-xs text-zinc-500 sm:text-xs md:text-sm">
-                {t('Select items from menu')}
-              </p>
+         
             </div>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
@@ -867,9 +852,7 @@ useEffect(() => {
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
                 {t('payment')}
               </h2>
-              <p className="text-xs text-zinc-500 sm:text-xs md:text-sm">
-                {t('payment_text')}
-              </p>
+        
             </div>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
