@@ -592,7 +592,7 @@ useEffect(() => {
                 delivery: !prev.delivery,
               }))
             }
-            className="-mx-2 mt-6 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
+            className="-mx-2  flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
           >
             <div className="space-y-1 text-left">
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
@@ -675,7 +675,7 @@ useEffect(() => {
             onClick={() =>
               setExpandedSections((prev) => ({ ...prev, menu: !prev.menu }))
             }
-            className="-mx-2 mt-6 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
+            className="-mx-2  flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
           >
             <div className="space-y-1 text-left">
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
@@ -846,7 +846,7 @@ useEffect(() => {
                 payment: !prev.payment,
               }))
             }
-            className="-mx-2 mt-6 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
+            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
           >
             <div className="space-y-1 text-left">
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
