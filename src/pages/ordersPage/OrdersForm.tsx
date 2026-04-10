@@ -60,7 +60,6 @@ export const OrdersForm = () => {
 
   const { saveFormData, clearFormData } = useOrderFormContext()
   const [editData, setEditData] = useState<Order>(defaultOrderData)
-  const [isInitialized, setIsInitialized] = useState(false)
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
   const [expandedSections, setExpandedSections] = useState({
     customer: true,

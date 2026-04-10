@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/purity */
 import { motion } from 'framer-motion'
-import { Check, Mic } from 'lucide-react'
-import React, { useRef, useState, useEffect } from 'react'
+import { Check } from 'lucide-react'
+import React, { useRef } from 'react'
 
 type InputType = 'str' | 'num'
 
@@ -38,102 +38,10 @@ const Input = <T extends string | number>({
 }: InputProps<T>) => {
   const inputType = type === 'num' ? 'number' : 'text'
 
-  const [isListening, setIsListening] = useState(false)
-  const recognitionRef = useRef<any>(null)
-  const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const isHoldingRef = useRef(false)
 
-  /* 🎤 Setup Tamil Speech Recognition */
-  useEffect(() => {
-    const SpeechRecognition =
-      (window as any).SpeechRecognition ||
-      (window as any).webkitSpeechRecognition
 
-    if (!SpeechRecognition) return
 
-    const recognition = new SpeechRecognition()
-    recognition.continuous = false
-    recognition.interimResults = false
-    recognition.lang = 'ta-IN' // Tamil only
 
-    recognition.onresult = (event: any) => {
-      const transcript =
-        event.results[event.results.length - 1][0].transcript.trim()
-
-      if (!transcript) return
-
-      if (type === 'num') {
-        // 🔥 STRICT NUMBER MODE
-        // Accept only digits
-        const digitsOnly = transcript.replace(/\D/g, '')
-
-        if (digitsOnly.length === transcript.length) {
-          // Only append if fully numeric
-          const oldValue = String(inputValue ?? '')
-          const newValue = oldValue + digitsOnly
-          onChange(Number(newValue) as T)
-        }
-        // else ignore completely
-      } else {
-        const oldValue = String(inputValue ?? '')
-        const newText =
-          oldValue.length > 0 ? oldValue + ' ' + transcript : transcript
-
-        onChange(newText as T)
-      }
-    }
-
-    recognition.onend = () => {
-      setIsListening(false)
-    }
-
-    recognitionRef.current = recognition
-  }, [inputValue, onChange, type])
-
-  /* 🎤 Start Listening */
-  const startListening = () => {
-    if (!recognitionRef.current || isListening) return
-    recognitionRef.current.start()
-    setIsListening(true)
-  }
-
-  /* 🎤 Stop Listening */
-  const stopListening = () => {
-    if (!recognitionRef.current || !isListening) return
-    recognitionRef.current.stop()
-    setIsListening(false)
-  }
-
-  /* 👆 Long Press */
-  const handleMouseDown = () => {
-    isHoldingRef.current = false
-
-    holdTimeoutRef.current = setTimeout(() => {
-      isHoldingRef.current = true
-      startListening()
-    }, 250)
-  }
-
-  const handleMouseUp = () => {
-    if (holdTimeoutRef.current) {
-      clearTimeout(holdTimeoutRef.current)
-    }
-
-    if (isHoldingRef.current) {
-      stopListening()
-    }
-  }
-
-  /* 👆 Single Click */
-  const handleClick = () => {
-    if (isHoldingRef.current) return
-
-    if (isListening) {
-      stopListening()
-    } else {
-      startListening()
-    }
-  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value as T)
