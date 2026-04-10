@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Spinner from '@/components/common/Spinner'
-import DialogBox from '@/components/common/DialogBox'
 import { useFetchProducts } from '@/queries/productQueries'
 import type { OrderItem, OrderProductRef } from '@/types/order'
 import type { Product } from '@/types/product'
-import { Minus, Plus, Search, X } from 'lucide-react'
+import { Minus, Plus } from 'lucide-react'
 import ButtonSm from '../common/Buttons'
 
 interface ProductMenuSelectorProps {
@@ -18,8 +17,6 @@ interface GroupedProducts {
   categoryName: string
   products: Product[]
 }
-
-type CategoryFilter = number | 'all'
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('en-IN', {
@@ -58,9 +55,6 @@ const ProductMenuSelector = ({
   const { t } = useTranslation()
   const safeItems = selectedItems || []
   const { data: products = [], isLoading } = useFetchProducts()
-  const [activeCategory, setActiveCategory] = useState<CategoryFilter>('all')
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
   const [quantityDrafts, setQuantityDrafts] = useState<Record<number, string>>(
     {}
   )
@@ -97,55 +91,22 @@ const ProductMenuSelector = ({
     return map
   }, [products])
 
-  useEffect(() => {
-    if (!groupedProducts.length) {
-      setActiveCategory('all')
-      return
-    }
-
-    setActiveCategory((prev) => {
-      if (prev === 'all') return prev
-      return groupedProducts.some((group) => group.categoryId === prev)
-        ? prev
-        : 'all'
-    })
-  }, [groupedProducts])
-
-  const filteredGroups = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase()
-    const groups =
-      activeCategory === 'all'
-        ? groupedProducts
-        : groupedProducts.filter((group) => group.categoryId === activeCategory)
-
-    return groups
-      .map((group) => ({
-        ...group,
-        products: group.products.filter((product) => {
-          if (!normalizedSearch) return true
-          const haystack =
-            `${product.primaryName ?? ''} ${product.secondaryName ?? ''} ${group.categoryName}`.toLowerCase()
-          return haystack.includes(normalizedSearch)
-        }),
-      }))
-      .filter((group) => group.products.length > 0)
-  }, [groupedProducts, activeCategory, searchTerm])
-
-  const updateItems = (nextItems: OrderItem[]) => onChange(nextItems)
+  const displayGroups = groupedProducts
 
   useEffect(() => {
     setQuantityDrafts((prev) => {
       const next: Record<number, string> = {}
       safeItems.forEach((item) => {
         const productId = getOrderItemProductId(item)
-        if (!productId) return
-        if (productId in prev) {
+        if (productId && productId in prev) {
           next[productId] = prev[productId]
         }
       })
       return next
     })
   }, [safeItems])
+
+  const updateItems = (nextItems: OrderItem[]) => onChange(nextItems)
 
   const handleAddProduct = (productId: number) => {
     const product = productsById.get(productId)
@@ -156,15 +117,10 @@ const ProductMenuSelector = ({
     )
 
     if (alreadySelected) {
-      const unitPrice = alreadySelected.unitPrice ?? product.price ?? 0
       updateItems(
         safeItems.map((item) =>
           getOrderItemProductId(item) === productId
-            ? {
-                ...item,
-                quantity: item.quantity + 1,
-                totalPrice: unitPrice * (item.quantity + 1),
-              }
+            ? { ...item, quantity: item.quantity + 1 }
             : item
         )
       )
@@ -176,21 +132,14 @@ const ProductMenuSelector = ({
 
   const handleQuantityChange = (productId: number, delta: number) => {
     const nextItems = safeItems.reduce<OrderItem[]>((acc, item) => {
-      const lineProductId = getOrderItemProductId(item)
-      if (lineProductId !== productId) {
+      if (getOrderItemProductId(item) !== productId) {
         acc.push(item)
         return acc
       }
 
       const nextQuantity = item.quantity + delta
       if (nextQuantity > 0) {
-        const fallbackProduct = productsById.get(lineProductId ?? productId)
-        const unitPrice = item.unitPrice ?? fallbackProduct?.price ?? 0
-        acc.push({
-          ...item,
-          quantity: nextQuantity,
-          totalPrice: unitPrice * nextQuantity,
-        })
+        acc.push({ ...item, quantity: nextQuantity })
       }
       return acc
     }, [])
@@ -210,17 +159,9 @@ const ProductMenuSelector = ({
     if (!Number.isFinite(parsedQuantity) || parsedQuantity < 1) return
 
     const nextItems = safeItems.map((item) => {
-      const lineProductId = getOrderItemProductId(item)
-      if (lineProductId !== productId) return item
+      if (getOrderItemProductId(item) !== productId) return item
 
-      const fallbackProduct = productsById.get(lineProductId ?? productId)
-      const unitPrice = item.unitPrice ?? fallbackProduct?.price ?? 0
-
-      return {
-        ...item,
-        quantity: parsedQuantity,
-        totalPrice: unitPrice * parsedQuantity,
-      }
+      return { ...item, quantity: parsedQuantity }
     })
 
     updateItems(nextItems)
@@ -251,17 +192,9 @@ const ProductMenuSelector = ({
 
     if (parsedQuantity !== currentQuantity) {
       const nextItems = safeItems.map((item) => {
-        const lineProductId = getOrderItemProductId(item)
-        if (lineProductId !== productId) return item
+        if (getOrderItemProductId(item) !== productId) return item
 
-        const fallbackProduct = productsById.get(lineProductId ?? productId)
-        const unitPrice = item.unitPrice ?? fallbackProduct?.price ?? 0
-
-        return {
-          ...item,
-          quantity: parsedQuantity,
-          totalPrice: unitPrice * parsedQuantity,
-        }
+        return { ...item, quantity: parsedQuantity }
       })
 
       updateItems(nextItems)
@@ -273,346 +206,112 @@ const ProductMenuSelector = ({
     }))
   }
 
-  const totalProductCount = safeItems.reduce(
-    (sum, item) => sum + (item.quantity || 0),
-    0
-  )
-  const totalProductCost = safeItems.reduce((sum, item) => {
-    const lineValue =
-      typeof item.totalPrice === 'number'
-        ? item.totalPrice
-        : (item.unitPrice ?? 0) * (item.quantity || 0)
-    return sum + lineValue
-  }, 0)
-
-  const pricePerPlate = totalProductCount > 0 ? totalProductCost : 0
-
-  const summaryCards = safeItems
-    .filter((line) => line.product)
-    .map((line) => {
-      const productRef = line.product!
-      const lineProductId =
-        productRef.productId ?? (productRef as Partial<{ id?: number }>).id
-      const fallbackProduct = lineProductId
-        ? productsById.get(lineProductId)
-        : undefined
-      const displayName =
-        productRef.productPrimaryName ||
-        productRef.primaryName ||
-        fallbackProduct?.primaryName ||
-        t('orders_product')
-      const unitPrice = line.unitPrice ?? fallbackProduct?.price ?? 0
-
-      return (
-        <article
-          key={`${displayName}-${lineProductId ?? displayName}`}
-          className="flex flex-col gap-4 rounded-md border border-[#E4E4E7] bg-[#F9F9F9] p-4 text-zinc-900"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-zinc-900">
-                {displayName}
-              </p>
-              <p className="text-xs text-zinc-500">
-                {line.quantity} x {formatCurrency(unitPrice)}
-              </p>
-            </div>
-            <span className="text-sm font-semibold text-zinc-900">
-              {formatCurrency(unitPrice * line.quantity)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white p-2">
-            <div className="flex w-full items-center justify-between gap-3">
-              <button
-                type="button"
-                aria-label={t('decrease_quantity')}
-                onClick={() =>
-                  lineProductId && handleQuantityChange(lineProductId, -1)
-                }
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-              >
-                <Minus size={12} />
-              </button>
-              <input
-                type="number"
-                min={1}
-                step={1}
-                inputMode="numeric"
-                value={
-                  lineProductId
-                    ? (quantityDrafts[lineProductId] ?? String(line.quantity))
-                    : String(line.quantity)
-                }
-                onChange={(event) =>
-                  lineProductId &&
-                  handleQuantityInputChange(lineProductId, event.target.value)
-                }
-                onBlur={() =>
-                  lineProductId &&
-                  handleQuantityInputBlur(lineProductId, line.quantity)
-                }
-                className="h-8 w-14 rounded-md border border-[#E4E4E7] text-center text-sm font-semibold outline-none focus:border-zinc-900"
-              />
-              <button
-                type="button"
-                aria-label={t('increase_quantity')}
-                onClick={() =>
-                  lineProductId && handleQuantityChange(lineProductId, 1)
-                }
-                className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-              >
-                <Plus size={12} />
-              </button>
-            </div>
-          </div>
-        </article>
-      )
-    })
-
-  const drawerContent = (
-    <div className="flex h-full w-full flex-col bg-white">
-      <header className="flex items-center justify-between border-b border-[#F1F1F1] pb-4">
-        <div>
-          <p className="text-xs font-semibold text-zinc-500 uppercase">
-            {t('orders_menu_builder')}
-          </p>
-          <h2 className="text-xl font-semibold text-zinc-900">
-            {t('orders_menu_items_selection')}
-          </h2>
-        </div>
-        <button
-          type="button"
-          aria-label={t('orders_close_menu_drawer')}
-          onClick={() => setIsDrawerOpen(false)}
-          className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-md border border-[#E4E4E7] bg-black text-zinc-500 transition hover:bg-zinc-100"
-        >
-          <X className="text-white" size={18} />
-        </button>
-      </header>
-
-      <div className="mt-4 flex flex-1 flex-col overflow-hidden">
-        <div className="flex flex-col gap-3 border-b border-[#F1F1F1] pb-4">
-          <div className="flex items-center gap-2 rounded-md border border-[#E4E4E7] bg-gray-50 px-4 py-2">
-            <Search className="h-4 w-4 text-zinc-400" />
-            <input
-              type="text"
-              placeholder={t('orders_search_dishes_or_cuisines')}
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-full border-none bg-transparent text-sm text-zinc-700 outline-none placeholder:text-zinc-400"
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setActiveCategory('all')}
-              className={`rounded-md border border-[#D4D4D8] px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition ${
-                activeCategory === 'all'
-                  ? 'bg-zinc-900 text-white'
-                  : 'bg-white text-zinc-600 hover:bg-zinc-100'
-              }`}
-            >
-              {t('all')}
-            </button>
-            {groupedProducts.map((group) => (
-              <button
-                type="button"
-                key={group.categoryId}
-                onClick={() => setActiveCategory(group.categoryId)}
-                className={`rounded-md border border-[#D4D4D8] px-3 py-1.5 text-xs font-semibold tracking-wide uppercase transition ${
-                  activeCategory === group.categoryId
-                    ? 'bg-zinc-900 text-white'
-                    : 'bg-white text-zinc-600 hover:bg-zinc-100'
-                }`}
-              >
-                {group.categoryName}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto pr-1 pb-32">
-          {isLoading ? (
-            <div className="flex min-h-[200px] items-center justify-center">
-              <Spinner />
-            </div>
-          ) : filteredGroups.length === 0 ? (
-            <div className="border border-dashed border-[#E4E4E7] bg-white p-6 text-center text-sm text-zinc-500">
-              {t('orders_nothing_matches_search')}
-            </div>
-          ) : (
-            filteredGroups.map((group) => (
-              <div key={group.categoryId} className="mt-4 space-y-3">
-                <div>
-                  <p className="mb-4 text-[12px] font-semibold tracking-[0.3em] text-zinc-500 uppercase">
-                    {group.categoryName}
-                  </p>
-                </div>
-                <div className="grid gap-3 grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {group.products.map((product) => {
-                    const selectedLine = safeItems.find(
-                      (item) => getOrderItemProductId(item) === product.id
-                    )
-                    const isSelected = Boolean(selectedLine)
-                    return (
-                      <div
-                        key={product.id}
-                        className={`flex flex-col gap-4 rounded-md border p-4 transition ${
-                          isSelected
-                            ? 'border-zinc-300 bg-white shadow-sm'
-                            : 'border-[#E4E4E7]/50 bg-white shadow-sm hover:border-zinc-900'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className=" text-base font-semibold text-zinc-900">
-                              {product.primaryName}
-                            </p>
-                            <p className="text-sm text-zinc-500">
-                              {product.secondaryName ||
-                                t('orders_signature_dish')}
-                            </p>
-                          </div>
-                         
-                        </div>
-                         <span className="text-sm font-semibold text-zinc-900">
-                            {formatCurrency(product.price ?? 0)}
-                          </span>
-                        {isSelected ? (
-                          <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white px-4 py-2">
-                            <button
-                              type="button"
-                              aria-label={t('decrease_quantity')}
-                              onClick={() =>
-                                product.id &&
-                                handleQuantityChange(product.id, -1)
-                              }
-                              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-                            >
-                              <Minus size={14} />
-                            </button>
-                            <input
-                              type="number"
-                              min={1}
-                              step={1}
-                              inputMode="numeric"
-                              value={
-                                quantityDrafts[product.id] ??
-                                String(selectedLine?.quantity ?? 1)
-                              }
-                              onChange={(event) =>
-                                product.id &&
-                                handleQuantityInputChange(
-                                  product.id,
-                                  event.target.value
-                                )
-                              }
-                              onBlur={() =>
-                                handleQuantityInputBlur(
-                                  product.id,
-                                  selectedLine?.quantity ?? 1
-                                )
-                              }
-                              className="h-9 w-16 rounded-md border border-[#E4E4E7] text-center text-sm font-semibold text-zinc-900 outline-none focus:border-zinc-900"
-                            />
-                            <button
-                              type="button"
-                              aria-label={t('increase_quantity')}
-                              onClick={() =>
-                                product.id &&
-                                handleQuantityChange(product.id, 1)
-                              }
-                              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
-                            >
-                              <Plus size={14} />
-                            </button>
-                          </div>
-                        ) : (
-                          <ButtonSm
-                            type="button"
-                            state="default"
-                            onClick={() => handleAddProduct(product.id)}
-                            className="rounded-sm border border-[#E4E4E7] px-5 py-2 text-xs font-semibold tracking-wide uppercase"
-                          >
-                            {t('add')}
-                          </ButtonSm>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div className="sticky right-0 bottom-0 left-0 mt-auto border-t border-[#E4E4E7] bg-white p-2">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.3em] text-zinc-500 uppercase">
-              {t('summary')}
-            </p>
-            <p className="text-base font-semibold text-zinc-900">
-              {totalProductCount} {t('items')} ·{' '}
-              {formatCurrency(totalProductCost)}
-            </p>
-          </div>
-          <ButtonSm
-            type="button"
-            state="default"
-            className="w-full rounded-sm border border-[#E4E4E7] px-6 py-3 text-sm font-semibold tracking-wide uppercase sm:w-auto"
-            onClick={() => setIsDrawerOpen(false)}
-          >
-            {t('orders_review_selection')}
-          </ButtonSm>
-        </div>
-      </div>
-    </div>
-  )
-
   return (
     <section className="">
-      <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <header className="mt-6 space-y-1">
-          <h2 className="text-base font-semibold text-zinc-800">
-            {t('orders_menu_items')}
-          </h2>
-          <p className="text-sm text-zinc-500">
-            {t('orders_added_dishes')} · {totalProductCount} {t('items')}
-            {totalProductCount > 0 &&
-              ` · ${formatCurrency(pricePerPlate)} / plate`}
-          </p>
-        </header>
-
-        <ButtonSm
-          type="button"
-          state="default"
-          className="rounded-sm border border-[#E4E4E7] px-4 py-2 text-xs font-semibold tracking-wide uppercase"
-          onClick={() => setIsDrawerOpen(true)}
-        >
-          {t('orders_add_more')}
-        </ButtonSm>
-      </header>
-
-      {safeItems.length === 0 ? (
-        <div className="border border-dashed border-[#E4E4E7] bg-[#F9F9F9] px-4 py-8 text-center text-sm text-zinc-500">
-          {t('orders_no_dishes_added_yet')}
+      {isLoading ? (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <Spinner />
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {summaryCards}
+        <div className="grid gap-3 sm:gap-4">
+          {displayGroups.map((group) => (
+            <div key={group.categoryId}>
+              <p className="mb-3 text-[10px] font-semibold tracking-[0.3em] text-zinc-500 uppercase sm:text-[12px]">
+                {group.categoryName}
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                {group.products.map((product) => {
+                  const selectedLine = safeItems.find(
+                    (item) => getOrderItemProductId(item) === product.id
+                  )
+                  const isSelected = Boolean(selectedLine)
+                  return (
+                    <div
+                      key={product.id}
+                      className={`flex flex-col gap-3 rounded-md border p-3 transition ${
+                        isSelected
+                          ? 'border-zinc-300 bg-white shadow-sm'
+                          : 'border-[#E4E4E7]/50 bg-white shadow-sm hover:border-zinc-900'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-zinc-900 sm:text-sm">
+                            {product.primaryName}
+                          </p>
+                          <p className="text-[10px] text-zinc-500 sm:text-xs">
+                            {product.secondaryName ||
+                              t('orders_signature_dish')}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-semibold text-zinc-900 sm:text-sm">
+                        {formatCurrency(product.price ?? 0)}
+                      </span>
+                      {isSelected ? (
+                        <div className="flex items-center justify-between rounded-md border border-[#E4E4E7] bg-white px-2 py-1.5">
+                          <button
+                            type="button"
+                            aria-label={t('decrease_quantity')}
+                            onClick={() =>
+                              product.id && handleQuantityChange(product.id, -1)
+                            }
+                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            step={1}
+                            inputMode="numeric"
+                            value={
+                              quantityDrafts[product.id] ??
+                              String(selectedLine?.quantity ?? 1)
+                            }
+                            onChange={(event) =>
+                              product.id &&
+                              handleQuantityInputChange(
+                                product.id,
+                                event.target.value
+                              )
+                            }
+                            onBlur={() =>
+                              handleQuantityInputBlur(
+                                product.id,
+                                selectedLine?.quantity ?? 1
+                              )
+                            }
+                            className="h-7 w-12 rounded-md border border-[#E4E4E7] text-center text-xs font-semibold text-zinc-900 outline-none focus:border-zinc-900"
+                          />
+                          <button
+                            type="button"
+                            aria-label={t('increase_quantity')}
+                            onClick={() =>
+                              product.id && handleQuantityChange(product.id, 1)
+                            }
+                            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md bg-white text-zinc-700 transition hover:bg-zinc-900 hover:text-white"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                      ) : (
+                        <ButtonSm
+                          type="button"
+                          state="default"
+                          onClick={() => handleAddProduct(product.id)}
+                          className="rounded-sm border border-[#E4E4E7] px-3 py-1.5 text-[10px] font-semibold tracking-wide uppercase sm:text-xs"
+                        >
+                          {t('add')}
+                        </ButtonSm>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </div>
-      )}
-
-      {isDrawerOpen && (
-        <DialogBox
-          isSideDrawer
-          width="100vw"
-          setToggleDialogueBox={setIsDrawerOpen}
-        >
-          {drawerContent}
-        </DialogBox>
       )}
     </section>
   )
