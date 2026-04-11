@@ -106,7 +106,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             <div
               className="h-1 rounded-full bg-blue-600 transition-all"
               style={{
-                width: duration > 0 ? `${(currentTime / duration) * 100}%` : '0%',
+                width:
+                  duration > 0 ? `${(currentTime / duration) * 100}%` : '0%',
               }}
             />
           </div>
@@ -193,14 +194,16 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             step="0.1"
             value={volume}
             onChange={handleVolumeChange}
-            className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-blue-200 outline-none max-w-xs"
+            className="h-2 max-w-xs flex-1 cursor-pointer appearance-none rounded-full bg-blue-200 outline-none"
             style={{
               background: `linear-gradient(to right, #2563eb 0%, #2563eb ${
                 volume * 100
               }%, #e0e7ff ${volume * 100}%, #e0e7ff 100%)`,
             }}
           />
-          <span className="text-xs text-blue-700">{Math.round(volume * 100)}%</span>
+          <span className="text-xs text-blue-700">
+            {Math.round(volume * 100)}%
+          </span>
         </div>
 
         {/* Download Button */}
@@ -208,7 +211,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           <button
             onClick={onDownload}
             disabled={isDownloading}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download size={18} />
             {isDownloading ? 'Downloading...' : 'Download Audio'}

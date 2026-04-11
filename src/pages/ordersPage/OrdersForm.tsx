@@ -87,7 +87,8 @@ const AudioPlayerWrapper: React.FC<AudioPlayerWrapperProps> = ({ audioId }) => {
     return (
       <div className="rounded-xl border-2 border-red-200 bg-red-50 p-6">
         <p className="text-sm text-red-700">
-          Failed to load audio. Please check if the audio file still exists on the server.
+          Failed to load audio. Please check if the audio file still exists on
+          the server.
         </p>
       </div>
     )

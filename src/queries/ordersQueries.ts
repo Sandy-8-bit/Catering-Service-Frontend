@@ -343,7 +343,7 @@ export const useFetchOrderAudio = (audioId?: number | null) => {
 
       const token = authHandler()
       const baseURL = axiosInstance.defaults.baseURL || ''
-      
+
       // Use fetch directly to bypass service worker issues
       const response = await fetch(
         `${baseURL}/api/orders/audio/${audioId}/download`,
