@@ -58,32 +58,40 @@ export interface OrderAdditionalMenuItem {
 // Full order shape returned by GET endpoints (list/detail)
 export interface Order {
   id: number
+  audioId?: number | null
   customerName: string
-  customerPhone: string
-  customerAddress: string
-  eventType: string
+  customerPhone: string | null
+  customerAddress: string | null
+  eventType: string | null
   eventDate: string
-  eventTime: string
-  totalPlates: number
+  eventTime: string | null
+  totalPlates: number | null
   deliveredByUs: boolean
   driver?: OrderDriver
+  driverId?: number | null
+  driverName?: string | null
   offerPercentage?: number
   totalAmount?: number
   advanceAmount: number
-  priceReducedPerPlate?: number
-  discountPercentage?: number
+  priceReducedPerPlate?: number | null
+  discountPercentage?: number | null
   balanceAmount: number
-  paymentType: string
+  paymentType: string | null
+  orderStatus?: string
+  paymentStatus?: string
   status?: string
   items: OrderItem[]
   additionalItems: OrderAdditionalItem[]
   additionalMenuItems?: OrderAdditionalMenuItem[]
   requiredSubProducts?: RequiredSubProduct[]
   discountAmount?: number
-  createdAt: string
-  updatedAt: string
-  locationUrl: string
-  deliveryCharge?: number
+  createdAt?: string
+  updatedAt?: string
+  locationUrl: string | null
+  deliveryCharge?: number | null
+  subTotalAmount?: number
+  grandTotalAmount?: number
+  returnableItemsChecked?: boolean
 }
 
 // Payload fragment for POST / PATCH item entries

@@ -331,3 +331,51 @@ export const fetchOrderBill = async (
   })
   return (res.data?.data ?? res.data) as BillData
 }
+
+// ─── Audio Download ──────────────────────────────────────────────────────────
+
+export const useFetchOrderAudio = (audioId?: number | null) => {
+  const fetchAudio = async (): Promise<Blob> => {
+    try {
+      if (!audioId) {
+        throw new Error('Audio ID is required')
+      }
+
+      const token = authHandler()
+      const baseURL = axiosInstance.defaults.baseURL || ''
+      
+      // Use fetch directly to bypass service worker issues
+      const response = await fetch(
+        `${baseURL}/api/orders/audio/${audioId}/download`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: 'include',
+        }
+      )
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Audio file not found on server')
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      return await response.blob()
+    } catch (error: unknown) {
+      console.error('Audio fetch error:', error)
+      handleApiError(error, 'Fetch audio')
+      throw error
+    }
+  }
+
+  return useQuery({
+    queryKey: ['orderAudio', audioId],
+    queryFn: fetchAudio,
+    enabled: !!audioId,
+    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    retry: 1,
+  })
+}

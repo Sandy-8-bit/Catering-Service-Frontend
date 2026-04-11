@@ -8,6 +8,7 @@ import {
   useCreateOrder,
   useFetchOrderById,
   useUpdateOrder,
+  useFetchOrderAudio,
 } from '@/queries/ordersQueries'
 import type { Order } from '@/types/order'
 import { useFetchAdditionalItems } from '@/queries/additionalItemsQueries'
@@ -40,7 +41,71 @@ import {
 import { useOrderFormContext } from '@/context/OrderFormContext'
 import DialogBox from '@/components/common/DialogBox'
 import VoiceOrderDialog from '@/components/orders/VoiceOrderDialog'
+import AudioPlayer from '@/components/orders/AudioPlayer'
 import { Mic, ChevronDown } from 'lucide-react'
+import toast from 'react-hot-toast'
+
+// Audio Player Wrapper Component
+interface AudioPlayerWrapperProps {
+  audioId: number
+}
+
+const AudioPlayerWrapper: React.FC<AudioPlayerWrapperProps> = ({ audioId }) => {
+  const { data: audioBlob, isLoading, isError } = useFetchOrderAudio(audioId)
+  const [isDownloading, setIsDownloading] = useState(false)
+
+  const handleDownload = async () => {
+    if (!audioBlob) return
+    try {
+      setIsDownloading(true)
+      const url = URL.createObjectURL(audioBlob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `order-audio-${audioId}.wav`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      toast.success('Audio downloaded successfully')
+    } catch (error) {
+      console.error('Download error:', error)
+      toast.error('Failed to download audio')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse rounded-xl bg-blue-100 p-6">
+        <div className="h-8 w-32 rounded bg-blue-200" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-xl border-2 border-red-200 bg-red-50 p-6">
+        <p className="text-sm text-red-700">
+          Failed to load audio. Please check if the audio file still exists on the server.
+        </p>
+      </div>
+    )
+  }
+
+  if (!audioBlob) {
+    return null
+  }
+
+  return (
+    <AudioPlayer
+      audioBlob={audioBlob}
+      title="Order Voice Recording"
+      onDownload={handleDownload}
+      isDownloading={isDownloading}
+    />
+  )
+}
 
 export const OrdersForm = () => {
   const { t } = useTranslation()
@@ -57,7 +122,7 @@ export const OrdersForm = () => {
 
   const { data: additionalItems = [], isLoading: isAdditionalLoading } =
     useFetchAdditionalItems()
-  const [isNegative, setIsNegative] = useState(false);
+  const [isNegative, setIsNegative] = useState(false)
   const { saveFormData, clearFormData } = useOrderFormContext()
   const [editData, setEditData] = useState<Order>(defaultOrderData)
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
@@ -153,7 +218,6 @@ export const OrdersForm = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [expandedMenuItems])
 
-
   // Handle click outside for menu items
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -213,38 +277,38 @@ export const OrdersForm = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [expandedMenuItems])
 
-useEffect(() => {
-  if (isEditMode) {
-    if (existingOrder) {
-      setEditData(existingOrder)
+  useEffect(() => {
+    if (isEditMode) {
+      if (existingOrder) {
+        setEditData(existingOrder)
+      }
+      return
     }
-    return
-  }
 
-  // Create mode
-  let initialData: Order = defaultOrderData
+    // Create mode
+    let initialData: Order = defaultOrderData
 
-  try {
-    const stored = localStorage.getItem('orderFormData')
-    if (stored) {
-      initialData = JSON.parse(stored)
+    try {
+      const stored = localStorage.getItem('orderFormData')
+      if (stored) {
+        initialData = JSON.parse(stored)
+      }
+    } catch (err) {
+      console.error('Failed to load from localStorage', err)
     }
-  } catch (err) {
-    console.error("Failed to load from localStorage", err)
-  }
 
-  if (selectedDateParam) {
-    initialData = {
-      ...initialData,
-      eventDate: selectedDateParam,
+    if (selectedDateParam) {
+      initialData = {
+        ...initialData,
+        eventDate: selectedDateParam,
+      }
     }
-  }
 
-  setEditData(initialData)
-}, [isEditMode, existingOrder, selectedDateParam])
+    setEditData(initialData)
+  }, [isEditMode, existingOrder, selectedDateParam])
   // Auto-save form data to localStorage whenever it changes (only in create mode)
   useEffect(() => {
-    if (isEditMode ) return
+    if (isEditMode) return
 
     const timer = setTimeout(() => {
       saveFormData(editData)
@@ -391,8 +455,12 @@ useEffect(() => {
 
   // Check if form is valid for submission
   const isFormValidForSubmit = (): boolean => {
-    const hasName = !!(editData.customerName && editData.customerName.trim() !== '')
-    const hasPhone = !!(editData.customerPhone && editData.customerPhone.trim() !== '')
+    const hasName = !!(
+      editData.customerName && editData.customerName.trim() !== ''
+    )
+    const hasPhone = !!(
+      editData.customerPhone && editData.customerPhone.trim() !== ''
+    )
     return hasName && hasPhone
   }
 
@@ -443,6 +511,13 @@ useEffect(() => {
       <div className="divider min-w-full border border-[#F1F1F1]" />
 
       <section className="flex flex-col gap-3 p-3 sm:gap-5 sm:p-6">
+        {/* Audio Player - show if editing order with audio */}
+        {isEditMode && existingOrder?.audioId && (
+          <div className="mb-2">
+            <AudioPlayerWrapper audioId={existingOrder.audioId} />
+          </div>
+        )}
+
         <form className="flex flex-col gap-3 sm:gap-5" onSubmit={handleSubmit}>
           {/* Customer Information */}
           <button
@@ -459,7 +534,6 @@ useEffect(() => {
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
                 {t('customer_information')}
               </h2>
-           
             </div>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
@@ -473,7 +547,7 @@ useEffect(() => {
                 title={t('name')}
                 name="customerName"
                 placeholder={t('eg_name')}
-                inputValue={editData.customerName}
+                inputValue={editData.customerName ?? ''}
                 onChange={(value) =>
                   setEditData((prev) => ({
                     ...prev,
@@ -488,7 +562,7 @@ useEffect(() => {
                 name="phoneNumber"
                 prefixText="+91"
                 placeholder={t('phone_placeholder')}
-                inputValue={editData.customerPhone}
+                inputValue={editData.customerPhone ?? ''}
                 onChange={(value) =>
                   setEditData((prev) => ({
                     ...prev,
@@ -501,7 +575,7 @@ useEffect(() => {
                 title={t('address')}
                 name="address"
                 placeholder={t('address_placeholder')}
-                inputValue={editData.customerAddress}
+                inputValue={editData.customerAddress ?? ''}
                 onChange={(value) =>
                   setEditData((prev) => ({
                     ...prev,
@@ -559,7 +633,7 @@ useEffect(() => {
                 <TimeInput
                   title=""
                   name="time"
-                  value={editData.eventTime}
+                  value={editData.eventTime ?? ''}
                   onChange={(value) =>
                     setEditData((prev) => ({
                       ...prev,
@@ -568,7 +642,7 @@ useEffect(() => {
                   }
                 />
               </div>
-               <Input
+              <Input
                 title={t('total_plates')}
                 prefixText={t('count')}
                 placeholder="Enter total plates"
@@ -591,13 +665,12 @@ useEffect(() => {
                 delivery: !prev.delivery,
               }))
             }
-            className="-mx-2  flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
+            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
           >
             <div className="space-y-1 text-left">
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
                 {t('delivery_payment')}
               </h2>
-         
             </div>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
@@ -613,7 +686,6 @@ useEffect(() => {
                 onChange={(checked) =>
                   setEditData((prev) => ({ ...prev, deliveredByUs: checked }))
                 }
-                
               />
               {editData.deliveredByUs && (
                 <>
@@ -653,18 +725,16 @@ useEffect(() => {
                     title={t('location_url')}
                     name="Location Url"
                     placeholder={t('location_url_placeholder')}
-                    inputValue={editData.locationUrl}
+                    inputValue={editData.locationUrl ?? ''}
                     onChange={(value) =>
                       setEditData((prev) => ({
                         ...prev,
-                        locationUrl: value,
+                        locationUrl: value || null,
                       }))
                     }
                   />
                 </>
               )}
-
-             
             </div>
           )}
 
@@ -674,13 +744,12 @@ useEffect(() => {
             onClick={() =>
               setExpandedSections((prev) => ({ ...prev, menu: !prev.menu }))
             }
-            className="-mx-2  flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
+            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
           >
             <div className="space-y-1 text-left">
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
                 {t('Menu Selection')}
               </h2>
-         
             </div>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
@@ -851,7 +920,6 @@ useEffect(() => {
               <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
                 {t('payment')}
               </h2>
-        
             </div>
             <ChevronDown
               className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
@@ -946,50 +1014,53 @@ useEffect(() => {
               })()}
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
-            
-<div className="flex flex-col gap-2">
-  <Input
-    title={t('price_reduced_per_plate')}
-    prefixText="₹"
-    placeholder="0"
-    inputValue={
-      editData.priceReducedPerPlate?.toString().replace('-', '') || ''
-    }
-    onChange={(value) => {
-      const num = safeNumber(value);
+                <div className="flex flex-col gap-2">
+                  <Input
+                    title={t('price_reduced_per_plate')}
+                    prefixText="₹"
+                    placeholder="0"
+                    inputValue={
+                      editData.priceReducedPerPlate
+                        ?.toString()
+                        .replace('-', '') || ''
+                    }
+                    onChange={(value) => {
+                      const num = safeNumber(value)
 
-      setEditData((prev) => ({
-        ...prev,
-        priceReducedPerPlate: isNegative ? -num : num,
-      }));
-    }}
-  />
+                      setEditData((prev) => ({
+                        ...prev,
+                        priceReducedPerPlate: isNegative ? -num : num,
+                      }))
+                    }}
+                  />
 
-  {/* Plus / Minus Toggle */}
-  <div className="flex gap-2">
-    <button
-      type="button"
-      onClick={() => setIsNegative(false)}
-      className={`px-4 py-1 rounded-md text-sm font-medium transition 
-        ${!isNegative 
-          ? "bg-green-500 text-white" 
-          : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
-    >
-      +
-    </button>
+                  {/* Plus / Minus Toggle */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsNegative(false)}
+                      className={`rounded-md px-4 py-1 text-sm font-medium transition ${
+                        !isNegative
+                          ? 'bg-green-500 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      +
+                    </button>
 
-    <button
-      type="button"
-      onClick={() => setIsNegative(true)}
-      className={`px-4 py-1 rounded-md text-sm font-medium transition 
-        ${isNegative 
-          ? "bg-red-500 text-white" 
-          : "bg-gray-200 text-gray-700 hover:bg-gray-300"}`}
-    >
-      −
-    </button>
-  </div>
-</div>
+                    <button
+                      type="button"
+                      onClick={() => setIsNegative(true)}
+                      className={`rounded-md px-4 py-1 text-sm font-medium transition ${
+                        isNegative
+                          ? 'bg-red-500 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      −
+                    </button>
+                  </div>
+                </div>
 
                 <Input
                   title={t('discount_percentage')}
@@ -1026,7 +1097,7 @@ useEffect(() => {
                     paymentTypeOptions.find(
                       (option) =>
                         option.label.toLocaleLowerCase() ===
-                        editData.paymentType.toLocaleLowerCase()
+                        (editData.paymentType ?? '').toLocaleLowerCase()
                     ) || { id: 0, label: t('select_payment_type') }
                   }
                   onChange={(option) =>
@@ -1101,7 +1172,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
 
   const isSubmitDisabled = (): boolean => {
     if (!isFormValid) return true
-    
+
     if (isEditMode) {
       return lodash.isEqual(editData, existingOrder)
     } else {

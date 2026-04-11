@@ -10,6 +10,8 @@ import {
   Trash2,
   X,
   ChevronDown,
+  SpeakerIcon,
+  Speaker,
 } from 'lucide-react'
 import InlineCalendar from '@/components/common/InlineCalendar'
 import ButtonSm from '@/components/common/Buttons'
@@ -44,22 +46,27 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
     return <></>
   }
 
-  const eventDate = new Date(order.eventDate)
+  const eventDate = order.eventDate ? new Date(order.eventDate) : null
 
-  const formatTime = (time: string) => {
-  const [hour, minute] = time.split(':');
+  const formatTime = (time: string | null | undefined) => {
+    if (!time) return t('not_specified') || 'N/A'
+    try {
+      const [hour, minute] = time.split(':')
+      return new Date(0, 0, 0, +hour, +minute).toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    } catch {
+      return t('not_specified') || 'N/A'
+    }
+  }
 
-  return new Date(0, 0, 0, +hour, +minute).toLocaleTimeString('en-IN', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
+  const handleCopy = (text: string | null | undefined) => {
+    if (!text) return
+    navigator.clipboard.writeText(text)
+    toast.success('Copied!')
+  }
 
-const handleCopy = (text: string) => {
-  navigator.clipboard.writeText(text);
-  toast.success('Copied!');
-};
-  
   return (
     <article className="overflow-hidden rounded-xl border-2 border-zinc-200/80 bg-white">
       <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50 px-5 py-3">
@@ -69,71 +76,125 @@ const handleCopy = (text: string) => {
             {t('order_details')}
           </p>
         </div>
-        <span className="rounded-md bg-zinc-900 px-3 py-1 text-xs font-bold tracking-wide text-white">
-          #{order.id}
-        </span>
+        <div className="flex items-center gap-3">
+          {order.audioId && (
+            <div className="flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 ring-1 ring-blue-200">
+              <SpeakerIcon size={14} className="text-blue-600" />
+              <span className="text-[10px] font-semibold text-blue-600">
+                Audio
+              </span>
+            </div>
+          )}
+          <span className="rounded-md bg-zinc-900 px-3 py-1 text-xs font-bold tracking-wide text-white">
+            #{order.id}
+          </span>
+        </div>
       </div>
       <div className="p-5">
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-       <DetailCell
-  label={t('customer')}
-  value={
-    <span
-      className="cursor-pointer hover:text-blue-500"
-      onClick={() => handleCopy(order.customerName)}
-    >
-      {order.customerName}
-    </span>
-  }
-/>
+          <DetailCell
+            label={t('customer')}
+            value={
+              order.customerName ? (
+                <span
+                  className="cursor-pointer hover:text-blue-500"
+                  onClick={() => handleCopy(order.customerName)}
+                >
+                  {order.customerName}
+                </span>
+              ) : (
+                <span className="text-zinc-400">
+                  {t('not_specified') || 'N/A'}
+                </span>
+              )
+            }
+          />
 
-<DetailCell
-  label={t('phone')}
-  value={
-    <span
-      className="cursor-pointer hover:text-blue-500"
-      onClick={() => handleCopy(order.customerPhone)}
-    >
-      {order.customerPhone}
-    </span>
-  }
-/>
-          <DetailCell label={t('event')} value={order.eventType} />
+          <DetailCell
+            label={t('phone')}
+            value={
+              order.customerPhone ? (
+                <span
+                  className="cursor-pointer hover:text-blue-500"
+                  onClick={() => handleCopy(order.customerPhone)}
+                >
+                  {order.customerPhone}
+                </span>
+              ) : (
+                <span className="text-zinc-400">
+                  {t('not_specified') || 'N/A'}
+                </span>
+              )
+            }
+          />
+          <DetailCell
+            label={t('event')}
+            value={
+              order.eventType ? (
+                order.eventType
+              ) : (
+                <span className="text-zinc-400">
+                  {t('not_specified') || 'N/A'}
+                </span>
+              )
+            }
+          />
           <DetailCell
             label={t('date_time')}
             value={
-              <span>
-                {eventDate.toLocaleDateString(undefined, {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-                {' | '}
-                <span className="">
-                  {formatTime(order.eventTime)}
+              eventDate ? (
+                <span>
+                  {eventDate.toLocaleDateString(undefined, {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                  {' | '}
+                  <span className="">{formatTime(order.eventTime)}</span>
                 </span>
-              </span>
+              ) : (
+                <span className="text-zinc-400">
+                  {t('not_specified') || 'N/A'}
+                </span>
+              )
             }
           />
           <DetailCell
             label={t('headcount')}
             value={
-              <span>
-                {order.totalPlates}{' '}
-                <span className="text-sm font-normal text-zinc-400">
-                  {t('guests')}
+              order.totalPlates ? (
+                <span>
+                  {order.totalPlates}{' '}
+                  <span className="text-sm font-normal text-zinc-400">
+                    {t('guests')}
+                  </span>
                 </span>
-              </span>
+              ) : (
+                <span className="text-zinc-400">
+                  {t('not_specified') || 'N/A'}
+                </span>
+              )
             }
           />
-          <DetailCell label={t('payment')} value={order.paymentType} />
+          <DetailCell
+            label={t('payment')}
+            value={
+              order.paymentType ? (
+                order.paymentType
+              ) : (
+                <span className="text-zinc-400">
+                  {t('not_specified') || 'N/A'}
+                </span>
+              )
+            }
+          />
           <DetailCell
             label={t('advance')}
-            value={`₹${order.advanceAmount.toLocaleString()}`}
+            value={`₹${(order.advanceAmount || 0).toLocaleString()}`}
           />
           <DetailCell
             label={t('balance')}
-            value={`₹${order.balanceAmount.toLocaleString()}`}
+            value={`₹${(order.balanceAmount || 0).toLocaleString()}`}
           />
         </dl>
       </div>
@@ -523,12 +584,12 @@ export const OrdersPage = () => {
                 </h3>
               </div>
               {ordersForDate.length > 0 && (
-                <span className="whitespace-nowrap rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-500 ring-1 ring-orange-200">
+                <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold whitespace-nowrap text-orange-500 ring-1 ring-orange-200">
                   {ordersForDate.length} {t('total')}
                 </span>
               )}
             </header>
-<div className="flex relative z-10 max-h-52 flex-col gap-2 overflow-visible">
+            <div className="relative z-10 flex max-h-52 flex-col gap-2 overflow-visible">
               {isLoading ? (
                 <div className="flex animate-pulse flex-col gap-2">
                   {Array.from({ length: 3 }).map((_, i) => (
@@ -546,96 +607,117 @@ export const OrdersPage = () => {
                   {infoMessage}
                 </p>
               ) : (
-             ordersForDate.map((order, index) => {
-  const isActive = order.id === selectedOrderId
+                ordersForDate.map((order, index) => {
+                  const isActive = order.id === selectedOrderId
 
+                  return (
+                    <button
+                      type="button"
+                      key={order.id}
+                      onClick={() =>
+                        setSelectedOrderId((prev) =>
+                          prev === order.id ? null : order.id
+                        )
+                      }
+                      className={`w-full cursor-pointer rounded-xl px-4 py-3 text-left transition-all ${
+                        isActive
+                          ? 'bg-orange-500 shadow-md shadow-orange-200'
+                          : 'border border-zinc-100 bg-zinc-50 hover:bg-zinc-100'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          {/* 🔢 Number + Name + Audio Icon */}
+                          <div className="flex items-center gap-1.5">
+                            <p
+                              className={`text-base font-bold ${
+                                isActive ? 'text-white' : 'text-zinc-800'
+                              }`}
+                            >
+                              {index + 1}.{' '}
+                              {order.customerName || (
+                                <span className="text-zinc-400 italic">
+                                  ({t('no_name') || 'No name'})
+                                </span>
+                              )}
+                            </p>
+                            {order.audioId && (
+                              <Speaker
+                                size={14}
+                                className={
+                                  isActive ? 'text-white' : 'text-blue-600'
+                                }
+                              />
+                            )}
+                          </div>
 
+                          {/* 📞 Phone number */}
+                          <p
+                            className={`text-sm ${
+                              isActive ? 'text-orange-100' : 'text-zinc-600'
+                            }`}
+                          >
+                            {order.customerPhone || (
+                              <span className="text-zinc-400">
+                                {t('no_phone') || 'No phone'}
+                              </span>
+                            )}
+                          </p>
 
+                          {/* Order meta */}
+                          <span
+                            className={`text-[11px] ${
+                              isActive ? 'text-orange-100' : 'text-zinc-400'
+                            }`}
+                          >
+                            #{order.id} ·{' '}
+                            {order.eventType || (
+                              <span className="text-zinc-400">
+                                {t('no_event') || 'No event'}
+                              </span>
+                            )}
+                          </span>
+                        </div>
 
-  return (
-    <button
-      type="button"
-      key={order.id}
-      onClick={() =>
-        setSelectedOrderId((prev) =>
-          prev === order.id ? null : order.id
-        )
-      }
-      className={`w-full  cursor-pointer rounded-xl px-4 py-3 text-left transition-all ${
-        isActive
-          ? 'bg-orange-500 shadow-md shadow-orange-200'
-          : 'border border-zinc-100 bg-zinc-50 hover:bg-zinc-100'
-      }`}
-    >
-      <div className="flex  items-start justify-between gap-2">
-        <div>
-          {/* 🔢 Number + Name */}
-          <p
-            className={`text-base font-bold ${
-              isActive ? 'text-white' : 'text-zinc-800'
-            }`}
-          >
-            {index + 1}. {order.customerName}
-          </p>
+                        <div className="relative z-10 flex flex-wrap items-center justify-end gap-1.5 lg:hidden">
+                          <ActionDropdown
+                            actions={[
+                              {
+                                id: 'edit',
+                                label: 'Edit',
+                                icon: <Edit3 className="h-3 w-3" />,
+                                onClick: () =>
+                                  handleNavigateToForm('edit', order.id),
+                              },
+                              {
+                                id: 'delete',
+                                label: 'Delete',
+                                icon: <Trash2 className="h-3 w-3" />,
+                                color: 'text-red-600',
+                                onClick: () => {
+                                  setSelectedOrderId(order.id)
+                                  setIsDeleteDialogOpen(true)
+                                },
+                              },
+                              {
+                                id: 'status',
+                                label: 'Status',
+                                icon: <Edit3 className="h-3 w-3" />,
+                                onClick: () =>
+                                  navigate(`/driver/order/${order.id}`),
+                              },
+                            ]}
+                          />
 
-          {/* 📞 Phone number */}
-          <p
-            className={`text-sm ${
-              isActive ? 'text-orange-100' : 'text-zinc-600'
-            }`}
-          >
-          {order.customerPhone}
-          </p>
-
-          {/* Order meta */}
-          <span
-            className={`text-[11px] ${
-              isActive ? 'text-orange-100' : 'text-zinc-400'
-            }`}
-          >
-            #{order.id} · {order.eventType}
-          </span>
-        </div>
-
-        <div className="flex  z-10 relative flex-wrap justify-end items-center gap-1.5 lg:hidden">
-          <ActionDropdown
-            actions={[
-              {
-                id: 'edit',
-                label: 'Edit',
-                icon: <Edit3 className="h-3 w-3" />,
-                onClick: () =>
-                  handleNavigateToForm('edit', order.id),
-              },
-              {
-                id: 'delete',
-                label: 'Delete',
-                icon: <Trash2 className="h-3 w-3" />,
-                color: 'text-red-600',
-                onClick: () => {
-                  setSelectedOrderId(order.id)
-                  setIsDeleteDialogOpen(true)
-                },
-              },
-              {
-                id: 'status',
-                label: 'Status',
-                icon: <Edit3 className="h-3 w-3" />,
-                onClick: () =>
-                  navigate(`/driver/order/${order.id}`),
-              },
-            ]}
-          />
-
-          {/* prevent triggering long press */}
-          <div onClick={(e) => e.stopPropagation()}>
-            <DownloadBillButton orderId={order.id} compact />
-          </div>
-        </div>
-      </div>
-    </button>
-  )
-})
+                          {/* prevent triggering long press */}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <DownloadBillButton orderId={order.id} compact />
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  )
+                })
               )}
             </div>
           </div>
