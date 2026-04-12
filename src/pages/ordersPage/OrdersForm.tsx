@@ -469,9 +469,9 @@ export const OrdersForm = () => {
     return <SkeletonForm inputCount={12} />
 
   return (
-    <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
-      <header className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4">
-        <h1 className="flex w-max flex-row items-center gap-1 text-start text-base font-semibold text-zinc-800 sm:gap-2 sm:text-lg md:text-xl">
+    <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-amber-200 bg-amber-50">
+      <header className="flex flex-col gap-2 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-4">
+        <h1 className="flex w-max flex-row items-center gap-1 text-start text-xs font-semibold text-amber-900 sm:gap-2 sm:text-sm md:text-base lg:text-lg">
           <ArrowLeft
             onClick={() => {
               navigate(-1)
@@ -489,7 +489,7 @@ export const OrdersForm = () => {
             onClick={() => setShowVoiceDialog(true)}
             className="px-2 py-1.5 text-xs font-medium sm:px-3 sm:py-2 sm:text-sm"
           >
-            <Mic className="mr-1 h-3.5 w-3.5 shrink-0 text-zinc-700 sm:mr-2 sm:h-4 sm:w-4" />
+            <Mic className="mr-1 h-3.5 w-3.5 shrink-0 text-amber-700 sm:mr-2 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">{t('voice_order')}</span>
             <span className="inline sm:hidden">Voice</span>
           </ButtonSm>
@@ -509,9 +509,9 @@ export const OrdersForm = () => {
           />
         </div>
       </header>
-      <div className="divider min-w-full border border-[#F1F1F1]" />
+      <div className="divider min-w-full border border-amber-200" />
 
-      <section className="flex flex-col gap-3 p-3 sm:gap-5 sm:p-6">
+      <section className="flex flex-col gap-3 bg-gradient-to-b from-white to-amber-50 p-3 sm:gap-5 sm:p-6">
         {/* Audio Player - show if editing order with audio */}
         {isEditMode && existingOrder?.audioId && (
           <div className="mb-2">
@@ -529,15 +529,15 @@ export const OrdersForm = () => {
                 customer: !prev.customer,
               }))
             }
-            className="-mx-2 mt-0 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
+            className="-mx-2 mt-0 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-amber-100"
           >
             <div className="space-y-1 text-left">
-              <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
+              <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
                 {t('customer_information')}
               </h2>
             </div>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
+              className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
                 expandedSections.customer ? 'rotate-180' : ''
               }`}
             />
@@ -607,7 +607,7 @@ export const OrdersForm = () => {
                 }
               />
               <div className="space-y-2 sm:space-y-3">
-                <label className="text-xs font-medium text-zinc-700 sm:text-sm">
+                <label className="text-xs font-medium text-amber-700 sm:text-sm">
                   {t('event_time')}
                 </label>
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
@@ -624,7 +624,7 @@ export const OrdersForm = () => {
                       className={`rounded-lg border-2 px-2 py-1.5 text-xs font-medium transition-all sm:px-3 sm:py-2 sm:text-sm ${
                         editData.eventTime === preset.value
                           ? 'border-orange-500 bg-orange-50 text-orange-700'
-                          : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300'
+                          : 'border-amber-200 bg-white text-amber-700 hover:border-amber-300'
                       }`}
                     >
                       {preset.label}
@@ -666,15 +666,15 @@ export const OrdersForm = () => {
                 delivery: !prev.delivery,
               }))
             }
-            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
+            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-amber-100"
           >
             <div className="space-y-1 text-left">
-              <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
+              <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
                 {t('delivery_payment')}
               </h2>
             </div>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
+              className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
                 expandedSections.delivery ? 'rotate-180' : ''
               }`}
             />
@@ -745,15 +745,15 @@ export const OrdersForm = () => {
             onClick={() =>
               setExpandedSections((prev) => ({ ...prev, menu: !prev.menu }))
             }
-            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
+            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-amber-100"
           >
             <div className="space-y-1 text-left">
-              <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
+              <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
                 {t('Menu Selection')}
               </h2>
             </div>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
+              className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
                 expandedSections.menu ? 'rotate-180' : ''
               }`}
             />
@@ -763,23 +763,23 @@ export const OrdersForm = () => {
               {/* Product Menu Items Separator */}
               <div
                 ref={productMenuRef}
-                className="flex flex-col space-y-3 rounded-lg border border-zinc-100 bg-zinc-50 p-4"
+                className="flex flex-col space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-4"
               >
                 <button
                   type="button"
                   onClick={() => toggleMenuItemSection('productMenu')}
-                  className="flex w-full items-center justify-between space-y-1 rounded-lg transition-colors hover:bg-zinc-100"
+                  className="flex w-full items-center justify-between space-y-1 rounded-lg transition-colors hover:bg-amber-100"
                 >
                   <div className="space-y-1.5 text-left">
-                    <h3 className="text-xs font-semibold text-zinc-800 sm:text-sm">
+                    <h3 className="text-xs font-semibold text-amber-900 sm:text-sm">
                       {t('orders_menu_items')}
                     </h3>
-                    <p className="text-[10px] text-zinc-500 sm:text-xs">
+                    <p className="text-[10px] text-amber-600 sm:text-xs">
                       {editData.items?.length || 0} {t('selected_items')}
                     </p>
                   </div>
                   <ChevronDown
-                    className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
+                    className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
                       expandedMenuItems.productMenu ? 'rotate-180' : ''
                     }`}
                   />
@@ -792,7 +792,7 @@ export const OrdersForm = () => {
                   }`}
                 >
                   {expandedMenuItems.productMenu && (
-                    <div className="max-h-[1200px] flex-1 overflow-y-auto border-t border-zinc-200 pt-4">
+                    <div className="max-h-[1200px] flex-1 overflow-y-auto border-t border-amber-200 pt-4">
                       <ProductMenuSelector
                         selectedItems={editData.items}
                         onChange={(items) =>
@@ -810,24 +810,24 @@ export const OrdersForm = () => {
               {/* Additional Menu Items Separator */}
               <div
                 ref={additionalMenuRef}
-                className="flex flex-col space-y-3 rounded-lg border border-zinc-100 bg-zinc-50 p-4"
+                className="flex flex-col space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-4"
               >
                 <button
                   type="button"
                   onClick={() => toggleMenuItemSection('additionalMenu')}
-                  className="flex w-full items-center justify-between space-y-1 rounded-lg transition-colors hover:bg-zinc-100"
+                  className="flex w-full items-center justify-between space-y-1 rounded-lg transition-colors hover:bg-amber-100"
                 >
                   <div className="space-y-1.5 text-left">
-                    <h3 className="text-xs font-semibold text-zinc-800 sm:text-sm">
+                    <h3 className="text-xs font-semibold text-amber-900 sm:text-sm">
                       {t('orders_additional_menu_items')}
                     </h3>
-                    <p className="text-[10px] text-zinc-500 sm:text-xs">
+                    <p className="text-[10px] text-amber-600 sm:text-xs">
                       {editData.additionalMenuItems?.length || 0}{' '}
                       {t('selected_items')}
                     </p>
                   </div>
                   <ChevronDown
-                    className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
+                    className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
                       expandedMenuItems.additionalMenu ? 'rotate-180' : ''
                     }`}
                   />
@@ -840,7 +840,7 @@ export const OrdersForm = () => {
                   }`}
                 >
                   {expandedMenuItems.additionalMenu && (
-                    <div className="max-h-[1200px] flex-1 overflow-y-auto border-t border-zinc-200 pt-4">
+                    <div className="max-h-[1200px] flex-1 overflow-y-auto border-t border-amber-200 pt-4">
                       <AdditionalMenuSelector
                         selectedItems={editData.additionalMenuItems ?? []}
                         onChange={(items) =>
@@ -858,24 +858,24 @@ export const OrdersForm = () => {
               {/* Additional Items Separator */}
               <div
                 ref={additionalItemsRef}
-                className="flex flex-col space-y-3 rounded-lg border border-zinc-100 bg-zinc-50 p-4"
+                className="flex flex-col space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-4"
               >
                 <button
                   type="button"
                   onClick={() => toggleMenuItemSection('additionalItems')}
-                  className="flex w-full items-center justify-between space-y-1 rounded-lg transition-colors hover:bg-zinc-100"
+                  className="flex w-full items-center justify-between space-y-1 rounded-lg transition-colors hover:bg-amber-100"
                 >
                   <div className="space-y-1.5 text-left">
-                    <h3 className="text-xs font-semibold text-zinc-800 sm:text-sm">
+                    <h3 className="text-xs font-semibold text-amber-900 sm:text-sm">
                       {t('additional_items')}
                     </h3>
-                    <p className="text-[10px] text-zinc-500 sm:text-xs">
+                    <p className="text-[10px] text-amber-600 sm:text-xs">
                       {editData.additionalItems?.length || 0}{' '}
                       {t('selected_items')}
                     </p>
                   </div>
                   <ChevronDown
-                    className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
+                    className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
                       expandedMenuItems.additionalItems ? 'rotate-180' : ''
                     }`}
                   />
@@ -888,7 +888,7 @@ export const OrdersForm = () => {
                   }`}
                 >
                   {expandedMenuItems.additionalItems && (
-                    <div className="max-h-[1200px] flex-1 overflow-y-auto border-t border-zinc-200 pt-4">
+                    <div className="max-h-[1200px] flex-1 overflow-y-auto border-t border-amber-200 pt-4">
                       <AdditionalItemsSelector
                         availableItems={additionalItems}
                         selectedItems={editData.additionalItems ?? []}
@@ -915,15 +915,15 @@ export const OrdersForm = () => {
                 payment: !prev.payment,
               }))
             }
-            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-zinc-50"
+            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-amber-100"
           >
             <div className="space-y-1 text-left">
-              <h2 className="text-xs font-semibold text-zinc-800 sm:text-sm md:text-base">
+              <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
                 {t('payment')}
               </h2>
             </div>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-zinc-400 transition-transform sm:h-5 sm:w-5 ${
+              className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
                 expandedSections.payment ? 'rotate-180' : ''
               }`}
             />
@@ -941,44 +941,44 @@ export const OrdersForm = () => {
                 const oneLeafPrice = calculateOneLeafPrice(editData)
 
                 return (
-                  <div className="flex flex-col gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-3 sm:gap-3 sm:p-5">
-                    <div className="flex justify-between gap-3 text-xs text-zinc-600 sm:text-sm">
+                  <div className="flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 sm:gap-3 sm:p-5">
+                    <div className="flex justify-between gap-3 text-xs text-amber-700 sm:text-sm">
                       <span>{t('one_leaf_price')}:</span>
-                      <span className="font-regular text-zinc-900">
+                      <span className="font-regular text-amber-900">
                         ₹{Math.round(oneLeafPrice).toLocaleString()}
                       </span>
                     </div>
-                    <div className="flex justify-between gap-3 text-xs text-zinc-600 sm:text-sm">
+                    <div className="flex justify-between gap-3 text-xs text-amber-700 sm:text-sm">
                       <span>{t('total_leaf_items_subtotal')}:</span>
-                      <span className="font-regular text-zinc-900">
+                      <span className="font-regular text-amber-900">
                         ₹{menuItemsSubtotal.toLocaleString()}
                       </span>
                     </div>
 
-                    <div className="flex justify-between text-xs text-zinc-600 sm:text-sm">
+                    <div className="flex justify-between text-xs text-amber-700 sm:text-sm">
                       <span>{t('additional_menu_items_subtotal')}:</span>
-                      <span className="font-regular text-zinc-900">
+                      <span className="font-regular text-amber-900">
                         ₹{additionalMenuItemsSubtotal.toLocaleString()}
                       </span>
                     </div>
-                    <div className="flex justify-between text-xs text-zinc-600 sm:text-sm">
+                    <div className="flex justify-between text-xs text-amber-700 sm:text-sm">
                       <span>{t('additional_items_subtotal')}:</span>
-                      <span className="font-regular text-zinc-900">
+                      <span className="font-regular text-amber-900">
                         ₹{additionalItemsSubtotal.toLocaleString()}
                       </span>
                     </div>
-                    <div className="mt-2 flex justify-between border-t border-zinc-200 pt-2 text-xs text-zinc-600 sm:text-sm">
+                    <div className="mt-2 flex justify-between border-t border-amber-300 pt-2 text-xs text-amber-700 sm:text-sm">
                       <span className="font-semibold">
                         {t('subtotal_before_delivery')}:
                       </span>
-                      <span className="font-semibold text-zinc-900">
+                      <span className="font-semibold text-amber-900">
                         ₹{getSubtotalBeforeDelivery().toLocaleString()}
                       </span>
                     </div>
                     {editData.deliveredByUs && (
-                      <div className="flex justify-between text-xs text-zinc-600 sm:text-sm">
+                      <div className="flex justify-between text-xs text-amber-700 sm:text-sm">
                         <span>{t('delivery_charges')}:</span>
-                        <span className="font-regular text-zinc-900">
+                        <span className="font-regular text-amber-900">
                           ₹{(editData.deliveryCharge || 0).toLocaleString()}
                         </span>
                       </div>
@@ -1002,11 +1002,11 @@ export const OrdersForm = () => {
                           </>
                         ) : null
                       })()}
-                    <div className="flex justify-between border-t border-zinc-200 pt-3">
-                      <span className="text-xs font-semibold text-zinc-900 sm:text-sm">
+                    <div className="flex justify-between border-t border-amber-300 pt-3">
+                      <span className="text-xs font-semibold text-amber-900 sm:text-sm">
                         {t('total')}:
                       </span>
-                      <span className="text-sm font-bold text-zinc-900 sm:text-lg">
+                      <span className="text-xs font-bold text-amber-900 sm:text-base md:text-lg">
                         ₹{(editData.totalAmount ?? 0).toLocaleString()}
                       </span>
                     </div>
@@ -1043,7 +1043,7 @@ export const OrdersForm = () => {
                       className={`rounded-md px-4 py-1 text-sm font-medium transition ${
                         !isNegative
                           ? 'bg-green-500 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          : 'bg-amber-100 text-amber-600 hover:bg-amber-200'
                       }`}
                     >
                       +
@@ -1055,7 +1055,7 @@ export const OrdersForm = () => {
                       className={`rounded-md px-4 py-1 text-sm font-medium transition ${
                         isNegative
                           ? 'bg-red-500 text-white'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                          : 'bg-amber-100 text-amber-600 hover:bg-amber-200'
                       }`}
                     >
                       −
