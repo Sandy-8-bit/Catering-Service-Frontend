@@ -873,7 +873,8 @@ export const OrdersPage = () => {
                         quantity:
                           item.quantity * (selectedOrder.totalPlates || 1),
                         totalPrice:
-                          (item.totalPrice ?? 0) * (selectedOrder.totalPlates || 1),
+                          (item.totalPrice ?? 0) *
+                          (selectedOrder.totalPlates || 1),
                       }))}
                       columns={[
                         {
