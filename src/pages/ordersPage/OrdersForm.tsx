@@ -683,6 +683,7 @@ export const OrdersForm = () => {
             <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
               <InputCheckbox
                 title={t('delivery_by_us')}
+                label="Delivery"
                 checked={editData.deliveredByUs}
                 onChange={(checked) =>
                   setEditData((prev) => ({ ...prev, deliveredByUs: checked }))
