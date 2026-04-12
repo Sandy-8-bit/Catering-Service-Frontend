@@ -769,8 +769,10 @@ export const OrdersPage = () => {
                       <BillTable
                         data={selectedOrder.items.map((item) => ({
                           ...item,
-                          quantity: item.quantity * (selectedOrder.totalPlates || 1),
-                          totalPrice: item.totalPrice * (selectedOrder.totalPlates || 1),
+                          quantity:
+                            item.quantity * (selectedOrder.totalPlates || 1),
+                          totalPrice:
+                            item.totalPrice * (selectedOrder.totalPlates || 1),
                         }))}
                         columns={[
                           {
@@ -868,8 +870,10 @@ export const OrdersPage = () => {
                     <BillTable
                       data={selectedOrder.additionalMenuItems.map((item) => ({
                         ...item,
-                        quantity: item.quantity * (selectedOrder.totalPlates || 1),
-                        totalPrice: item.totalPrice * (selectedOrder.totalPlates || 1),
+                        quantity:
+                          item.quantity * (selectedOrder.totalPlates || 1),
+                        totalPrice:
+                          item.totalPrice * (selectedOrder.totalPlates || 1),
                       }))}
                       columns={[
                         {
@@ -960,8 +964,10 @@ export const OrdersPage = () => {
                     <BillTable
                       data={selectedOrder.additionalItems.map((item) => ({
                         ...item,
-                        quantity: item.quantity * (selectedOrder.totalPlates || 1),
-                        totalPrice: item.totalPrice * (selectedOrder.totalPlates || 1),
+                        quantity:
+                          item.quantity * (selectedOrder.totalPlates || 1),
+                        totalPrice:
+                          item.totalPrice * (selectedOrder.totalPlates || 1),
                       }))}
                       columns={[
                         {
