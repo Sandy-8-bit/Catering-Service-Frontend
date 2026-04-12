@@ -370,7 +370,7 @@
   "total_price": "Total Price",
   "item_name": "Item Name",
   "update_status": "Update Status",
-  "create_Voice Order": "Create Voice Order",
+  "create_Voice Order": "Voice Order",
   "back_to_day_view": "Back to day view",
   "overview_for_day": "Overview for the Day",
   "additional_item_with_id": "Additional {{id}}",

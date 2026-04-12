@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import InlineCalendar from '@/components/common/InlineCalendar'
 import ButtonSm from '@/components/common/Buttons'
-import GenericTable from '@/components/common/GenericTable'
+import BillTable from '@/components/common/BillTable'
 import DialogBox from '@/components/common/DialogBox'
 import VoiceOrderDialog from '@/components/orders/VoiceOrderDialog'
 import DownloadBillButton from '@/components/orders/DownloadBillButton'
@@ -31,11 +31,13 @@ const DetailCell = ({
   label: string
   value: React.ReactNode
 }) => (
-  <div className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-zinc-200">
-    <p className="mb-1 text-xs font-semibold tracking-wider text-zinc-400 uppercase">
+  <div className="rounded-xl bg-gradient-to-br from-amber-50 to-white px-4 py-3 shadow-sm ring-1 ring-amber-200">
+    <p className="mb-1 text-xs font-semibold tracking-wider text-amber-600 uppercase">
       {label}
     </p>
-    <p className="text-base leading-snug font-bold text-zinc-900">{value}</p>
+    <p className="text-xs leading-snug font-bold text-amber-900 sm:text-sm md:text-base">
+      {value}
+    </p>
   </div>
 )
 
@@ -68,11 +70,11 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
   }
 
   return (
-    <article className="overflow-hidden rounded-xl border-2 border-zinc-200/80 bg-white">
-      <div className="flex items-center justify-between border-b border-zinc-100 bg-zinc-50 px-5 py-3">
+    <article className="overflow-hidden rounded-xl border-2 border-amber-300 bg-gradient-to-br from-white to-amber-50">
+      <div className="flex items-center justify-between border-b border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-5 py-3">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-orange-500" />
-          <p className="text-xs font-bold tracking-widest text-zinc-500 uppercase">
+          <span className="h-2 w-2 rounded-full bg-amber-700" />
+          <p className="text-xs font-bold tracking-widest text-amber-700 uppercase">
             {t('order_details')}
           </p>
         </div>
@@ -80,12 +82,12 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
           {order.audioId && (
             <div className="flex items-center gap-1 rounded-md bg-blue-50 px-2 py-1 ring-1 ring-blue-200">
               <SpeakerIcon size={14} className="text-blue-600" />
-              <span className="text-[10px] font-semibold text-blue-600">
+              <span className="text-xs font-semibold text-blue-600 sm:text-sm">
                 Audio
               </span>
             </div>
           )}
-          <span className="rounded-md bg-zinc-900 px-3 py-1 text-xs font-bold tracking-wide text-white">
+          <span className="rounded-md bg-amber-800 px-3 py-1 text-xs font-bold tracking-wide text-white">
             #{order.id}
           </span>
         </div>
@@ -237,14 +239,14 @@ const buildQuantitySummary = <T,>(
   orders: Order[],
   getItems: (order: Order) => T[],
   getLabel: (item: T) => string,
-  getQuantity: (item: T) => number
+  getQuantity: (item: T, order: Order) => number
 ) => {
   const map = new Map<string, number>()
   orders.forEach((order) => {
     getItems(order).forEach((item) => {
       const label = getLabel(item)
       if (!label) return
-      map.set(label, (map.get(label) ?? 0) + getQuantity(item))
+      map.set(label, (map.get(label) ?? 0) + getQuantity(item, order))
     })
   })
   return Array.from(map.entries()).map(([label, quantity]) => ({
@@ -254,7 +256,7 @@ const buildQuantitySummary = <T,>(
 }
 
 const detailSectionTitleClass =
-  'text-xs font-bold uppercase tracking-[0.2em] text-orange-500'
+  'text-xs font-bold uppercase tracking-[0.2em] text-amber-700'
 
 interface ActionDropdownProps {
   actions: Array<{
@@ -392,7 +394,7 @@ export const OrdersPage = () => {
         sourceOrders,
         (order) => order.items,
         (item) => getProductDisplayName(item),
-        (item) => item.quantity
+        (item, order) => item.quantity * (order.totalPlates || 1)
       ),
     [sourceOrders]
   )
@@ -420,7 +422,7 @@ export const OrdersPage = () => {
           item?.itemPrimaryName ||
           item?.itemSecondaryName ||
           t('additional_item_with_id', { id: item?.id }),
-        (item) => item.quantity
+        (item, order) => item.quantity * (order.totalPlates || 1)
       ),
     [sourceOrders, t]
   )
@@ -433,7 +435,7 @@ export const OrdersPage = () => {
         (item) =>
           getAdditionalMenuItemDisplayName(item) ||
           t('additional_item_with_id', { id: item?.productId }),
-        (item) => item.quantity
+        (item, order) => item.quantity * (order.totalPlates || 1)
       ),
     [sourceOrders, t]
   )
@@ -483,11 +485,11 @@ export const OrdersPage = () => {
   }
 
   return (
-    <main className="layout-container flex min-h-[95vh] flex-col overflow-hidden rounded-[12px] border border-zinc-200 bg-zinc-50 shadow-sm">
-      <header className="flex flex-col gap-3 border-b border-zinc-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+    <main className="layout-container flex min-h-[95vh] flex-col overflow-hidden rounded-[12px] border border-amber-200 bg-amber-50 shadow-sm">
+      <header className="flex flex-col gap-3 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex items-center gap-3">
-          <span className="h-5 w-1 rounded-full bg-orange-500" />
-          <h1 className="text-xl font-bold tracking-tight text-zinc-900">
+          <span className="h-5 w-1 rounded-full bg-amber-700" />
+          <h1 className="text-xs font-bold tracking-tight text-amber-900 sm:text-sm md:text-lg lg:text-xl">
             {t('orders')}
           </h1>
         </div>
@@ -526,10 +528,12 @@ export const OrdersPage = () => {
           <ButtonSm
             state="outline"
             onClick={() => setShowVoiceDialog(true)}
-            className="font-medium lg:flex"
+            className="px-2! py-1.5! font-medium sm:flex md:px-3! md:py-2! lg:flex"
           >
-            <Mic className="mr-2 h-4 w-4 text-zinc-700" />{' '}
-            {t('create_Voice Order')}
+            <Mic className="mr-2 h-3 w-3 text-zinc-700 sm:h-4 sm:w-4" />{' '}
+            <span className="text-xs sm:text-sm">
+              {t('create_Voice Order')}
+            </span>
           </ButtonSm>
           <ButtonSm
             state="outline"
@@ -542,9 +546,12 @@ export const OrdersPage = () => {
           <ButtonSm
             state="default"
             onClick={() => handleNavigateToForm('create')}
-            className="font-medium"
+            className="flex! scale-80 px-2! py-1! font-medium sm:flex md:scale-100! md:px-3! md:py-2! lg:flex"
           >
-            <Plus className="mr-2 h-4 w-4 text-white" /> {t('add_new_order')}
+            <Plus className="mr-2 h-3 w-3 text-white sm:h-4 sm:w-4" />{' '}
+            <span className="text-xs! font-medium! md:text-sm!">
+              {t('add_new_order')}
+            </span>
           </ButtonSm>
         </div>
       </header>
@@ -560,7 +567,7 @@ export const OrdersPage = () => {
 
       <section className="flex max-h-full flex-1 flex-col gap-0 overflow-hidden lg:flex-row">
         {/* left section */}
-        <div className="flex w-full flex-col gap-5 border-b border-zinc-200 bg-zinc-50 p-4 lg:w-[360px] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0">
+        <div className="flex w-full flex-col gap-5 border-b border-amber-200 bg-gradient-to-b from-amber-50 to-yellow-50 p-4 lg:w-[360px] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0">
           <InlineCalendar
             className="min-w-full!"
             showSelectedLabel={false}
@@ -573,18 +580,18 @@ export const OrdersPage = () => {
             }}
           />
 
-          <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm">
-            <header className="mb-3 flex items-start justify-between gap-2">
+          <div className="overflow-hidden rounded-2xl border border-amber-300 bg-white p-4 shadow-md">
+            <header className="mb-3 flex flex-col items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold tracking-widest text-zinc-400 uppercase">
+                <p className="truncate text-xs font-semibold tracking-widest text-amber-600 uppercase">
                   {t('orders_on')}
                 </p>
-                <h3 className="truncate text-base font-bold text-zinc-900">
+                <h3 className="truncate text-xs font-bold text-amber-900 sm:text-sm md:text-base">
                   {formattedDateLabel}
                 </h3>
               </div>
               {ordersForDate.length > 0 && (
-                <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-bold whitespace-nowrap text-orange-500 ring-1 ring-orange-200">
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold whitespace-nowrap text-amber-700 ring-1 ring-amber-300">
                   {ordersForDate.length} {t('total')}
                 </span>
               )}
@@ -603,7 +610,7 @@ export const OrdersPage = () => {
                   ))}
                 </div>
               ) : infoMessage ? (
-                <p className="rounded-xl border border-zinc-100 bg-zinc-50 p-3 text-sm text-zinc-400">
+                <p className="rounded-xl border border-zinc-100 bg-zinc-50 p-3 text-xs text-zinc-400 sm:text-sm">
                   {infoMessage}
                 </p>
               ) : (
@@ -621,16 +628,16 @@ export const OrdersPage = () => {
                       }
                       className={`w-full cursor-pointer rounded-xl px-4 py-3 text-left transition-all ${
                         isActive
-                          ? 'bg-orange-500 shadow-md shadow-orange-200'
-                          : 'border border-zinc-100 bg-zinc-50 hover:bg-zinc-100'
+                          ? 'bg-amber-600 shadow-md shadow-amber-300'
+                          : 'border border-amber-200 bg-amber-50 hover:bg-amber-100'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2">
+                      <div className="flex flex-col items-start justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           {/* 🔢 Number + Name + Audio Icon */}
                           <div className="flex items-center gap-1.5">
                             <p
-                              className={`text-base font-bold ${
+                              className={`text-xs font-bold sm:text-sm md:text-base ${
                                 isActive ? 'text-white' : 'text-zinc-800'
                               }`}
                             >
@@ -653,8 +660,8 @@ export const OrdersPage = () => {
 
                           {/* 📞 Phone number */}
                           <p
-                            className={`text-sm ${
-                              isActive ? 'text-orange-100' : 'text-zinc-600'
+                            className={`hidden text-xs sm:block ${
+                              isActive ? 'text-white' : 'text-zinc-600'
                             }`}
                           >
                             {order.customerPhone || (
@@ -666,16 +673,18 @@ export const OrdersPage = () => {
 
                           {/* Order meta */}
                           <span
-                            className={`text-[11px] ${
-                              isActive ? 'text-orange-100' : 'text-zinc-400'
+                            className={`text-xs sm:text-sm ${
+                              isActive ? 'text-white' : 'text-zinc-400'
                             }`}
                           >
-                            #{order.id} ·{' '}
-                            {order.eventType || (
-                              <span className="text-zinc-400">
-                                {t('no_event') || 'No event'}
-                              </span>
-                            )}
+                            #{order.id} •{' '}
+                            <span className="hidden sm:inline">
+                              {order.eventType || (
+                                <span className="text-zinc-400">
+                                  {t('no_event') || 'No event'}
+                                </span>
+                              )}
+                            </span>
                           </span>
                         </div>
 
@@ -723,20 +732,20 @@ export const OrdersPage = () => {
           </div>
         </div>
         {/* right section */}
-        <div className="flex w-full flex-col gap-6 overflow-visible bg-white p-4 shadow-[-1px_0_0_0_#e4e4e7] sm:p-6">
+        <div className="flex w-full flex-col gap-6 overflow-visible bg-gradient-to-b from-white to-yellow-50 p-4 shadow-[-1px_0_0_0_#dcc694] sm:p-6">
           <div className="flex flex-col items-start gap-1">
             {selectedOrder ? (
               <button
                 type="button"
                 onClick={() => setSelectedOrderId(null)}
-                className="flex items-center gap-1.5 text-xs font-semibold text-orange-500 hover:text-orange-600"
+                className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 hover:text-amber-800 sm:text-sm"
               >
                 <ArrowLeft size={12} /> {t('back_to_day_view')}
               </button>
             ) : (
               <>
                 <p className={detailSectionTitleClass}>{t('summary')}</p>
-                <p className="text-xl font-bold text-zinc-900">
+                <p className="text-xs font-bold text-amber-900 sm:text-sm md:text-lg lg:text-xl">
                   {t('overview_for_day')}
                 </p>
               </>
@@ -748,8 +757,8 @@ export const OrdersPage = () => {
           <div className="flex min-h-0 flex-1 flex-col gap-10 overflow-y-auto">
             <div className="flex flex-col gap-4 overflow-hidden">
               <div className="flex items-center gap-2">
-                <span className="h-4 w-0.5 rounded-full bg-orange-500" />
-                <h3 className="text-base font-bold text-zinc-900">
+                <span className="h-4 w-0.5 rounded-full bg-amber-700" />
+                <h3 className="text-xs font-bold text-amber-900 sm:text-sm md:text-base">
                   {selectedOrder ? t('items_in_order') : t('items_required')}
                 </h3>
               </div>
@@ -757,76 +766,83 @@ export const OrdersPage = () => {
                 {selectedOrder ? (
                   selectedOrder.items && selectedOrder.items.length > 0 ? (
                     <>
-                      <GenericTable
-                        data={selectedOrder.items}
-                        dataCell={[
+                      <BillTable
+                        data={selectedOrder.items.map((item) => ({
+                          ...item,
+                          quantity: item.quantity * (selectedOrder.totalPlates || 1),
+                          totalPrice: item.totalPrice * (selectedOrder.totalPlates || 1),
+                        }))}
+                        columns={[
                           {
-                            headingTitle: t('primary_name'),
-                            accessVar: 'productPrimaryName',
+                            key: 'productPrimaryName',
+                            label: t('primary_name'),
+                            width: '30%',
                           },
                           {
-                            headingTitle: t('secondary_name'),
-                            accessVar: 'productSecondaryName',
+                            key: 'productSecondaryName',
+                            label: t('secondary_name'),
+                            width: '25%',
                           },
                           {
-                            headingTitle: t('quantity'),
-                            accessVar: 'quantity',
+                            key: 'quantity',
+                            label: t('quantity'),
+                            width: '15%',
+                            align: 'center',
                             render: (value) => (
-                              <span className="font-semibold text-zinc-900">
-                                {value}
-                              </span>
+                              <span className="font-semibold">{value}</span>
                             ),
                           },
                           {
-                            headingTitle: t('total_price'),
-                            accessVar: 'totalPrice',
+                            key: 'totalPrice',
+                            label: t('total_price'),
+                            width: '30%',
+                            align: 'right',
                             render: (value) => (
-                              <span className="font-semibold text-zinc-900">
+                              <span className="font-semibold">
                                 ₹{value?.toLocaleString()}
                               </span>
                             ),
                           },
                         ]}
-                        isHeaderVisible={true}
                         messageWhenNoData={t('no_menu_items_order')}
                       />
-                      <div className="mt-4 flex items-center justify-between rounded-lg border border-zinc-200 bg-zinc-50 p-3">
-                        <p className="text-sm font-semibold text-zinc-700">
+                      <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 p-3">
+                        <p className="text-xs font-semibold text-amber-700 sm:text-sm">
                           {t('menu_items_subtotal')}
                         </p>
-                        <p className="text-lg font-bold text-zinc-900">
+                        <p className="text-xs font-bold text-amber-900 sm:text-sm md:text-lg">
                           ₹{menuItemsSubtotal.toLocaleString()}
                         </p>
                       </div>
                     </>
                   ) : (
-                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
                       <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
                       {t('no_menu_items_order')}
                     </p>
                   )
                 ) : itemsSummary.length > 0 ? (
-                  <GenericTable
+                  <BillTable
                     data={itemsSummary.map((item) => ({
                       productPrimaryName: item.label,
                       quantity: item.quantity,
                     }))}
-                    dataCell={[
+                    columns={[
                       {
-                        headingTitle: t('item_name'),
-                        accessVar: 'productPrimaryName',
+                        key: 'productPrimaryName',
+                        label: t('item_name'),
+                        width: '70%',
                       },
                       {
-                        headingTitle: t('quantity'),
-                        accessVar: 'quantity',
+                        key: 'quantity',
+                        label: t('quantity'),
+                        width: '30%',
+                        align: 'right',
                         render: (value) => (
-                          <span className="font-semibold text-zinc-900">
-                            {value}
-                          </span>
+                          <span className="font-semibold">{value}</span>
                         ),
                       },
                     ]}
-                    isHeaderVisible={true}
                     messageWhenNoData={t('no_items_planned')}
                   />
                 ) : (
@@ -840,8 +856,8 @@ export const OrdersPage = () => {
 
             <div className="flex flex-col gap-4 overflow-hidden">
               <div className="flex items-center gap-2">
-                <span className="h-4 w-0.5 rounded-full bg-orange-500" />
-                <h3 className="text-base font-bold text-zinc-900">
+                <span className="h-4 w-0.5 rounded-full bg-amber-700" />
+                <h3 className="text-xs font-bold text-amber-900 sm:text-sm md:text-base">
                   Additional Menu Items
                 </h3>
               </div>
@@ -849,67 +865,74 @@ export const OrdersPage = () => {
                 {selectedOrder ? (
                   selectedOrder.additionalMenuItems &&
                   selectedOrder.additionalMenuItems.length > 0 ? (
-                    <GenericTable
-                      data={selectedOrder.additionalMenuItems}
-                      dataCell={[
+                    <BillTable
+                      data={selectedOrder.additionalMenuItems.map((item) => ({
+                        ...item,
+                        quantity: item.quantity * (selectedOrder.totalPlates || 1),
+                        totalPrice: item.totalPrice * (selectedOrder.totalPlates || 1),
+                      }))}
+                      columns={[
                         {
-                          headingTitle: t('primary_name'),
-                          accessVar: 'productPrimaryName',
+                          key: 'productPrimaryName',
+                          label: t('primary_name'),
+                          width: '30%',
                         },
                         {
-                          headingTitle: t('secondary_name'),
-                          accessVar: 'productSecondaryName',
+                          key: 'productSecondaryName',
+                          label: t('secondary_name'),
+                          width: '25%',
                         },
                         {
-                          headingTitle: t('quantity'),
-                          accessVar: 'quantity',
+                          key: 'quantity',
+                          label: t('quantity'),
+                          width: '15%',
+                          align: 'center',
                           render: (value) => (
-                            <span className="font-semibold text-zinc-900">
-                              {value}
-                            </span>
+                            <span className="font-semibold">{value}</span>
                           ),
                         },
                         {
-                          headingTitle: t('total_price'),
-                          accessVar: 'totalPrice',
+                          key: 'totalPrice',
+                          label: t('total_price'),
+                          width: '30%',
+                          align: 'right',
                           render: (value) => (
-                            <span className="font-semibold text-zinc-900">
+                            <span className="font-semibold">
                               ₹{value?.toLocaleString?.() ?? 0}
                             </span>
                           ),
                         },
                       ]}
-                      isHeaderVisible={true}
                       messageWhenNoData={t('no_items_planned')}
                     />
                   ) : (
-                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
                       <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
                       {t('no_items_planned')}
                     </p>
                   )
                 ) : additionalMenuItemsSummary.length > 0 ? (
-                  <GenericTable
+                  <BillTable
                     data={additionalMenuItemsSummary.map((item) => ({
                       productPrimaryName: item.label,
                       quantity: item.quantity,
                     }))}
-                    dataCell={[
+                    columns={[
                       {
-                        headingTitle: t('item_name'),
-                        accessVar: 'productPrimaryName',
+                        key: 'productPrimaryName',
+                        label: t('item_name'),
+                        width: '70%',
                       },
                       {
-                        headingTitle: t('quantity'),
-                        accessVar: 'quantity',
+                        key: 'quantity',
+                        label: t('quantity'),
+                        width: '30%',
+                        align: 'right',
                         render: (value) => (
-                          <span className="font-semibold text-zinc-900">
-                            {value}
-                          </span>
+                          <span className="font-semibold">{value}</span>
                         ),
                       },
                     ]}
-                    isHeaderVisible={true}
                     messageWhenNoData={t('no_items_planned')}
                   />
                 ) : (
@@ -923,8 +946,8 @@ export const OrdersPage = () => {
 
             <div className="flex flex-col gap-4 overflow-hidden">
               <div className="flex items-center gap-2">
-                <span className="h-4 w-0.5 rounded-full bg-orange-500" />
-                <h3 className="text-base font-bold text-zinc-900">
+                <span className="h-4 w-0.5 rounded-full bg-amber-700" />
+                <h3 className="text-xs font-bold text-amber-900 sm:text-sm md:text-base">
                   {selectedOrder
                     ? t('additional_items_in_order')
                     : t('additional_items_required')}
@@ -934,71 +957,78 @@ export const OrdersPage = () => {
                 {selectedOrder ? (
                   selectedOrder.additionalItems &&
                   selectedOrder.additionalItems.length > 0 ? (
-                    <GenericTable
-                      data={selectedOrder.additionalItems}
-                      dataCell={[
+                    <BillTable
+                      data={selectedOrder.additionalItems.map((item) => ({
+                        ...item,
+                        quantity: item.quantity * (selectedOrder.totalPlates || 1),
+                        totalPrice: item.totalPrice * (selectedOrder.totalPlates || 1),
+                      }))}
+                      columns={[
                         {
-                          headingTitle: t('primary_name'),
-                          accessVar: 'itemPrimaryName',
+                          key: 'itemPrimaryName',
+                          label: t('primary_name'),
+                          width: '30%',
                         },
                         {
-                          headingTitle: t('secondary_name'),
-                          accessVar: 'itemSecondaryName',
+                          key: 'itemSecondaryName',
+                          label: t('secondary_name'),
+                          width: '25%',
                         },
                         {
-                          headingTitle: t('quantity'),
-                          accessVar: 'quantity',
+                          key: 'quantity',
+                          label: t('quantity'),
+                          width: '15%',
+                          align: 'center',
                           render: (value) => (
-                            <span className="font-semibold text-zinc-900">
-                              {value}
-                            </span>
+                            <span className="font-semibold">{value}</span>
                           ),
                         },
                         {
-                          headingTitle: t('total_price'),
-                          accessVar: 'totalPrice',
+                          key: 'totalPrice',
+                          label: t('total_price'),
+                          width: '30%',
+                          align: 'right',
                           render: (value) => (
-                            <span className="font-semibold text-zinc-900">
+                            <span className="font-semibold">
                               ₹{value?.toLocaleString()}
                             </span>
                           ),
                         },
                       ]}
-                      isHeaderVisible={true}
                       messageWhenNoData={t('no_additional_items_order')}
                     />
                   ) : (
-                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
                       <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
                       {t('no_additional_items_order')}
                     </p>
                   )
                 ) : additionalItemsSummary.length > 0 ? (
-                  <GenericTable
+                  <BillTable
                     data={additionalItemsSummary.map((item) => ({
                       itemPrimaryName: item.label,
                       quantity: item.quantity,
                     }))}
-                    dataCell={[
+                    columns={[
                       {
-                        headingTitle: t('item_name'),
-                        accessVar: 'itemPrimaryName',
+                        key: 'itemPrimaryName',
+                        label: t('item_name'),
+                        width: '70%',
                       },
                       {
-                        headingTitle: t('quantity'),
-                        accessVar: 'quantity',
+                        key: 'quantity',
+                        label: t('quantity'),
+                        width: '30%',
+                        align: 'right',
                         render: (value) => (
-                          <span className="font-semibold text-zinc-900">
-                            {value}
-                          </span>
+                          <span className="font-semibold">{value}</span>
                         ),
                       },
                     ]}
-                    isHeaderVisible={true}
                     messageWhenNoData={t('no_additional_items_planned')}
                   />
                 ) : (
-                  <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-sm text-zinc-400">
+                  <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
                     <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
                     {t('no_additional_items_planned')}
                   </p>
@@ -1030,12 +1060,12 @@ export const OrdersPage = () => {
             </header>
 
             <div className="flex flex-col gap-2">
-              <p className="text-sm text-zinc-600">
+              <p className="text-xs text-zinc-600 sm:text-sm">
                 Are you sure you want to delete order{' '}
                 <span className="font-bold">#{selectedOrder.id}</span> for{' '}
                 <span className="font-bold">{selectedOrder.customerName}</span>?
               </p>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-400 sm:text-sm">
                 This action cannot be undone.
               </p>
             </div>

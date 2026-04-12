@@ -356,12 +356,12 @@ export const useFetchOrderAudio = (audioId?: number | null) => {
         }
       )
 
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Audio file not found on server')
-        }
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
+      // if (!response.ok) {
+      //   if (response.status === 404) {
+      //     throw new Error('Audio file not found on server')
+      //   }
+      //   throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      // }
 
       return await response.blob()
     } catch (error: unknown) {
