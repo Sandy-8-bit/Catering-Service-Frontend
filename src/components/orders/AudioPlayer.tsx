@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react'
-import { Play, Pause, Volume2, Download } from 'lucide-react'
+import { Play, Pause, Download } from 'lucide-react'
 
 interface AudioPlayerProps {
   audioBlob: Blob
@@ -20,7 +20,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(1)
 
   // Create object URL for the blob
   useEffect(() => {
@@ -63,14 +62,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     setCurrentTime(time)
     if (audioRef.current) {
       audioRef.current.currentTime = time
-    }
-  }
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const vol = parseFloat(e.target.value)
-    setVolume(vol)
-    if (audioRef.current) {
-      audioRef.current.volume = vol
     }
   }
 
@@ -139,7 +130,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
       {/* Header */}
       <div className="mb-4 flex items-center gap-2">
-        <Volume2 size={20} className="text-blue-600" />
         <h3 className="text-lg font-semibold text-blue-900">{title}</h3>
       </div>
 
@@ -184,34 +174,12 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
           </div>
         </div>
 
-        {/* Volume Control */}
-        <div className="flex items-center gap-3">
-          <Volume2 size={16} className="text-blue-600" />
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            value={volume}
-            onChange={handleVolumeChange}
-            className="h-2 max-w-xs flex-1 cursor-pointer appearance-none rounded-full bg-blue-200 outline-none"
-            style={{
-              background: `linear-gradient(to right, #2563eb 0%, #2563eb ${
-                volume * 100
-              }%, #e0e7ff ${volume * 100}%, #e0e7ff 100%)`,
-            }}
-          />
-          <span className="text-xs text-blue-700">
-            {Math.round(volume * 100)}%
-          </span>
-        </div>
-
         {/* Download Button */}
         {onDownload && (
           <button
             onClick={onDownload}
             disabled={isDownloading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Download size={18} />
             {isDownloading ? 'Downloading...' : 'Download Audio'}

@@ -356,14 +356,21 @@ export const useFetchOrderAudio = (audioId?: number | null) => {
         }
       )
 
-      // if (!response.ok) {
-      //   if (response.status === 404) {
-      //     throw new Error('Audio file not found on server')
-      //   }
-      //   throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      // }
+      // Parse the JSON response to get the audio URL
+      const jsonData = await response.json()
 
-      return await response.blob()
+      if (!jsonData.success || !jsonData.data) {
+        throw new Error(jsonData.message || 'Failed to get audio URL')
+      }
+
+      // Fetch the actual audio file from the URL (e.g., Cloudinary)
+      const audioResponse = await fetch(jsonData.data)
+
+      if (!audioResponse.ok) {
+        throw new Error(`Failed to fetch audio: HTTP ${audioResponse.status}`)
+      }
+
+      return await audioResponse.blob()
     } catch (error: unknown) {
       console.error('Audio fetch error:', error)
       handleApiError(error, 'Fetch audio')
