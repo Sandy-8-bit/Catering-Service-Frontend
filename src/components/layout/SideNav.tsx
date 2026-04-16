@@ -53,13 +53,13 @@ const SideNav: React.FC = () => {
 
   const navigationItems: NavigationItem[] = useMemo(() => {
     const items: NavigationItem[] = [
-      // {
-      //   label: 'Dashboard',
-      //   path: appRoutes.dashboard.path,
-      //   icon: '/icons/sideNavIcons/dashboard-icon.svg',
-      //   activeIcon: '/icons/sideNavIcons/dashboard-icon-active.svg',
-      //   section: 'main',
-      // },
+      {
+        label: 'Dashboard',
+        path: appRoutes.dashboard.path,
+        icon: '/icons/sideNavIcons/dashboard-icon.svg',
+        activeIcon: '/icons/sideNavIcons/dashboard-icon-active.svg',
+        section: 'main',
+      },
       {
         label: t('side_nav_order_management'),
         path: appRoutes.orders.path,
@@ -69,18 +69,18 @@ const SideNav: React.FC = () => {
       },
 
       {
-        label: t('side_nav_user_management'),
-        path: appRoutes.userManagement.path,
+        label: t('side_nav_master_configuration'),
+        path: appRoutes.master.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
         section: 'settings',
       },
       {
-        label: t('side_nav_master_configuration'),
-        path: appRoutes.master.path,
+        label: 'Reports',
+        path: appRoutes.reports.path,
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         activeIcon: '/icons/sideNavIcons/rawMaterials-icon-active.svg',
-        section: 'main',
+        section: 'settings',
       },
     ]
 
@@ -183,10 +183,10 @@ const SideNav: React.FC = () => {
 
       <div
         style={{ zoom: 0.85 }}
-        className="floating-container relative hidden min-h-[125vh] border-r border-gray-200 bg-[#FAFAFA] md:flex"
+        className="floating-container bg-gradient-to-br from-amber-50 via-white to-amber-50  relative hidden min-h-[125vh] border-r border-gray-200 bg-[#FAFAFA] md:flex"
       >
         <motion.section
-          className={`flex h-[115vh] flex-col gap-4 overflow-hidden bg-[#FAFAFA] px-2.5 pt-4 transition-all duration-300 select-none ${isExpanded ? 'w-[280px]' : 'w-[100px]'}`}
+          className={`flex h-[115vh] flex-col gap-4 overflow-hidden bg-amber-50  px-2.5 pt-4 transition-all duration-300 select-none ${isExpanded ? 'w-[280px]' : 'w-[100px]'}`}
           animate={{ x: 0, opacity: 1 }}
         >
           <motion.div

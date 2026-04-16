@@ -78,7 +78,6 @@ const MasterPage: React.FC = () => {
         navigateUrl: appRoutes.products.path,
       },
     ]
-
     // Only show Recipes if NOT staff
     if (role !== 'STAFF') {
       cards.push({
@@ -101,7 +100,6 @@ const MasterPage: React.FC = () => {
         navigateUrl: appRoutes.calculateRawMaterials.path,
       })
     }
-
     cards.push({
       icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
       title: t('additional_items'),
@@ -111,12 +109,22 @@ const MasterPage: React.FC = () => {
       btnText: t('configure'),
       navigateUrl: appRoutes.additionalItems.path,
     })
-
+    
+    // Add User Management card
+    cards.push({
+      icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
+      title: t('side_nav_user_management'),
+      desc: 'Manage users and their roles',
+      label: t('side_nav_user_management'),
+      labelColor: 'bg-indigo-50 text-indigo-700',
+      btnText: t('configure'),
+      navigateUrl: appRoutes.master.children.userManagement,
+    })
     return cards
   }, [t, role])
 
   return (
-    <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
+    <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-amber-50">
       <header className="flex flex-row gap-4 p-4">
         <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
           {t('master_configurations')}

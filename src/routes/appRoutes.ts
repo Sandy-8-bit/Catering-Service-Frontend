@@ -12,6 +12,12 @@ export const appRoutes = {
   },
   master: {
     path: '/master',
+    children: {
+      userManagement: '/master/user-management',
+    },
+  },
+  reports: {
+    path: '/reports',
     children: {},
   },
   rawMaterials: {
@@ -46,10 +52,6 @@ export const appRoutes = {
   },
   ordersForm: {
     path: '/order-management/form',
-    children: {},
-  },
-  userManagement: {
-    path: '/user-management',
     children: {},
   },
   driver: {

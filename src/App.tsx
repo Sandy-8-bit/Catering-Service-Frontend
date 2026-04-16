@@ -17,10 +17,9 @@ const SignInPage = lazy(async () => ({
 const CategoriesPage = lazy(
   () => import('@/pages/catergoriesPage/CatergoriesPage')
 )
-const Dashboard = lazy(async () => ({
-  default: (await import('@/pages/Dashboard')).Dashboard,
-}))
+const Dashboard = lazy(() => import('@/pages/dashboard/Dash'))
 const MasterPage = lazy(() => import('@/pages/masterPage/MasterPage'))
+const ReportsPage = lazy(() => import('@/pages/reportsPage/ReportsPage'))
 const OrdersForm = lazy(() => import('@/pages/ordersPage/OrdersForm'))
 const OrdersPage = lazy(async () => ({
   default: (await import('@/pages/ordersPage/OrdersPage')).OrdersPage,
@@ -58,6 +57,11 @@ function App() {
             <Route path={appRoutes.dashboard.path} element={<Dashboard />} />
             <Route path={appRoutes.master.path} element={<MasterPage />} />
             <Route
+              path={appRoutes.master.children.userManagement}
+              element={<UsersPage />}
+            />
+            <Route path={appRoutes.reports.path} element={<ReportsPage />} />
+            <Route
               path={appRoutes.rawMaterials.path}
               element={<RawMaterialsPage />}
             />
@@ -79,10 +83,7 @@ function App() {
               path={appRoutes.additionalItems.path}
               element={<AdditionalItemsPage />}
             />
-            <Route
-              path={appRoutes.userManagement.path}
-              element={<UsersPage />}
-            />
+
             <Route path={appRoutes.orders.path} element={<OrdersPage />} />
             <Route path={appRoutes.ordersForm.path} element={<OrdersForm />} />
             <Route

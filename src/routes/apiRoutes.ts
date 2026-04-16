@@ -4,6 +4,9 @@ export const apiRoutes = {
   register: '/api/auth/register',
   verify: '/api/auth/verify-totp',
 
+  // DASHBOARD
+  dashboard: '/api/dashboard',
+
   // MASTER ROUTES
   categories: '/api/admin/categories',
   rawMaterials: '/api/admin/raw-materials',
