@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Download, Loader2 } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import jsPDF from 'jspdf'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
-import useClickOutside from '@/hooks/useClickOutside'
 import {
   fetchOrderBill,
   type BillData,
@@ -661,8 +661,20 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
   date,
 }) => {
   const { t } = useTranslation()
-  const [dropdownRef, isOpen, setIsOpen] = useClickOutside(false)
+  const [isOpen, setIsOpen] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [position, setPosition] = useState({ top: 0, left: 0 })
   const [loadingType, setLoadingType] = useState<BillType | null>(null)
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: Math.max(window.scrollX, rect.right + window.scrollX - 240),
+      })
+    }
+  }, [isOpen])
 
   const billOptions: BillOption[] = [
     {
@@ -700,15 +712,18 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
     }
   }
 
+  const handleClose = () => setIsOpen(false)
+
   const isAnyLoading = loadingType !== null
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         disabled={isAnyLoading}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex cursor-pointer flex-row items-center border-2 border-[#F1F1F1] bg-white font-semibold text-black shadow-sm outline-0 transition-colors duration-200 select-none hover:bg-gray-100 active:bg-gray-200 ${
+        className={`download-bill-button flex cursor-pointer flex-row items-center border-2 border-[#F1F1F1] bg-white font-semibold text-black shadow-sm outline-0 transition-colors duration-200 select-none hover:bg-gray-100 active:bg-gray-200 ${
           compact
             ? 'gap-1 rounded-lg px-2 py-1.5 text-xs'
             : 'gap-2 rounded-[9px] px-3 py-3 text-sm'
@@ -737,38 +752,120 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
         />
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 z-50 mt-1.5 w-60 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg ring-1 ring-zinc-100">
-          <p className="border-b border-zinc-100 px-4 py-2 text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
-            {t('select_bill_type')}
-          </p>
-          <ul className="py-1">
-            {billOptions.map((option) => (
-              <li key={option.type}>
-                <button
-                  type="button"
-                  disabled={loadingType === option.type}
-                  onClick={() => handleDownload(option)}
-                  className="flex w-full flex-col gap-0.5 px-4 py-2.5 text-left transition-colors hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <span className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
-                    {loadingType === option.type ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-orange-500" />
-                    ) : (
-                      <Download className="h-3.5 w-3.5 text-orange-500" />
-                    )}
-                    {option.label}
-                  </span>
-                  <span className="pl-5 text-xs text-zinc-400">
-                    {option.description}
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
+      {isOpen &&
+        createPortal(
+          <>
+            <div className="download-bill-overlay" onClick={handleClose} />
+            <div
+              className="download-bill-menu"
+              style={{
+                top: `${position.top}px`,
+                left: `${position.left}px`,
+              }}
+            >
+              <p className="download-bill-header">{t('select_bill_type')}</p>
+              <ul className="download-bill-items">
+                {billOptions.map((option) => (
+                  <li key={option.type}>
+                    <button
+                      type="button"
+                      disabled={loadingType === option.type}
+                      onClick={() => handleDownload(option)}
+                      className="download-bill-item"
+                    >
+                      <span className="download-bill-item-title">
+                        {loadingType === option.type ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin text-orange-500" />
+                        ) : (
+                          <Download className="h-3.5 w-3.5 text-orange-500" />
+                        )}
+                        {option.label}
+                      </span>
+                      <span className="download-bill-item-desc">
+                        {option.description}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <style>{`
+              .download-bill-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 30;
+              }
+              
+              .download-bill-menu {
+                position: fixed;
+                z-index: 40;
+                width: 240px;
+                overflow: hidden;
+                border-radius: 0.75rem;
+                border: 1px solid #e4e4e7;
+                background-color: white;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                ring: 1px white;
+              }
+              
+              .download-bill-header {
+                border-bottom: 1px solid #f3f4f6;
+                padding: 0.5rem 1rem;
+                font-size: 0.625rem;
+                font-weight: bold;
+                letter-spacing: 0.1em;
+                color: #9ca3af;
+                text-transform: uppercase;
+              }
+              
+              .download-bill-items {
+                padding: 0.25rem 0;
+              }
+              
+              .download-bill-item {
+                display: flex;
+                width: 100%;
+                flex-direction: column;
+                gap: 0.125rem;
+                padding: 0.625rem 1rem;
+                text-align: left;
+                transition-property: background-color, color;
+                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                transition-duration: 150ms;
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: inherit;
+              }
+              
+              .download-bill-item:hover {
+                background-color: #fef3c7;
+              }
+              
+              .download-bill-item:disabled {
+                cursor: not-allowed;
+                opacity: 0.6;
+              }
+              
+              .download-bill-item-title {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: #18181b;
+              }
+              
+              .download-bill-item-desc {
+                padding-left: 1.25rem;
+                font-size: 0.75rem;
+                color: #a1a5ab;
+              }
+            `}</style>
+            </div>
+          </>,
+          document.body
+        )}
+    </>
   )
 }
 

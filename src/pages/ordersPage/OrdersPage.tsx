@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { createPortal } from 'react-dom'
 import {
   Archive,
   ArrowLeft,
@@ -271,14 +272,29 @@ interface ActionDropdownProps {
 
 const ActionDropdown = ({ actions, disabled = false }: ActionDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [position, setPosition] = useState({ top: 0, left: 0 })
+
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX,
+      })
+    }
+  }, [isOpen])
+
+  const handleClose = () => setIsOpen(false)
 
   return (
-    <div className="relative inline-block">
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`flex cursor-pointer flex-row items-center gap-2 rounded-[9px] border-2 border-[#F1F1F1] bg-white px-3 py-1.5 text-[12px] font-semibold text-black shadow-sm outline-0 transition-colors duration-200 select-none hover:bg-gray-100 active:bg-gray-200 lg:py-3 lg:text-sm ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
+        className={`action-dropdown-button flex cursor-pointer flex-row items-center gap-2 rounded-[9px] border-2 border-[#F1F1F1] bg-white px-3 py-1.5 text-[12px] font-semibold text-black shadow-sm outline-0 transition-colors duration-200 select-none hover:bg-gray-100 active:bg-gray-200 lg:py-3 lg:text-sm ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
       >
         Actions
         <ChevronDown
@@ -286,45 +302,102 @@ const ActionDropdown = ({ actions, disabled = false }: ActionDropdownProps) => {
         />
       </button>
 
-      {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-30"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute top-full left-0 z-40 mt-1.5 w-60 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg ring-1 ring-zinc-100">
-            <p className="border-b border-zinc-100 px-4 py-2 text-[10px] font-bold tracking-widest text-zinc-400 uppercase">
-              Actions
-            </p>
-            <ul className="py-1">
-              {actions.map((action) => (
-                <li key={action.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      action.onClick()
-                      setIsOpen(false)
-                    }}
-                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-orange-50 ${action.color || 'text-zinc-900'}`}
-                  >
-                    <span
-                      className={
-                        action.color === 'text-red-600'
-                          ? 'text-red-600'
-                          : 'text-orange-500'
-                      }
+      {isOpen &&
+        createPortal(
+          <>
+            <div className="action-dropdown-overlay" onClick={handleClose} />
+            <div
+              className="action-dropdown-menu"
+              style={{
+                top: `${position.top}px`,
+                left: `${position.left}px`,
+              }}
+            >
+              <p className="action-dropdown-header">Actions</p>
+              <ul className="action-dropdown-items">
+                {actions.map((action) => (
+                  <li key={action.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        action.onClick()
+                        handleClose()
+                      }}
+                      className="action-dropdown-item"
                     >
-                      {action.icon}
-                    </span>
-                    {action.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </>
-      )}
-    </div>
+                      <span
+                        className={
+                          action.color === 'text-red-600'
+                            ? 'text-red-600'
+                            : 'text-orange-500'
+                        }
+                      >
+                        {action.icon}
+                      </span>
+                      {action.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <style>{`
+              .action-dropdown-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 30;
+              }
+              
+              .action-dropdown-menu {
+                position: fixed;
+                z-index: 40;
+                width: 240px;
+                overflow: hidden;
+                border-radius: 0.75rem;
+                border: 1px solid #e4e4e7;
+                background-color: white;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+                ring: 1px white;
+              }
+              
+              .action-dropdown-header {
+                border-bottom: 1px solid #f3f4f6;
+                padding: 0.5rem 1rem;
+                font-size: 0.625rem;
+                font-weight: bold;
+                letter-spacing: 0.1em;
+                color: #9ca3af;
+                text-transform: uppercase;
+              }
+              
+              .action-dropdown-items {
+                padding: 0.25rem 0;
+              }
+              
+              .action-dropdown-item {
+                display: flex;
+                width: 100%;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.625rem 1rem;
+                font-size: 0.875rem;
+                font-weight: 600;
+                transition-property: background-color, color;
+                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                transition-duration: 150ms;
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: inherit;
+              }
+              
+              .action-dropdown-item:hover {
+                background-color: #fef3c7;
+              }
+            `}</style>
+            </div>
+          </>,
+          document.body
+        )}
+    </>
   )
 }
 
