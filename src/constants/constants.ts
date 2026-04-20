@@ -15,15 +15,14 @@ export const ROLE_OPTIONS: DropdownOption[] = [
 ]
 
 export const eventTypeOptions: DropdownOption[] = [
-  'Wedding',
-  'Reception',
-  'periya kariyam',
-  'Birthday',
-  'Housewarming',
-  'Baby Shower',
+  'வெட்டிங்',
+  'ரிசப்ஷன்',
+  'பெரிய காரியம்',
+  'பர்த்டே',
+  'ஹவுஸ்வார்மிங்',
+  'பேபி ஷவர்',
   ''
 ].map((label, index) => ({ id: index + 1, label }))
-
 export const paymentTypeOptions: DropdownOption[] = [
   'CASH',
   'UPI',

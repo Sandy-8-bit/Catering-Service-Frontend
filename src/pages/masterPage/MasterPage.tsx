@@ -70,6 +70,15 @@ const MasterPage: React.FC = () => {
       },
       {
         icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
+        title: t('master_categories'),
+        desc: t('master_categories_desc'),
+        label: t('master_categories_label'),
+        labelColor: 'bg-teal-50 text-teal-700',
+        btnText: t('configure'),
+        navigateUrl: appRoutes.master.children.masterCategories,
+      },
+      {
+        icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
         title: t('products'),
         desc: t('products_desc'),
         label: t('products_label'),

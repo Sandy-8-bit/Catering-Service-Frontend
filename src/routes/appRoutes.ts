@@ -14,6 +14,7 @@ export const appRoutes = {
     path: '/master',
     children: {
       userManagement: '/master/user-management',
+      masterCategories: '/master/master-categories',
     },
   },
   reports: {

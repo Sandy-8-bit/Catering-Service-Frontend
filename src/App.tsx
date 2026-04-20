@@ -17,6 +17,9 @@ const SignInPage = lazy(async () => ({
 const CategoriesPage = lazy(
   () => import('@/pages/catergoriesPage/CatergoriesPage')
 )
+const MasterCategoriesPage = lazy(
+  () => import('@/pages/masterCategoriesPage/MasterCategoriesPage')
+)
 const Dashboard = lazy(() => import('@/pages/dashboard/Dash'))
 const MasterPage = lazy(() => import('@/pages/masterPage/MasterPage'))
 const ReportsPage = lazy(() => import('@/pages/reportsPage/ReportsPage'))
@@ -59,6 +62,10 @@ function App() {
             <Route
               path={appRoutes.master.children.userManagement}
               element={<UsersPage />}
+            />
+            <Route
+              path={appRoutes.master.children.masterCategories}
+              element={<MasterCategoriesPage />}
             />
             <Route path={appRoutes.reports.path} element={<ReportsPage />} />
             <Route

@@ -91,6 +91,13 @@
   "category_primary": "முதன்மை பெயர்",
   "category_secondary": "இரண்டாம் பெயர்",
 
+  "master_categories": "முக்கிய வகைகள்",
+  "add_master_category": "முக்கிய வகுப்பை சேர்க்கவும்",
+  "edit_master_category": "முக்கிய வகுப்பைத் திருத்தவும்",
+  "delete_master_category": "முக்கிய வகுப்பை நீக்கவும்",
+  "master_categories_desc": "காலை உணவு, மதிய உணவு, இரவு உணவு போன்ற உணவு வகைகளை நிர்வகிக்கவும்.",
+  "master_categories_label": "முக்கிய அமைப்பு",
+
   "raw_materials": "பச்சை பொருட்கள்",
   "add_raw_material": "பச்சை பொருள் சேர்க்கவும்",
   "edit_raw_material": "பச்சை பொருளைத் திருத்தவும்",
@@ -195,15 +202,11 @@
   "secondary_name": "இரண்டாம் பெயர்",
   "description": "விளக்கம்",
   "raw_material": "மூலப்பொருள்",
-  "purchase_unit": "வாங்குதலான முறையின் அலகு",
-  "purchase_quantity": "வாங்குதலான அளவு",
-  "purchase_price": "வாங்குதலான விலை (₹)",
   "select_unit": "அலகைத் தேர்ந்துகொள்ளவும்",
   "table_view": "அட்டவணை பார்வை",
   "export_data": "தரவை ஏற்றுமதி செய்",
   "cancel_add": "சேர்க்கவும் ரத்து",
   "save_material": "பொருளைச் சேமிக்கவும்",
-  "add_raw_material": "மூலப்பொருள் சேர்க்கவும்",
   "no_raw_materials": "மூலப்பொருட்கள் கிடைக்கவில்லை.",
 
   "raw_material_column": "மூலப்பொருள்",
@@ -219,9 +222,10 @@
   "chargeable": "செலுத்தக்கூடியது",
   "price_per_unit": "அலகுக்கான விலை (₹)",
   "active": "செயல்படுத்துவது",
+  "inactive": "செயல்படுத்தப்படாதது",
   "returnable": "திரும்பல்",
   "save_item": "உருப்படியைச் சேமிக்கவும்",
-  "add_additional_item": "கூடுதல் உருப்படியைச் சேர்க்கவும்",
+
   "no_additional_items": "கூடுதல் உருப்படிகள் கிடைக்கவில்லை.",
 
   "headcount": "தலைக்षணம்",
@@ -418,7 +422,7 @@
   "select_products_with_quantity": "கணக்கீட்டிற்கான பொருட்களைத் தேர்ந்தெடுக்கவும் மற்றும் அவற்றின் அளவுகளை வரையறுக்கவும்",
   "no_products_selected": "இன்னும் பொருட்கள் தேர்ந்தெடுக்கப்படவில்லை. தொடங்க 'பொருளையச் சேர்க்கவும்' என்பதைக் கிளிக் செய்யவும்.",
   "no_products_available": "பொருட்கள் கிடைக்கவில்லை.",
-  "add_product": "பொருளை சேர்க்கவும்",
+
   "add_another_product": "மற்றொரு பொருளை சேர்க்கவும்",
   "selection_summary": "தேர்வு சுருக்கம்",
   "selection_summary_hint": "+/- பொத்தான்களைக் கிளிக் செய்யவும் அல்லது அளவை நேரடியாக தட்டவும்",
