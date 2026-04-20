@@ -6,11 +6,13 @@ import ButtonSm from '@/components/common/Buttons'
 import DialogBox from '@/components/common/DialogBox'
 import GenericTable, { type DataCell } from '@/components/common/GenericTable'
 import DropdownSelect from '@/components/common/DropDown'
+import TableMultiSelectDropDown from '@/components/common/TableMultiSelectDropDown'
 import { TableInput } from '@/components/common/TableInput'
 import {
   useCreateCategory,
   useEditCategory,
   useFetchCategories,
+  useFetchMasterCategoryOptions,
 } from '@/queries/categoryQueries'
 import type { Category, CategoryPayload } from '@/types/category'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
@@ -30,10 +32,13 @@ import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 export const CategoriesPage = () => {
   const { t } = useTranslation()
 
+  const { data: masterCategoryOptions = [] } = useFetchMasterCategoryOptions()
+
   const createEmptyCategory = (id: number): Category => ({
     id,
     primaryName: '',
     secondaryName: '',
+    masterCategoryIds: [],
   })
   const {
     data: categories = [],
@@ -59,20 +64,33 @@ export const CategoriesPage = () => {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEditData(categories.map((item) => ({ ...item })))
+    setEditData(categories.map((item) => ({
+      ...item,
+      // Convert masterCategories array to masterCategoryIds for multi-select
+      masterCategoryIds: item.masterCategories?.map((mc) => mc.masterCategoryId) ?? [],
+    })))
   }, [categories])
 
   const originalMap = useMemo(() => {
-    return new Map(categories.map((item) => [item.id, item]))
+    return new Map(categories.map((item) => [
+      item.id,
+      {
+        ...item,
+        masterCategoryIds: item.masterCategories?.map((mc) => mc.masterCategoryId) ?? [],
+      },
+    ]))
   }, [categories])
 
   const changedRows = useMemo(() => {
     return editData.filter((row) => {
       const original = originalMap.get(row.id)
       if (!original) return false
+      const originalIds = (original.masterCategoryIds ?? []).sort((a, b) => a - b)
+      const rowIds = (row.masterCategoryIds ?? []).sort((a, b) => a - b)
       return (
         original.primaryName !== row.primaryName ||
-        (original.secondaryName ?? '') !== (row.secondaryName ?? '')
+        (original.secondaryName ?? '') !== (row.secondaryName ?? '') ||
+        JSON.stringify(originalIds) !== JSON.stringify(rowIds)
       )
     })
   }, [editData, originalMap])
@@ -108,7 +126,7 @@ export const CategoriesPage = () => {
   const updateRowField = (
     rowId: number,
     field: keyof Category,
-    value: string,
+    value: string | number | number[],
     opts: { isDraft?: boolean } = {}
   ) => {
     setEditData((prev) => {
@@ -159,6 +177,7 @@ export const CategoriesPage = () => {
       const payloads: CategoryPayload[] = draftsToSave.map((draft) => ({
         primaryName: draft.primaryName.trim(),
         secondaryName: draft.secondaryName?.trim() ?? '',
+        masterCategoryIds: draft.masterCategoryIds ?? [],
       }))
 
       try {
@@ -296,6 +315,53 @@ export const CategoriesPage = () => {
           }
         />
       ),
+    },
+    {
+      headingTitle: 'Master Categories',
+      accessVar: 'masterCategories',
+      className: 'w-64',
+      render: (value, row) => {
+        // In view mode, show all master category names
+        if (!canEditRow(row.id)) {
+          const masterCategories = (value ?? []) as Array<{ masterCategoryId: number; masterCategoryName: string }>
+          
+          if (!masterCategories.length) {
+            return <span className="text-xs text-gray-400">None</span>
+          }
+
+          return (
+            <div className="flex flex-wrap gap-1">
+              {masterCategories.map((mc) => (
+                <span
+                  key={mc.masterCategoryId}
+                  className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800"
+                >
+                  {mc.masterCategoryName}
+                </span>
+              ))}
+            </div>
+          )
+        }
+
+        // In edit mode, show multi-select with masterCategoryIds
+        const selectedIds = (row.masterCategoryIds ?? []) as number[]
+        const selectedValues = selectedIds.map((id) => String(id))
+        return (
+          <TableMultiSelectDropDown
+            isEditMode={canEditRow(row.id)}
+            title=""
+            options={masterCategoryOptions}
+            selectedValues={selectedValues}
+            placeholder="Select Master Categories"
+            onChange={(values) => {
+              const numericIds = values.map((v) => Number(v)).filter((v) => !isNaN(v))
+              updateRowField(row.id, 'masterCategoryIds', numericIds, {
+                isDraft: isDraftRow(row),
+              })
+            }}
+          />
+        )
+      },
     },
     {
       headingTitle: 'Actions',

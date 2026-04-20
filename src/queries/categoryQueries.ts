@@ -14,6 +14,7 @@
 import type { DropdownOption } from '@/components/common/Input'
 import { apiRoutes } from '@/routes/apiRoutes'
 import type { Category, CategoryPayload } from '@/types/category'
+import type { MasterCategory } from '@/types/masterCategory'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'
@@ -113,6 +114,37 @@ export const useFetchCategoryOptions = () => {
 
   return useQuery({
     queryKey: ['categoryOptions'],
+    queryFn: fetchOptions,
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  })
+}
+
+/**
+ * 🔽 Fetch master category options for categories dropdown
+ */
+export const useFetchMasterCategoryOptions = () => {
+  const fetchOptions = async (): Promise<DropdownOption[]> => {
+    try {
+      const token = authHandler()
+
+      const res = await axiosInstance.get(apiRoutes.masterCategories, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+
+      const masterCategories = res.data.data as MasterCategory[]
+
+      return masterCategories.map((category) => ({
+        id: category.id,
+        label: category.primaryName,
+      }))
+    } catch (error: unknown) {
+      handleApiError(error, 'Master Categories')
+    }
+  }
+
+  return useQuery({
+    queryKey: ['masterCategoryOptions'],
     queryFn: fetchOptions,
     staleTime: 1000 * 60 * 5,
     retry: 1,
