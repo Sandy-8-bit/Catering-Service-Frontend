@@ -15,7 +15,7 @@ import {
   useEditProduct,
   useFetchProducts,
 } from '@/queries/productQueries'
-import type { Product, ProductPayload } from '@/types/product'
+import type { Product, ProductPayload, ProductCreateRequest } from '@/types/product'
 
 import { DeleteProductsDialog } from './DeleteProductsDialog'
 import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X, Trash2 } from 'lucide-react'
@@ -35,9 +35,11 @@ export const ProductsPage = () => {
     secondaryName: '',
     description: '',
     price: 0,
-    isRecipe: false,
-    category: { id: 0, primaryName: '', secondaryName: '' },
+    categoryIds: [],
     available: false,
+    isRecipe: false,
+    productType: 'VEG',
+    subProducts: [],
   })
 
   const {
@@ -76,11 +78,13 @@ export const ProductsPage = () => {
     return editData.filter((row) => {
       const original = originalMap.get(row.id)
       if (!original) return false
+      const originalCats = (original.categoryIds ?? []).sort()
+      const currentCats = (row.categoryIds ?? []).sort()
       return (
         original.primaryName !== row.primaryName ||
         (original.secondaryName ?? '') !== (row.secondaryName ?? '') ||
         (original.description ?? '') !== (row.description ?? '') ||
-        original.category.id !== row.category.id ||
+        JSON.stringify(originalCats) !== JSON.stringify(currentCats) ||
         original.available !== row.available ||
         original.price !== row.price
       )
@@ -96,21 +100,21 @@ export const ProductsPage = () => {
       (key) => (row[key as keyof Product]?.toString().trim() ?? '') === ''
     ) &&
     Number(row.price ?? 0) === 0 &&
-    Number(row.category.id ?? 0) === 0 &&
+    (row.categoryIds ?? []).length === 0 &&
     row.available === false
 
   const isDraftValid = (row: Product) => {
     const trimmed = {
       primaryName: row.primaryName?.trim() ?? '',
       description: row.description?.trim() ?? '',
-      categoryId: Number(row.category.id ?? 0),
+      categoryIds: (row.categoryIds ?? []).length > 0,
       price: Number(row.price ?? 0),
     }
 
     return (
       trimmed.primaryName &&
       trimmed.description &&
-      trimmed.categoryId > 0 &&
+      trimmed.categoryIds &&
       trimmed.price > 0
     )
   }
@@ -131,7 +135,7 @@ export const ProductsPage = () => {
   const updateRowField = (
     rowId: number,
     field: keyof Product,
-    value: string | number | boolean | Product['category'],
+    value: string | number | boolean | number[],
     opts: { isDraft?: boolean } = {}
   ) => {
     setEditData((prev) => {
@@ -148,8 +152,8 @@ export const ProductsPage = () => {
           normalizedValue = (
             typeof value === 'number' ? value : Number(value) || 0
           ) as Product[keyof Product]
-        } else if (field === 'category') {
-          normalizedValue = value as Product[keyof Product]
+        } else if (field === 'categoryIds') {
+          normalizedValue = Array.isArray(value) ? value : (value as Product[keyof Product])
         } else if (field === 'available') {
           normalizedValue = Boolean(value) as Product[keyof Product]
         } else {
@@ -187,9 +191,15 @@ export const ProductsPage = () => {
     secondaryName: row.secondaryName?.trim() ?? '',
     description: row.description?.trim() ?? '',
     price: Number(row.price) || 0,
-    categoryId: Number(row.category.id) || 0,
+    categoryIds: row.categoryIds ?? [],
     isRecipe: row.isRecipe,
     available: Boolean(row.available),
+    productType: row.productType ?? 'VEG',
+  })
+
+  const toProductCreateRequest = (row: Product): ProductCreateRequest => ({
+    id: row.id,
+    request: toProductPayload(row),
   })
 
   const handleSaveChanges = async () => {
@@ -205,7 +215,7 @@ export const ProductsPage = () => {
       }
 
       try {
-        await createProduct(draftsToSave.map(toProductPayload))
+        await createProduct(draftsToSave.map(toProductCreateRequest))
         setEditData((prev) => prev.filter((item) => !isDraftRow(item)))
         setSelectedRows([])
         setFormState(null)
@@ -359,12 +369,25 @@ export const ProductsPage = () => {
     },
     {
       headingTitle: t('product_category'),
-      accessVar: 'category',
+      accessVar: 'categoryIds',
       className: 'w-38',
-      render: (_value, row: Product) => {
-        const selectedOption = categoryOptions.find(
-          (option) => option.id == row.category.id
-        )
+      render: (value, row: Product) => {
+        if (!canEditRow(row.id)) {
+          const categoryList = (value ?? []) as number[]
+          if (!categoryList.length) {
+            return <span className="text-xs text-gray-400">None</span>
+          }
+          
+          const names = categoryList
+            .map((catId) => categoryOptions.find((opt) => opt.id === catId)?.label)
+            .filter(Boolean)
+            .join(', ')
+          
+          return <span className="text-sm">{names}</span>
+        }
+
+        const selectedIds = (value ?? []) as number[]
+        const selectedOption = categoryOptions.find((opt) => opt.id === (selectedIds[0] ?? 0))
 
         return (
           <TableDropDown
@@ -376,12 +399,8 @@ export const ProductsPage = () => {
             onChange={(option) =>
               updateRowField(
                 row.id,
-                'category',
-                {
-                  id: option.id,
-                  primaryName: option.label,
-                  secondaryName: '',
-                },
+                'categoryIds',
+                [option.id],
                 {
                   isDraft: isDraftRow(row),
                 }
@@ -413,7 +432,7 @@ export const ProductsPage = () => {
       ),
     },
     {
-      headingTitle: t('product_category'),
+      headingTitle: t('product_availability'),
       accessVar: 'available',
       className: 'w-32',
       render: (_value, row) => (

@@ -39,7 +39,7 @@ const RecipesPage = () => {
       className: 'min-w-[160px]',
       render: (_value, row: Product) => (
         <span className="text-sm font-medium text-zinc-700">
-          {row.category?.primaryName ?? '—'}
+          {row.categoryIds?.length ? row.categoryIds.join(', ') : '—'}
         </span>
       ),
     },

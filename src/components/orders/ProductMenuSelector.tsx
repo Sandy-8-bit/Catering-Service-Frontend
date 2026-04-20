@@ -64,9 +64,8 @@ const ProductMenuSelector = ({
     const collection = new Map<number, GroupedProducts>()
 
     products.forEach((product) => {
-      const categoryId = product.category?.id ?? 0
-      const categoryName =
-        product.category?.primaryName || t('orders_uncategorized')
+      const categoryId = product.categoryIds?.[0] ?? 0
+      const categoryName = 'Products' // Default category name since categoryIds contains only IDs
 
       if (!collection.has(categoryId)) {
         collection.set(categoryId, {
