@@ -653,7 +653,7 @@ export const OrdersPage = () => {
             }}
           />
 
-          <div className="overflow-hidden rounded-2xl border border-amber-300 bg-white p-4 shadow-md">
+          <div className="overflow-y-auto rounded-2xl border border-amber-300 bg-white p-4 shadow-md">
             <header className="mb-3 flex flex-col items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-semibold tracking-widest text-amber-600 uppercase">

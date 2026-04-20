@@ -529,15 +529,13 @@ export const OrdersForm = () => {
                 customer: !prev.customer,
               }))
             }
-            className="-mx-2 mt-0 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-amber-100"
+            className="flex w-full items-center justify-between rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-3 transition-all hover:bg-amber-100 hover:border-amber-400 sm:px-5 sm:py-4"
           >
-            <div className="space-y-1 text-left">
-              <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
-                {t('customer_information')}
-              </h2>
-            </div>
+            <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
+              {t('customer_information')}
+            </h2>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
+              className={`h-4 w-4 shrink-0 text-amber-700 transition-transform sm:h-5 sm:w-5 ${
                 expandedSections.customer ? 'rotate-180' : ''
               }`}
             />
@@ -666,15 +664,13 @@ export const OrdersForm = () => {
                 delivery: !prev.delivery,
               }))
             }
-            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-amber-100"
+            className="flex w-full items-center justify-between rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-3 transition-all hover:bg-amber-100 hover:border-amber-400 sm:px-5 sm:py-4"
           >
-            <div className="space-y-1 text-left">
-              <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
-                {t('delivery_payment')}
-              </h2>
-            </div>
+            <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
+              {t('delivery_payment')}
+            </h2>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
+              className={`h-4 w-4 shrink-0 text-amber-700 transition-transform sm:h-5 sm:w-5 ${
                 expandedSections.delivery ? 'rotate-180' : ''
               }`}
             />
@@ -746,15 +742,13 @@ export const OrdersForm = () => {
             onClick={() =>
               setExpandedSections((prev) => ({ ...prev, menu: !prev.menu }))
             }
-            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-amber-100"
+            className="flex w-full items-center justify-between rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-3 transition-all hover:bg-amber-100 hover:border-amber-400 sm:px-5 sm:py-4"
           >
-            <div className="space-y-1 text-left">
-              <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
-                {t('Menu Selection')}
-              </h2>
-            </div>
+            <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
+              {t('Menu Selection')}
+            </h2>
             <ChevronDown
-              className={`h-4 w-4 shrink-0 text-amber-600 transition-transform sm:h-5 sm:w-5 ${
+              className={`h-4 w-4 shrink-0 text-amber-700 transition-transform sm:h-5 sm:w-5 ${
                 expandedSections.menu ? 'rotate-180' : ''
               }`}
             />
@@ -916,10 +910,10 @@ export const OrdersForm = () => {
                 payment: !prev.payment,
               }))
             }
-            className="-mx-2 flex w-full items-center justify-between space-y-1 rounded-lg p-2 transition-colors hover:bg-amber-100"
+            className="flex w-full items-center justify-between rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-3 transition-all hover:bg-amber-100 hover:border-amber-400 sm:px-5 sm:py-4"
           >
             <div className="space-y-1 text-left">
-              <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
+              <h2 className="text-xs font-semibold text-amber-800 sm:text-sm md:text-base">
                 {t('payment')}
               </h2>
             </div>

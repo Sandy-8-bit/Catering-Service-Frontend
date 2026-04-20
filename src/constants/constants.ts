@@ -4,6 +4,8 @@ import type { Order } from '@/types/order'
 export const units: DropdownOption[] = [
   { id: 1, label: 'Kg' },
   { id: 2, label: 'Gm' },
+  { id: 3, label: 'Ltr' },
+  { id: 4, label: 'Ml' },
 ]
 
 export const ROLE_OPTIONS: DropdownOption[] = [

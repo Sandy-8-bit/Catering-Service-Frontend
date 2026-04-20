@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+  import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 import GenericTable, { type DataCell } from '@/components/common/GenericTable'
@@ -20,7 +20,6 @@ const RecipesPage = () => {
     navigate(detailPath)
   }
 
-  const recipeProducts = products.filter((product) => product.isRecipe)
 
   const recipeTableColumns: DataCell[] = [
     {
@@ -81,7 +80,7 @@ const RecipesPage = () => {
 
       <section className="flex flex-col gap-6 p-6">
         <GenericTable
-          data={recipeProducts}
+          data={products}
           dataCell={recipeTableColumns}
           isLoading={isProductsLoading}
           tableTitle="Product Recipes"
