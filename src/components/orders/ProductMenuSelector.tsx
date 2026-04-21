@@ -82,7 +82,8 @@ const ProductMenuSelector = ({
     return products.filter((product) => {
       if (selectedProductType === 'all') return true
       if (selectedProductType === 'veg') return product.productType === 'VEG'
-      if (selectedProductType === 'nonveg') return product.productType === 'NON_VEG'
+      if (selectedProductType === 'nonveg')
+        return product.productType === 'NON_VEG'
       return true
     })
   }, [products, selectedProductType])
