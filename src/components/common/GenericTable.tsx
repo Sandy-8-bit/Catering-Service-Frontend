@@ -985,11 +985,11 @@ export default function GenericTable({
               </div>
               <p className="items-center text-center text-lg font-medium text-slate-600">
                 {messageWhenNoData}
-                <p className="text-center text-sm font-medium text-slate-400">
-                  Try adjusting your search or filter to find what you're
-                  looking for.
-                </p>
               </p>
+              <span className="mt-2 text-center text-sm font-medium text-slate-400">
+                Try adjusting your search or filter to find what you're
+                looking for.
+              </span>
             </motion.div>
           )}
 

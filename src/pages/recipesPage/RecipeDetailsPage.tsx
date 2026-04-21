@@ -568,11 +568,6 @@ const RecipeDetailsPage = () => {
             onClick={() => navigate(-1)}
           />
           <div>
-            {product?.category?.primaryName && (
-              <p className="text-xs text-zinc-500">
-                {product.category.primaryName}
-              </p>
-            )}
             <h1 className="text-xl font-semibold text-zinc-800">
               {product?.primaryName ||
                 (isProductLoading ? 'Loading...' : product?.primaryName)}

@@ -14,7 +14,7 @@
 import { apiRoutes } from '@/routes/apiRoutes'
 import type {
   Product,
-  ProductPayload,
+  ProductCreateRequest,
   ProductQueryParams,
 } from '@/types/product'
 import { authHandler } from '@/utils/authHandler'
@@ -98,18 +98,18 @@ export const useCreateProduct = () => {
   const queryClient = useQueryClient()
 
   const createProduct = async (
-    payloads: ProductPayload[]
+    requests: ProductCreateRequest[]
   ): Promise<Product[]> => {
     try {
       const token = authHandler()
 
-      if (!payloads.length) {
+      if (!requests.length) {
         return []
       }
 
       const res = await axiosInstance.post(
         `${apiRoutes.products}/bulk/create`,
-        payloads,
+        requests,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -147,14 +147,11 @@ export const useEditProduct = () => {
       }
 
       const updatePayload = products.map((product) => {
-        const { id, category, ...rest } = product
+        const { id, subProducts, ...rest } = product
 
         return {
           id,
-          request: {
-            categoryId: category.id,
-            ...rest,
-          },
+          request: rest,
         }
       })
 
