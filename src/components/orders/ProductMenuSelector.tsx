@@ -70,14 +70,17 @@ const ProductMenuSelector = ({
   const [quantityDrafts, setQuantityDrafts] = useState<Record<number, string>>(
     {}
   )
-  const [selectedProductType, setSelectedProductType] = useState<ProductTypeFilter>('all')
+  const [selectedProductType, setSelectedProductType] =
+    useState<ProductTypeFilter>('all')
 
   // Filter products by type
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       if (selectedProductType === 'all') return true
-      if (selectedProductType === 'veg') return product.productTypeDisplay === 'Vegetarian'
-      if (selectedProductType === 'nonveg') return product.productTypeDisplay === 'Non-Vegetarian'
+      if (selectedProductType === 'veg')
+        return product.productTypeDisplay === 'Vegetarian'
+      if (selectedProductType === 'nonveg')
+        return product.productTypeDisplay === 'Non-Vegetarian'
       return true
     })
   }, [products, selectedProductType])
@@ -261,7 +264,7 @@ const ProductMenuSelector = ({
             <button
               type="button"
               onClick={() => setSelectedProductType('all')}
-              className={`whitespace-nowrap mb-3 rounded-full px-3 py-1 text-xs font-medium transition ${
+              className={`mb-3 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition ${
                 selectedProductType === 'all'
                   ? 'bg-amber-600 text-white shadow-sm'
                   : 'border border-amber-200 bg-white text-amber-700 hover:border-amber-300'
@@ -274,7 +277,7 @@ const ProductMenuSelector = ({
             <button
               type="button"
               onClick={() => setSelectedProductType('veg')}
-              className={`whitespace-nowrap mb-3 rounded-full px-3 py-1 text-xs font-medium transition ${
+              className={`mb-3 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition ${
                 selectedProductType === 'veg'
                   ? 'bg-green-600 text-white shadow-sm'
                   : 'border border-green-200 bg-white text-green-700 hover:border-green-300'
@@ -287,7 +290,7 @@ const ProductMenuSelector = ({
             <button
               type="button"
               onClick={() => setSelectedProductType('nonveg')}
-              className={`whitespace-nowrap mb-3 rounded-full px-3 py-1 text-xs font-medium transition ${
+              className={`mb-3 rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap transition ${
                 selectedProductType === 'nonveg'
                   ? 'bg-red-600 text-white shadow-sm'
                   : 'border border-red-200 bg-white text-red-700 hover:border-red-300'
@@ -301,7 +304,7 @@ const ProductMenuSelector = ({
           {masterCategoryGroups.map((masterGroup, masterIndex) => (
             <div
               key={masterGroup.masterCategoryId}
-              className={`space-y-5 border-l-4 border-amber-600 pl-4 py-4 ${
+              className={`space-y-5 border-l-4 border-amber-600 py-4 pl-4 ${
                 masterIndex > 0 ? 'mt-8 pt-6' : ''
               }`}
             >
@@ -317,8 +320,8 @@ const ProductMenuSelector = ({
                   className={`space-y-3 ${catIndex > 0 ? 'mt-6 pt-4' : ''}`}
                 >
                   {/* Category Subheading */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="w-1 h-4 bg-amber-500 rounded-full"></div>
+                  <div className="mb-4 flex items-center gap-2">
+                    <div className="h-4 w-1 rounded-full bg-amber-500"></div>
                     <p className="text-xs font-bold tracking-wider text-zinc-700 uppercase">
                       {categoryGroup.categoryName}
                     </p>
@@ -366,15 +369,19 @@ const ProductMenuSelector = ({
                             {formatCurrency(product.price ?? 0)}
                           </span>
                           {isSelected ? (
-                            <div 
+                            <div
                               className="flex items-center gap-2 rounded-lg p-2 shadow-sm"
-                              style={{ background: 'linear-gradient(to right, rgb(245, 245, 245), rgb(228, 228, 231))' }}
+                              style={{
+                                background:
+                                  'linear-gradient(to right, rgb(245, 245, 245), rgb(228, 228, 231))',
+                              }}
                             >
                               <button
                                 type="button"
                                 aria-label={t('decrease_quantity')}
                                 onClick={() =>
-                                  product.id && handleQuantityChange(product.id, -1)
+                                  product.id &&
+                                  handleQuantityChange(product.id, -1)
                                 }
                                 className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-red-500 text-white transition hover:bg-red-600 active:scale-95"
                               >
@@ -402,13 +409,14 @@ const ProductMenuSelector = ({
                                     selectedLine?.quantity ?? 1
                                   )
                                 }
-                                className="h-8 w-12 rounded-md border-2 border-zinc-200 bg-white text-center text-sm font-bold text-zinc-900 outline-none transition focus:border-zinc-900 focus:shadow-md"
+                                className="h-8 w-12 rounded-md border-2 border-zinc-200 bg-white text-center text-sm font-bold text-zinc-900 transition outline-none focus:border-zinc-900 focus:shadow-md"
                               />
                               <button
                                 type="button"
                                 aria-label={t('increase_quantity')}
                                 onClick={() =>
-                                  product.id && handleQuantityChange(product.id, 1)
+                                  product.id &&
+                                  handleQuantityChange(product.id, 1)
                                 }
                                 className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-green-500 text-white transition hover:bg-green-600 active:scale-95"
                               >
