@@ -1,638 +1,980 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Edit3,
+  Plus,
+  Trash2,
+  X,
+  Search,
+  ChevronDown,
+  AlertCircle,
+  Check,
+  Loader,
+} from 'lucide-react'
 
-import ButtonSm from '@/components/common/Buttons'
-import DialogBox from '@/components/common/DialogBox'
-import GenericTable, { type DataCell } from '@/components/common/GenericTable'
-import TableDropDown from '@/components/common/TableDropDown'
-import { TableInput } from '@/components/common/TableInput'
-
-import DropdownSelect from '@/components/common/DropDown'
 import { useFetchCategoryOptions } from '@/queries/categoryQueries'
 import {
   useCreateProduct,
   useEditProduct,
   useFetchProducts,
+  useDeleteProduct,
 } from '@/queries/productQueries'
-import type { Product, ProductPayload, ProductCreateRequest } from '@/types/product'
+import type { Product } from '@/types/product'
 
-import { DeleteProductsDialog } from './DeleteProductsDialog'
-import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X, Trash2 } from 'lucide-react'
-import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
-import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
+interface FormState {
+  type: 'add' | 'edit' | null
+  product: Product | null
+}
+
+interface ValidationErrors {
+  primaryName?: string
+  description?: string
+  price?: string
+  categoryIds?: string
+}
+
+interface TransformedProduct extends Product {
+  categoryIds: number[]
+}
 
 export const ProductsPage = () => {
   const { t } = useTranslation()
-  const availabilityOptions = [
-    { id: 1, label: t('product_available') },
-    { id: 2, label: t('product_unavailable') },
-  ]
 
-  const createEmptyProduct = (id: number): Product => ({
-    id,
-    primaryName: '',
-    secondaryName: '',
-    description: '',
-    price: 0,
-    categoryIds: [],
-    available: false,
-    isRecipe: false,
-    productType: 'VEG',
-    subProducts: [],
-  })
-
+  // Hooks
   const {
-    data: products = [],
+    data: productsData = [],
     isLoading: isProductsLoading,
-    isFetching,
+    refetch,
   } = useFetchProducts()
-  const { data: categoryOptions = [] } = useFetchCategoryOptions()
+  const { data: categoryOptionsData = [] } = useFetchCategoryOptions()
   const { mutateAsync: editProduct, isPending: isEditProductsPending } =
     useEditProduct()
   const { mutateAsync: createProduct, isPending: isCreateProductPending } =
     useCreateProduct()
+  const { mutateAsync: deleteProduct, isPending: isDeleteProductsPending } =
+    useDeleteProduct()
 
-  const [editData, setEditData] = useState<Product[]>([])
-  const [selectedRows, setSelectedRows] = useState<Product[]>([])
-  const [formState, setFormState] = useState<'add' | 'edit' | 'delete' | null>(
-    null
-  )
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [rowToDelete, setRowToDelete] = useState<Product | null>(null)
+  // State
+  const [formState, setFormState] = useState<FormState>({ type: null, product: null })
+  const [allProducts, setAllProducts] = useState<TransformedProduct[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<TransformedProduct | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error'
+    message: string
+  } | null>(null)
 
-  const isEditMode = formState === 'edit'
-  const isAddMode = formState === 'add'
-  const canEditRow = (rowId: number) => isEditMode || (isAddMode && rowId < 0)
+  // Safe category options
+  const categoryOptions = Array.isArray(categoryOptionsData) ? categoryOptionsData : []
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEditData(products.map((item) => ({ ...item })))
-  }, [products])
+  // Transform API products to match Product type
+  const transformProduct = useCallback((product: any): TransformedProduct => {
+    try {
+      // Extract category IDs from the categories array
+      const categoryIds = Array.isArray(product.categories)
+        ? product.categories.map((cat: any) => cat.categoryId || cat.id).filter(Boolean)
+        : []
 
-  const originalMap = useMemo(() => {
-    return new Map(products.map((item) => [item.id, item]))
-  }, [products])
+      const transformed: TransformedProduct = {
+        id: product.id || 0,
+        primaryName: product.primaryName || '',
+        secondaryName: product.secondaryName || '',
+        description: product.description || '',
+        price: Number(product.price) || 0,
+        categoryIds: categoryIds,
+        available: product.available ?? true,
+        isRecipe: product.isRecipe ?? false,
+        productType: product.productTypeDisplay
+          ? product.productTypeDisplay.toLowerCase().includes('veg')
+            ? 'VEG'
+            : 'NON_VEG'
+          : 'VEG',
+        subProducts: Array.isArray(product.subProducts) ? product.subProducts : [],
+      }
+      return transformed
+    } catch (error) {
+      console.error('Error transforming product:', product, error)
+      return {
+        id: product.id || 0,
+        primaryName: product.primaryName || 'Unknown',
+        secondaryName: '',
+        description: '',
+        price: 0,
+        categoryIds: [],
+        available: true,
+        isRecipe: false,
+        productType: 'VEG',
+        subProducts: [],
+      }
+    }
+  }, [])
 
-  const changedRows = useMemo(() => {
-    return editData.filter((row) => {
-      const original = originalMap.get(row.id)
-      if (!original) return false
-      const originalCats = (original.categoryIds ?? []).sort()
-      const currentCats = (row.categoryIds ?? []).sort()
-      return (
-        original.primaryName !== row.primaryName ||
-        (original.secondaryName ?? '') !== (row.secondaryName ?? '') ||
-        (original.description ?? '') !== (row.description ?? '') ||
-        JSON.stringify(originalCats) !== JSON.stringify(currentCats) ||
-        original.available !== row.available ||
-        original.price !== row.price
-      )
-    })
-  }, [editData, originalMap])
+useEffect(() => {
+  try {
+    const list = Array.isArray(productsData)
+      ? productsData
+      : productsData ?? []
 
-  const hasChanges = changedRows.length > 0
-
-  const isDraftRow = (row: Product) => row.id < 0
-
-  const isRowEmpty = (row: Product) =>
-    ['primaryName', 'secondaryName', 'description'].every(
-      (key) => (row[key as keyof Product]?.toString().trim() ?? '') === ''
-    ) &&
-    Number(row.price ?? 0) === 0 &&
-    (row.categoryIds ?? []).length === 0 &&
-    row.available === false
-
-  const isDraftValid = (row: Product) => {
-    const trimmed = {
-      primaryName: row.primaryName?.trim() ?? '',
-      description: row.description?.trim() ?? '',
-      categoryIds: (row.categoryIds ?? []).length > 0,
-      price: Number(row.price ?? 0),
+    // 🔥 IMPORTANT FIX
+    if (!list || list.length === 0) {
+      console.log("Skipping empty response")
+      return
     }
 
-    return (
-      trimmed.primaryName &&
-      trimmed.description &&
-      trimmed.categoryIds &&
-      trimmed.price > 0
-    )
+    const transformed = list.map(transformProduct)
+    setAllProducts(transformed)
+    console.log('Products loaded:', transformed.length)
+
+  } catch (error) {
+    console.error('Error transforming products:', error)
   }
+}, [productsData, transformProduct])
 
-  const draftRows = useMemo(
-    () => editData.filter((item) => isDraftRow(item)),
-    [editData]
+  // Show notification
+  const showNotification = useCallback(
+    (type: 'success' | 'error', message: string) => {
+      setNotification({ type, message })
+      const timer = setTimeout(() => setNotification(null), 3000)
+      return () => clearTimeout(timer)
+    },
+    []
   )
 
-  const hasValidDraft = draftRows.some((draft) => isDraftValid(draft))
+  // Filter products
+  const filteredProducts = useMemo(() => {
+    return allProducts.filter((product) => {
+      const matchesSearch =
+        product.primaryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.secondaryName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase())
 
-  const selectedRowIndices = useMemo(() => {
-    return selectedRows
-      .map((row) => editData.findIndex((item) => item.id === row.id))
-      .filter((index) => index !== -1)
-  }, [selectedRows, editData])
+      const matchesCategory =
+        !selectedCategory ||
+        (Array.isArray(product.categoryIds) &&
+          product.categoryIds.includes(selectedCategory))
 
-  const updateRowField = (
-    rowId: number,
-    field: keyof Product,
-    value: string | number | boolean | number[],
-    opts: { isDraft?: boolean } = {}
-  ) => {
-    setEditData((prev) => {
-      let blankRowIndex = -1
-
-      const updated = prev.map((item, index) => {
-        if (item.id !== rowId) return item
-
-        const wasEmptyDraft = isDraftRow(item) && isRowEmpty(item)
-
-        let normalizedValue: Product[keyof Product]
-
-        if (field === 'price') {
-          normalizedValue = (
-            typeof value === 'number' ? value : Number(value) || 0
-          ) as Product[keyof Product]
-        } else if (field === 'categoryIds') {
-          normalizedValue = Array.isArray(value) ? value : (value as Product[keyof Product])
-        } else if (field === 'available') {
-          normalizedValue = Boolean(value) as Product[keyof Product]
-        } else {
-          normalizedValue = value as Product[keyof Product]
-        }
-
-        const nextItem = {
-          ...item,
-          [field]: normalizedValue,
-        }
-
-        if (wasEmptyDraft && !isRowEmpty(nextItem)) {
-          blankRowIndex = index + 1
-        }
-
-        return nextItem
-      })
-
-      if (blankRowIndex !== -1) {
-        const newTempId = Date.now() * -1
-        const blankRow = createEmptyProduct(newTempId)
-        updated.splice(blankRowIndex, 0, blankRow)
-      }
-
-      return updated
+      return matchesSearch && matchesCategory
     })
+  }, [allProducts, searchQuery, selectedCategory])
 
-    if (opts.isDraft) {
-      setFormState('add')
+  // Create empty product template
+  const createEmptyProduct = useCallback((): TransformedProduct => {
+    return {
+      id: Date.now() * -1,
+      primaryName: '',
+      secondaryName: '',
+      description: '',
+      price: 0,
+      categoryIds: [],
+      available: true,
+      isRecipe: false,
+      productType: 'VEG',
+      subProducts: [],
     }
-  }
+  }, [])
 
-  const toProductPayload = (row: Product): ProductPayload => ({
-    primaryName: row.primaryName.trim(),
-    secondaryName: row.secondaryName?.trim() ?? '',
-    description: row.description?.trim() ?? '',
-    price: Number(row.price) || 0,
-    categoryIds: row.categoryIds ?? [],
-    isRecipe: row.isRecipe,
-    available: Boolean(row.available),
-    productType: row.productType ?? 'VEG',
-  })
+  // Handle Add Click
+  const handleAddClick = useCallback(() => {
+    setFormState({ type: 'add', product: createEmptyProduct() })
+  }, [createEmptyProduct])
 
-  const toProductCreateRequest = (row: Product): ProductCreateRequest => ({
-    id: row.id,
-    request: toProductPayload(row),
-  })
+  // Handle Edit Click
+  const handleEditClick = useCallback((product: TransformedProduct) => {
+    setFormState({ type: 'edit', product: { ...product } })
+  }, [])
 
-  const handleSaveChanges = async () => {
-    if (isAddMode) {
-      if (!hasValidDraft || isCreateProductPending) {
-        return
-      }
+  // Handle Delete Click
+  const handleDeleteClick = useCallback((product: TransformedProduct) => {
+    setDeleteConfirm(product)
+  }, [])
 
-      const draftsToSave = draftRows.filter((draft) => isDraftValid(draft))
-
-      if (!draftsToSave.length) {
-        return
-      }
-
-      try {
-        await createProduct(draftsToSave.map(toProductCreateRequest))
-        setEditData((prev) => prev.filter((item) => !isDraftRow(item)))
-        setSelectedRows([])
-        setFormState(null)
-      } catch (error) {
-        console.error(error)
-      }
-      return
-    }
-
-    if (!isEditMode) {
-      setFormState('edit')
-      return
-    }
-
-    if (!hasChanges || isEditProductsPending) {
-      if (!hasChanges) {
-        setFormState(null)
-      }
-      return
-    }
+  // Confirm Delete
+  const confirmDelete = useCallback(async () => {
+    if (!deleteConfirm) return
 
     try {
-      await editProduct(changedRows)
-      setFormState(null)
+      setIsSubmitting(true)
+
+      // Only delete if it's a real product (ID > 0)
+      if (deleteConfirm.id > 0) {
+        await deleteProduct(deleteConfirm)
+      }
+
+      setAllProducts((prev) => prev.filter((p) => p.id !== deleteConfirm.id))
+      setDeleteConfirm(null)
+      showNotification('success', `${deleteConfirm.primaryName} deleted successfully`)
+      await refetch()
     } catch (error) {
-      console.error(error)
+      console.error('Delete error:', error)
+      showNotification('error', 'Failed to delete product')
+    } finally {
+      setIsSubmitting(false)
     }
-  }
+  }, [deleteConfirm, deleteProduct, refetch, showNotification])
 
-  const handleDiscardChanges = () => {
-    setEditData(products.map((item) => ({ ...item })))
-    setSelectedRows([])
-    setFormState(null)
-  }
+  // Handle Form Submit
+  const handleFormSubmit = useCallback(
+    async (formProduct: TransformedProduct) => {
+      if (!formState.product) return
 
-  useHandleCancelHook(formState, handleDiscardChanges)
-  useHandleSaveHook(formState, handleSaveChanges)
+      try {
+        setIsSubmitting(true)
 
-  const handleSelectionChange = (_: number[], rows: Product[]) => {
-    setSelectedRows(rows)
-  }
-
-  const handleAddProductRow = () => {
-    const hasEmptyDraft = editData.some(
-      (item) => isDraftRow(item) && isRowEmpty(item)
-    )
-    if (hasEmptyDraft) {
-      setFormState('add')
-      return
-    }
-
-    const newTempId = Date.now() * -1
-    const blankRow = createEmptyProduct(newTempId)
-
-    setFormState('add')
-    setEditData((prev) => {
-      const lastDraftIndex = prev.reduce((acc, item, index) => {
-        if (isDraftRow(item)) return index
-        return acc
-      }, -1)
-
-      if (lastDraftIndex === -1) {
-        return [blankRow, ...prev]
-      }
-
-      const next = [...prev]
-      next.splice(lastDraftIndex + 1, 0, blankRow)
-      return next
-    })
-  }
-
-  const handleRemoveDraftRow = (rowId: number) => {
-    setEditData((prev) => {
-      const next = prev.filter((item) => item.id !== rowId)
-      if (!next.some((item) => isDraftRow(item))) {
-        setFormState(null)
-      }
-      return next
-    })
-  }
-
-  const productTableColumns: DataCell[] = [
-    {
-      headingTitle: t('product_name_primary'),
-      accessVar: 'primaryName',
-      className: 'max-w-32',
-      render: (value, row) => {
-        const isDraft = isDraftRow(row)
-
-        return (
-          <div className="relative container">
-            <TableInput
-              isEditMode={canEditRow(row.id)}
-              title=""
-              inputValue={value ?? ''}
-              onChange={(val) =>
-                updateRowField(row.id, 'primaryName', String(val ?? ''), {
-                  isDraft,
-                })
-              }
-            />
-            {isDraft && !isRowEmpty(row) && (
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation()
-                  handleRemoveDraftRow(row.id)
-                }}
-                className="absolute top-1/2 -left-2/3 min-w-max -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-200 ease-in-out hover:scale-105 active:scale-110"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        )
-      },
-    },
-    {
-      headingTitle: t('product_name_secondary'),
-      accessVar: 'secondaryName',
-      className: 'w-42',
-      render: (value, row) => (
-        <TableInput
-          isEditMode={canEditRow(row.id)}
-          title=""
-          inputValue={value ?? '-'}
-          onChange={(val) =>
-            updateRowField(row.id, 'secondaryName', String(val ?? ''), {
-              isDraft: isDraftRow(row),
-            })
-          }
-        />
-      ),
-    },
-    {
-      headingTitle: t('product_description'),
-      accessVar: 'description',
-      className: 'w-64',
-      render: (value, row) => (
-        <TableInput
-          isEditMode={canEditRow(row.id)}
-          title=""
-          inputValue={value ?? ''}
-          onChange={(val) =>
-            updateRowField(row.id, 'description', String(val ?? ''), {
-              isDraft: isDraftRow(row),
-            })
-          }
-        />
-      ),
-    },
-    {
-      headingTitle: t('product_category'),
-      accessVar: 'categoryIds',
-      className: 'w-38',
-      render: (value, row: Product) => {
-        if (!canEditRow(row.id)) {
-          const categoryList = (value ?? []) as number[]
-          if (!categoryList.length) {
-            return <span className="text-xs text-gray-400">None</span>
-          }
-          
-          const names = categoryList
-            .map((catId) => categoryOptions.find((opt) => opt.id === catId)?.label)
-            .filter(Boolean)
-            .join(', ')
-          
-          return <span className="text-sm">{names}</span>
+        const payload = {
+          primaryName: formProduct.primaryName.trim(),
+          secondaryName: formProduct.secondaryName?.trim() ?? '',
+          description: formProduct.description.trim(),
+          price: Number(formProduct.price) || 0,
+          categoryIds:
+            Array.isArray(formProduct.categoryIds) && formProduct.categoryIds.length > 0
+              ? formProduct.categoryIds
+              : [],
+          available: Boolean(formProduct.available),
+          isRecipe: formProduct.isRecipe ?? false,
+          productType: formProduct.productType ?? 'VEG',
         }
 
-        const selectedIds = (value ?? []) as number[]
-        const selectedOption = categoryOptions.find((opt) => opt.id === (selectedIds[0] ?? 0))
+        if (formState.type === 'add') {
+          // Create new product
+          await createProduct([
+            {
+              id: formProduct.id,
+              request: payload,
+            },
+          ])
+          showNotification('success', `${formProduct.primaryName} created successfully`)
+        } else if (formState.type === 'edit') {
+          // Edit existing product
+          await editProduct([formProduct])
+          setAllProducts((prev) =>
+            prev.map((p) => (p.id === formProduct.id ? formProduct : p))
+          )
+          showNotification('success', `${formProduct.primaryName} updated successfully`)
+        }
 
-        return (
-          <TableDropDown
-            isEditMode={canEditRow(row.id)}
-            title=""
-            options={categoryOptions}
-            selected={selectedOption}
-            placeholder="Select Category"
-            onChange={(option) =>
-              updateRowField(
-                row.id,
-                'categoryIds',
-                [option.id],
-                {
-                  isDraft: isDraftRow(row),
-                }
-              )
-            }
-          />
-        )
-      },
+        setFormState({ type: null, product: null })
+        await refetch()
+      } catch (error) {
+        console.error('Form submission error:', error)
+        showNotification('error', 'Failed to save product')
+      } finally {
+        setIsSubmitting(false)
+      }
     },
-    {
-      headingTitle: t('product_price'),
-      accessVar: 'price',
-      className: 'w-32',
-      render: (value, row) => (
-        <TableInput
-          isEditMode={canEditRow(row.id)}
-          title=""
-          inputValue={value ?? 0}
-          type="num"
-          onChange={(val) =>
-            updateRowField(
-              row.id,
-              'price',
-              typeof val === 'number' ? val : Number(val) || 0,
-              { isDraft: isDraftRow(row) }
-            )
-          }
-        />
-      ),
-    },
-    {
-      headingTitle: t('product_availability'),
-      accessVar: 'available',
-      className: 'w-32',
-      render: (_value, row) => (
-        <TableDropDown
-          isEditMode={canEditRow(row.id)}
-          title=""
-          options={availabilityOptions}
-          selected={
-            row.available ? availabilityOptions[0] : availabilityOptions[1]
-          }
-          placeholder="Availability"
-          onChange={(option) =>
-            updateRowField(row.id, 'available', option.id === 1, {
-              isDraft: isDraftRow(row),
-            })
-          }
-        />
-      ),
-    },
-    {
-      headingTitle: 'Actions',
-      accessVar: 'action',
-      className: 'w-20',
-      render: (_, row) => {
-        const isDraft = isDraftRow(row)
-        return !isDraft ? (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              setRowToDelete(row)
-              setIsDeleteDialogOpen(true)
-            }}
-            className="flex items-center justify-center rounded-md p-2 transition-all duration-200 ease-in-out hover:bg-red-50 active:scale-95"
-          >
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </button>
-        ) : null
-      },
-    },
-  ]
+    [formState, createProduct, editProduct, refetch, showNotification]
+  )
 
-  const handleDeleteSelected = () => {
-    if (selectedRows.length === 0) return
-    setIsDeleteDialogOpen(true)
-  }
+  // Get category label by ID
+  const getCategoryLabel = useCallback(
+    (id: number) => {
+      const found = categoryOptions.find((cat) => cat.id === id)
+      return found ? found.label : ''
+    },
+    [categoryOptions]
+  )
+
+const isLoading = isProductsLoading || allProducts.length === 0
+  const isPending = isCreateProductPending || isEditProductsPending || isDeleteProductsPending
 
   return (
-    <main className="layout-container flex min-h-[95vh] w-full flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
-      <header className="flex flex-row gap-4 p-4">
-        <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
-          {t('products')}
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
+      {/* Header */}
+      <header className="sticky top-0 z-40 border-b border-orange-200/50 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto w-full px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-orange-900">
+                {t('products') || 'Products'}
+              </h1>
+              <p className="mt-1 text-base font-semibold text-orange-600">
+                {allProducts.length} {t('items') || 'Items'}
+              </p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleAddClick}
+              disabled={isLoading || isPending}
+              className="flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-orange-700 active:shadow-md disabled:opacity-50 sm:w-auto w-full"
+            >
+              <Plus className="h-5 w-5" />
+              <span>{t('add_product') || 'Add Product'}</span>
+            </motion.button>
+          </div>
+
+          {/* Search and Filter */}
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-orange-400" />
+              <input
+                type="text"
+                placeholder={t('search_products') || 'Search products...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                disabled={isLoading}
+                className="w-full rounded-lg border-2 border-orange-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition placeholder:text-orange-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-orange-50"
+              />
+            </div>
+
+            <div className="relative w-full sm:w-auto">
+              <select
+                value={selectedCategory ?? ''}
+                onChange={(e) =>
+                  setSelectedCategory(e.target.value ? parseInt(e.target.value) : null)
+                }
+                disabled={isLoading}
+                className="w-full appearance-none rounded-lg border-2 border-orange-200 bg-white py-2.5 pl-4 pr-10 text-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-orange-50"
+              >
+                <option value="">{t('all_categories') || 'All Categories'}</option>
+                {categoryOptions.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-orange-400" />
+            </div>
+          </div>
+        </div>
       </header>
-      <div className="divider min-w-full border border-[#F1F1F1]" />
-      <section className="flex w-full flex-row justify-between gap-3 px-3 py-4">
-        <div className="flex w-max flex-row justify-end gap-3">
-          <ButtonSm
-            className="font-medium"
-            state="outline"
-            onClick={() => {}}
-            disabled={isEditProductsPending}
-            isPending={isEditProductsPending}
-          >
-            <Filter className="h-4 w-4 text-black" />
-            {t('filter')}
-          </ButtonSm>
-          <div className="divider min-h-full border border-[#F1F1F1]" />
-          <DropdownSelect
-            className="font-medium"
-            onChange={() => {}}
-            options={[]}
-            selected={{ id: 1, label: 'Table View' }}
-            disabled={isEditProductsPending}
-          />
-        </div>
 
-        <div className="flex w-max flex-row justify-end gap-3">
-          <ButtonSm
-            className="font-medium"
-            state="outline"
-            onClick={() => {}}
-            disabled={isEditProductsPending}
-            isPending={isEditProductsPending}
-          >
-            <UploadCloud className="h-5 w-5 text-black" />
-            {t('upload')}
-          </ButtonSm>
-          <div className="divider min-h-full border border-[#F1F1F1]" />
-          {isAddMode ? (
-            <>
-              <ButtonSm
-                state="outline"
-                onClick={handleDiscardChanges}
-                disabled={isCreateProductPending}
-              >
-                <X className="h-4 w-4 text-black" /> {t('cancel')}
-              </ButtonSm>
-              <ButtonSm
-                className={
-                  !hasValidDraft ? 'cursor-not-allowed! opacity-100!' : ''
-                }
-                state="default"
-                onClick={() => void handleSaveChanges()}
-                disabled={!hasValidDraft || isCreateProductPending}
-                isPending={isCreateProductPending}
-              >
-                <SaveIcon className="mr-2 h-4 w-4 text-white" /> {t('save')}
-              </ButtonSm>
-            </>
-          ) : (
-            <>
-              {isEditMode && (
-                <ButtonSm
-                  state="outline"
-                  onClick={handleDiscardChanges}
-                  disabled={isEditProductsPending}
+      {/* Main Content */}
+      <main className="mx-auto w-full px-4 py-8 sm:px-6 lg:px-8">
+        {isLoading ? (
+          // Loading State - Skeleton
+          <div className="space-y-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+              {[...Array(12)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="rounded-xl bg-white border border-orange-100 p-4 shadow-sm"
                 >
-                  <X className="h-4 w-4 text-black" />{' '}
-                  {hasChanges ? t('discard_changes') : t('cancel')}
-                </ButtonSm>
-              )}
-              <ButtonSm
-                className={
-                  !hasChanges && isEditMode
-                    ? 'cursor-not-allowed! opacity-100!'
-                    : ''
-                }
-                state={isEditMode ? 'default' : 'outline'}
-                onClick={() => void handleSaveChanges()}
-                disabled={isEditProductsPending || (isEditMode && !hasChanges)}
-                isPending={isEditProductsPending}
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-6 bg-orange-100 rounded w-3/4" />
+                    <div className="h-3 bg-orange-100 rounded w-1/2" />
+                    <div className="h-16 bg-orange-100 rounded" />
+                    <div className="flex gap-2">
+                      <div className="h-8 bg-orange-100 rounded flex-1" />
+                      <div className="h-8 bg-orange-100 rounded flex-1" />
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        ) : allProducts.length === 0 ? (
+          // Empty State
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="rounded-xl border-2 border-dashed border-orange-300 bg-orange-50 py-16 text-center"
+          >
+            <div className="mb-4 flex justify-center">
+              <AlertCircle className="h-12 w-12 text-orange-400" />
+            </div>
+            <p className="text-lg font-medium text-orange-900">
+              {t('no_data') || 'No products available'}
+            </p>
+            <p className="mt-2 text-sm text-orange-600">
+              {t('no_products_yet') || 'Start by adding your first product'}
+            </p>
+          </motion.div>
+        ) : filteredProducts.length === 0 ? (
+          // No Results from Filter
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="rounded-xl border-2 border-dashed border-orange-300 bg-orange-50 py-16 text-center"
+          >
+            <div className="mb-4 flex justify-center">
+              <Search className="h-12 w-12 text-orange-400" />
+            </div>
+            <p className="text-lg font-medium text-orange-900">
+              {t('no_data') || 'No products found'}
+            </p>
+            <p className="mt-2 text-sm text-orange-600">
+              {t('try_adjusting_filters') || 'Try adjusting your search or filters'}
+            </p>
+          </motion.div>
+        ) : (
+          // Products Grid - 1 col mobile, 2 tablet, 3 desktop, 4 lg, 6 xl
+          <motion.div
+            className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: { staggerChildren: 0.03, delayChildren: 0 },
+              },
+            }}
+          >
+            {filteredProducts.map((product) => (
+              <motion.div
+                key={product.id}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                className="group flex flex-col rounded-xl border border-orange-200 bg-white shadow-sm transition hover:shadow-md hover:border-orange-400"
               >
-                {(hasChanges || !isEditMode) && (
-                  <Edit3
-                    className={`mr-2 h-4 w-4 ${
-                      isEditMode
-                        ? hasChanges
-                          ? 'text-white'
-                          : 'text-white/80'
-                        : 'text-black'
-                    }`}
-                  />
-                )}{' '}
-                {isEditMode
-                  ? isEditProductsPending
-                    ? 'Saving…'
-                    : t('save_changes')
-                  : t('edit')}
-              </ButtonSm>
-              {!isEditMode && (
-                <ButtonSm state="default" onClick={handleAddProductRow}>
-                  <Plus className="mr-2 h-4 w-4 text-white" />
-                  {t('add_product')}
-                </ButtonSm>
-              )}
-            </>
-          )}
-        </div>
-      </section>
+                {/* Product Header */}
+                <div className="flex-1 p-4">
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-orange-900 truncate text-sm sm:text-base">
+                        {product.primaryName}
+                      </h3>
+                      {product.secondaryName && (
+                        <p className="text-xs text-orange-600 truncate">
+                          {product.secondaryName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
 
-      <GenericTable
-        data={editData}
-        className="mx-3"
-        dataCell={productTableColumns}
-        isLoading={isProductsLoading || isCreateProductPending || isFetching}
-        messageWhenNoData={t('no_data')}
-        isSelectable={formState !== 'add'}
-        selectedRowIndices={selectedRowIndices}
-        onSelectionChange={handleSelectionChange}
-        onDeleteSelected={handleDeleteSelected}
-      />
+                  {/* Description */}
+                  <p className="mb-3 line-clamp-2 text-xs sm:text-sm text-orange-700">
+                    {product.description}
+                  </p>
 
+                  {/* Categories */}
+                  {Array.isArray(product.categoryIds) && product.categoryIds.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-1">
+                      {product.categoryIds.map((catId) => {
+                        const label = getCategoryLabel(catId)
+                        return label ? (
+                          <span
+                            key={catId}
+                            className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700"
+                          >
+                            {label}
+                          </span>
+                        ) : null
+                      })}
+                    </div>
+                  )}
+
+                  {/* Availability Badge */}
+                  <div className="mb-3 flex items-center gap-2">
+                    {product.available ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
+                        <Check className="h-3 w-3" />
+                        {t('available') || 'Available'}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">
+                        {t('unavailable') || 'Unavailable'}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Price */}
+                  <div>
+                    <p className="text-2xl font-bold text-orange-600">
+                      ₹{product.price.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 border-t border-orange-100 p-3">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleEditClick(product)}
+                    disabled={isPending}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-orange-50 py-2 font-semibold text-orange-600 transition hover:bg-orange-100 active:bg-orange-200 disabled:opacity-50 text-xs sm:text-sm"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t('edit') || 'Edit'}</span>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => handleDeleteClick(product)}
+                    disabled={isPending}
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-red-50 py-2 font-semibold text-red-600 transition hover:bg-red-100 active:bg-red-200 disabled:opacity-50 text-xs sm:text-sm"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">{t('delete') || 'Delete'}</span>
+                  </motion.button>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </main>
+
+      {/* Notifications */}
       <AnimatePresence>
-        {isDeleteDialogOpen && (selectedRows.length > 0 || rowToDelete) && (
-          <DialogBox setToggleDialogueBox={setIsDeleteDialogOpen}>
-            <DeleteProductsDialog
-              products={rowToDelete ? [rowToDelete] : selectedRows}
-              onCancel={() => {
-                setIsDeleteDialogOpen(false)
-                setRowToDelete(null)
-              }}
-              onDeleted={() => {
-                const idsToDelete = new Set(
-                  (rowToDelete ? [rowToDelete] : selectedRows).map(
-                    (product) => product.id
-                  )
-                )
-                setEditData((prev) =>
-                  prev.filter((item) => !idsToDelete.has(item.id))
-                )
-                setSelectedRows([])
-                setIsDeleteDialogOpen(false)
-                setRowToDelete(null)
-              }}
-            />
-          </DialogBox>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold text-white shadow-lg sm:bottom-8 sm:right-8 ${
+              notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <Check className="h-5 w-5" />
+            ) : (
+              <AlertCircle className="h-5 w-5" />
+            )}
+            {notification.message}
+          </motion.div>
         )}
       </AnimatePresence>
-    </main>
+
+      {/* Product Form Modal */}
+      <AnimatePresence>
+        {formState.type && formState.product && (
+          <ProductFormModal
+            product={formState.product}
+            mode={formState.type}
+            categoryOptions={categoryOptions}
+            isSubmitting={isSubmitting}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setFormState({ type: null, product: null })}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <DeleteConfirmModal
+            product={deleteConfirm}
+            isSubmitting={isSubmitting}
+            onConfirm={confirmDelete}
+            onCancel={() => setDeleteConfirm(null)}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// Product Form Modal Component
+interface ProductFormModalProps {
+  product: TransformedProduct
+  mode: 'add' | 'edit'
+  categoryOptions: Array<{ id: number; label: string }>
+  isSubmitting: boolean
+  onSubmit: (product: TransformedProduct) => Promise<void>
+  onCancel: () => void
+}
+
+function ProductFormModal({
+  product,
+  mode,
+  categoryOptions,
+  isSubmitting,
+  onSubmit,
+  onCancel,
+}: ProductFormModalProps) {
+  const { t } = useTranslation()
+  const [formData, setFormData] = useState<TransformedProduct>(product)
+  const [errors, setErrors] = useState<ValidationErrors>({})
+
+  const validateForm = useCallback((): boolean => {
+    const newErrors: ValidationErrors = {}
+
+    if (!formData.primaryName.trim()) {
+      newErrors.primaryName = t('product_name_required') || 'Product name is required'
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = t('description_required') || 'Description is required'
+    }
+
+    if (formData.price <= 0) {
+      newErrors.price = t('price_must_be_greater') || 'Price must be greater than 0'
+    }
+
+    if (!Array.isArray(formData.categoryIds) || formData.categoryIds.length === 0) {
+      newErrors.categoryIds = t('select_category') || 'Select at least one category'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }, [formData, t])
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      if (!validateForm()) return
+      await onSubmit(formData)
+    },
+    [validateForm, formData, onSubmit]
+  )
+
+  const handleCategoryToggle = useCallback((categoryId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      categoryIds:
+        Array.isArray(prev.categoryIds) && prev.categoryIds.includes(categoryId)
+          ? prev.categoryIds.filter((id) => id !== categoryId)
+          : [...(Array.isArray(prev.categoryIds) ? prev.categoryIds : []), categoryId],
+    }))
+  }, [])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onCancel}
+      className="fixed inset-0 z-50 flex items-end bg-black/40 backdrop-blur-sm sm:items-center sm:justify-center"
+    >
+      <motion.form
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit}
+        className="w-full max-w-2xl rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-2xl sm:p-8 max-h-[90vh] overflow-y-auto"
+      >
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between sticky -top-8 bg-white -mx-6 -mt-6 px-6 py-4 border-b border-orange-200 z-10">
+          <h2 className="text-2xl font-bold text-orange-900">
+            {mode === 'add'
+              ? t('add_product') || 'Add New Product'
+              : t('edit_product') || 'Edit Product'}
+          </h2>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="rounded-lg p-2 text-orange-600 hover:bg-orange-100 transition disabled:opacity-50"
+          >
+            <X className="h-6 w-6" />
+          </button>
+        </div>
+
+        <div className="space-y-5">
+          {/* Primary Name */}
+          <div>
+            <label className="block text-sm font-semibold text-orange-900 mb-2">
+              {t('product_name') || 'Product Name'} *
+            </label>
+            <input
+              type="text"
+              value={formData.primaryName}
+              onChange={(e) =>
+                setFormData({ ...formData, primaryName: e.target.value })
+              }
+              placeholder={t('enter_product_name') || 'Enter product name'}
+              className={`w-full rounded-lg border-2 bg-white px-4 py-3 text-sm outline-none transition ${
+                errors.primaryName
+                  ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+                  : 'border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
+              }`}
+              disabled={isSubmitting}
+            />
+            {errors.primaryName && (
+              <p className="mt-1.5 text-xs sm:text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {errors.primaryName}
+              </p>
+            )}
+          </div>
+
+          {/* Secondary Name */}
+          <div>
+            <label className="block text-sm font-semibold text-orange-900 mb-2">
+              {t('secondary_name') || 'Secondary Name'} ({t('optional') || 'Optional'})
+            </label>
+            <input
+              type="text"
+              value={formData.secondaryName || ''}
+              onChange={(e) =>
+                setFormData({ ...formData, secondaryName: e.target.value })
+              }
+              placeholder={t('e_g_italian_classic') || 'e.g., Italian Classic'}
+              className="w-full rounded-lg border-2 border-orange-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:opacity-50"
+              disabled={isSubmitting}
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-semibold text-orange-900 mb-2">
+              {t('description') || 'Description'} *
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              placeholder={t('describe_your_product') || 'Describe your product'}
+              rows={3}
+              className={`w-full rounded-lg border-2 bg-white px-4 py-3 text-sm outline-none transition resize-none ${
+                errors.description
+                  ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+                  : 'border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
+              } disabled:opacity-50`}
+              disabled={isSubmitting}
+            />
+            {errors.description && (
+              <p className="mt-1.5 text-xs sm:text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {errors.description}
+              </p>
+            )}
+          </div>
+
+          {/* Price */}
+          <div>
+            <label className="block text-sm font-semibold text-orange-900 mb-2">
+              {t('price') || 'Price'} (₹) *
+            </label>
+            <input
+              type="number"
+              value={formData.price || ''}
+              onChange={(e) =>
+                setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
+              }
+              placeholder="0"
+              min="0"
+              step="0.01"
+              className={`w-full rounded-lg border-2 bg-white px-4 py-3 text-sm outline-none transition ${
+                errors.price
+                  ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+                  : 'border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
+              } disabled:opacity-50`}
+              disabled={isSubmitting}
+            />
+            {errors.price && (
+              <p className="mt-1.5 text-xs sm:text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {errors.price}
+              </p>
+            )}
+          </div>
+
+          {/* Categories */}
+          <div>
+            <label className="block text-sm font-semibold text-orange-900 mb-3">
+              {t('categories') || 'Categories'} *
+            </label>
+            {categoryOptions.length > 0 ? (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {categoryOptions.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => handleCategoryToggle(category.id)}
+                    disabled={isSubmitting}
+                    className={`rounded-lg border-2 px-3 py-2.5 text-sm font-semibold transition ${
+                      Array.isArray(formData.categoryIds) &&
+                      formData.categoryIds.includes(category.id)
+                        ? 'border-orange-500 bg-orange-50 text-orange-700'
+                        : 'border-orange-200 bg-white text-orange-700 hover:border-orange-300'
+                    } disabled:opacity-50`}
+                  >
+                    {category.label}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-orange-600">No categories available</p>
+            )}
+            {errors.categoryIds && (
+              <p className="mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4" />
+                {errors.categoryIds}
+              </p>
+            )}
+          </div>
+
+          {/* Availability */}
+          <div>
+            <label className="block text-sm font-semibold text-orange-900 mb-3">
+              {t('availability') || 'Availability'}
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, available: true })}
+                disabled={isSubmitting}
+                className={`flex-1 rounded-lg border-2 px-4 py-2.5 font-semibold transition ${
+                  formData.available
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-orange-200 bg-white text-orange-700 hover:border-orange-300'
+                } disabled:opacity-50`}
+              >
+                ✓ {t('available') || 'Available'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, available: false })}
+                disabled={isSubmitting}
+                className={`flex-1 rounded-lg border-2 px-4 py-2.5 font-semibold transition ${
+                  !formData.available
+                    ? 'border-red-500 bg-red-50 text-red-700'
+                    : 'border-orange-200 bg-white text-orange-700 hover:border-orange-300'
+                } disabled:opacity-50`}
+              >
+                ✕ {t('unavailable') || 'Unavailable'}
+              </button>
+            </div>
+          </div>
+
+          {/* Product Type */}
+          <div>
+            <label className="block text-sm font-semibold text-orange-900 mb-3">
+              {t('product_type') || 'Product Type'}
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData({ ...formData, productType: 'VEG' })
+                }
+                disabled={isSubmitting}
+                className={`flex-1 rounded-lg border-2 px-4 py-2.5 font-semibold transition ${
+                  formData.productType === 'VEG'
+                    ? 'border-green-500 bg-green-50 text-green-700'
+                    : 'border-orange-200 bg-white text-orange-700 hover:border-orange-300'
+                } disabled:opacity-50`}
+              >
+                🥬 {t('vegetarian') || 'Vegetarian'}
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setFormData({ ...formData, productType: 'NON_VEG' })
+                }
+                disabled={isSubmitting}
+                className={`flex-1 rounded-lg border-2 px-4 py-2.5 font-semibold transition ${
+                  formData.productType === 'NON_VEG'
+                    ? 'border-red-500 bg-red-50 text-red-700'
+                    : 'border-orange-200 bg-white text-orange-700 hover:border-orange-300'
+                } disabled:opacity-50`}
+              >
+                🍖 {t('non_vegetarian') || 'Non-Vegetarian'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Actions */}
+        <div className="mt-8 flex gap-3 border-t border-orange-200 pt-6 sticky -bottom-8 bg-white -mx-6 -mb-6 px-6 py-4 z-10">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="flex-1 rounded-lg border-2 border-orange-200 py-2.5 font-semibold text-orange-700 transition hover:bg-orange-50 disabled:opacity-50 text-sm sm:text-base"
+          >
+            {t('cancel') || 'Cancel'}
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 rounded-lg bg-orange-600 py-2.5 font-semibold text-white shadow-lg transition hover:bg-orange-700 disabled:opacity-50 text-sm sm:text-base flex items-center justify-center gap-2"
+          >
+            {isSubmitting && <Loader className="h-4 w-4 animate-spin" />}
+            {isSubmitting
+              ? t('saving') || 'Saving...'
+              : mode === 'add'
+              ? t('create') || 'Create'
+              : t('update') || 'Update'}
+          </motion.button>
+        </div>
+      </motion.form>
+    </motion.div>
+  )
+}
+
+// Delete Confirmation Modal Component
+interface DeleteConfirmModalProps {
+  product: TransformedProduct
+  isSubmitting: boolean
+  onConfirm: () => Promise<void>
+  onCancel: () => void
+}
+
+function DeleteConfirmModal({
+  product,
+  isSubmitting,
+  onConfirm,
+  onCancel,
+}: DeleteConfirmModalProps) {
+  const { t } = useTranslation()
+
+  const handleConfirm = useCallback(async () => {
+    await onConfirm()
+  }, [onConfirm])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onCancel}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
+      >
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+          <Trash2 className="h-6 w-6 text-red-600" />
+        </div>
+
+        <h3 className="mb-2 text-xl font-bold text-orange-900">
+          {t('delete_product') || 'Delete Product?'}
+        </h3>
+
+        <p className="mb-6 text-sm sm:text-base text-orange-700">
+          {t('delete_confirmation') || 'Are you sure you want to delete'}{' '}
+          <span className="font-semibold">{product.primaryName}</span>?{' '}
+          {t('this_action_cannot_be_undone') ||
+            'This action cannot be undone.'}
+        </p>
+
+        <div className="flex gap-3">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={onCancel}
+            disabled={isSubmitting}
+            className="flex-1 rounded-lg border-2 border-orange-200 py-2.5 font-semibold text-orange-700 transition hover:bg-orange-50 disabled:opacity-50 text-sm sm:text-base"
+          >
+            {t('cancel') || 'Cancel'}
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            type="button"
+            onClick={handleConfirm}
+            disabled={isSubmitting}
+            className="flex-1 rounded-lg bg-red-600 py-2.5 font-semibold text-white transition hover:bg-red-700 disabled:opacity-50 text-sm sm:text-base flex items-center justify-center gap-2"
+          >
+            {isSubmitting && <Loader className="h-4 w-4 animate-spin" />}
+            {isSubmitting ? t('deleting') || 'Deleting...' : t('delete') || 'Delete'}
+          </motion.button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }
 
