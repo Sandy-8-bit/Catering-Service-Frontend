@@ -22,12 +22,22 @@ interface MasterCategoryGroup {
   }[]
 }
 
-type ProductTypeFilter = 'all' | 'veg' | 'nonveg'
+type ProductTypeFilter = 'all' | 'Vegetarian' | 'Non-Vegetarian'
 
 const getProductTypeDisplay = (productType?: string): string => {
   if (productType === 'VEG') return 'Vegetarian'
   if (productType === 'NON_VEG') return 'Non-Vegetarian'
   return ''
+}
+
+const getProductType = (product: Product): 'VEG' | 'NON_VEG' | undefined => {
+  // Try to get productType directly
+  if ((product as any).productType) return (product as any).productType
+  // Fallback to productTypeDisplay
+  const display = (product as any).productTypeDisplay
+  if (display === 'Vegetarian') return 'VEG'
+  if (display === 'Non-Vegetarian') return 'NON_VEG'
+  return undefined
 }
 
 const formatCurrency = (value: number) =>
@@ -81,9 +91,10 @@ const ProductMenuSelector = ({
   const filteredProducts = useMemo(() => {
     return products.filter((product) => {
       if (selectedProductType === 'all') return true
-      if (selectedProductType === 'veg') return product.productType === 'VEG'
-      if (selectedProductType === 'nonveg')
-        return product.productType === 'NON_VEG'
+      const productType = getProductType(product)
+      if (selectedProductType === 'Vegetarian') return productType === 'VEG'
+      if (selectedProductType === 'Non-Vegetarian')
+        return productType === 'NON_VEG'
       return true
     })
   }, [products, selectedProductType])
@@ -328,14 +339,25 @@ const ProductMenuSelector = ({
 
               <button
                 type="button"
-                onClick={() => setSelectedProductType('veg')}
+                onClick={() => setSelectedProductType('Vegetarian')}
                 className={`rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition ${
-                  selectedProductType === 'veg'
+                  selectedProductType === 'Vegetarian'
                     ? 'bg-amber-600 text-white shadow-md'
                     : 'border-2 border-amber-200 bg-white text-amber-700 hover:border-amber-300 hover:bg-amber-50'
                 }`}
               >
                 {t('vegetarian') || 'Veg'}
+              </button>
+               <button
+                type="button"
+                onClick={() => setSelectedProductType('Non-Vegetarian')}
+                className={`rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition ${
+                  selectedProductType === 'Non-Vegetarian'
+                    ? 'bg-amber-600 text-white shadow-md'
+                    : 'border-2 border-amber-200 bg-white text-amber-700 hover:border-amber-300 hover:bg-amber-50'
+                }`}
+              >
+                {t('non_vegetarian') || 'Non-Veg'}
               </button>
             </div>
           </div>
@@ -346,7 +368,7 @@ const ProductMenuSelector = ({
               <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
                 {t('category') || 'Category'}
               </p>
-              <div className="mb-2 flex flex-wrap gap-3">
+                        <div className="mb-2 flex gap-3 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
                 <button
                   type="button"
                   onClick={() => {
@@ -389,7 +411,7 @@ const ProductMenuSelector = ({
               <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
                 {t('subcategory') || 'Subcategory'}
               </p>
-              <div className="mb-2 flex flex-wrap gap-3">
+              <div className="mb-2 flex gap-3 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
                 <button
                   type="button"
                   onClick={() => setSelectedCategory(null)}
@@ -445,15 +467,15 @@ const ProductMenuSelector = ({
                         <p className="text-[10px] text-zinc-500 sm:text-xs">
                           {product.secondaryName || t('orders_signature_dish')}
                         </p>
-                        {product.productType && (
+                        {getProductType(product) && (
                           <p
                             className={`text-[10px] font-medium ${
-                              product.productType === 'VEG'
+                              getProductType(product) === 'VEG'
                                 ? 'text-green-600'
                                 : 'text-red-600'
                             }`}
                           >
-                            {getProductTypeDisplay(product.productType)}
+                            {getProductTypeDisplay(getProductType(product))}
                           </p>
                         )}
                       </div>
