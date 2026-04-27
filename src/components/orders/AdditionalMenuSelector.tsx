@@ -303,7 +303,7 @@ const AdditionalMenuSelector = ({
             <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
               {t('product_type') || 'Product Type'}
             </p>
-            <div className="mb-2 flex flex-wrap gap-3">
+                        <div className="mb-2 flex gap-3 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
               <button
                 type="button"
                 onClick={() => setSelectedProductType('all')}
