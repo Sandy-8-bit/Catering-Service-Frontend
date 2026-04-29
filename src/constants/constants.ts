@@ -23,12 +23,13 @@ export const eventTypeOptions: DropdownOption[] = [
   'பேபி ஷவர்',
   ''
 ].map((label, index) => ({ id: index + 1, label }))
+
 export const paymentTypeOptions: DropdownOption[] = [
-  'CASH',
-  'UPI',
-  'Bank Transfer',
-  'CARD',
-  'Cheque',
+  'பணம்',          // CASH
+  'யூபிஐ',         // UPI
+  'வங்கி பரிமாற்றம்', // Bank Transfer
+  'கார்டு',         // CARD
+  'செக்',           // Cheque
 ].map((label, index) => ({ id: index + 1, label }))
 
 export const statusOptions: DropdownOption[] = [

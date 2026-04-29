@@ -653,33 +653,11 @@ export const OrdersForm = () => {
                   }))
                 }
               />
-            </div>
-          )}
-          {/* Delivery & Payment */}
-          <button
-            type="button"
-            onClick={() =>
-              setExpandedSections((prev) => ({
-                ...prev,
-                delivery: !prev.delivery,
-              }))
-            }
-            className="flex w-full items-center justify-between rounded-lg border-2 border-amber-300 bg-amber-50 px-4 py-3 transition-all hover:bg-amber-100 hover:border-amber-400 sm:px-5 sm:py-4"
-          >
-            <h2 className="text-xs font-semibold text-amber-900 sm:text-sm md:text-base">
-              {t('delivery_payment')}
-            </h2>
-            <ChevronDown
-              className={`h-4 w-4 shrink-0 text-amber-700 transition-transform sm:h-5 sm:w-5 ${
-                expandedSections.delivery ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-          {expandedSections.delivery && (
-            <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
+              
               <InputCheckbox
                 title={t('delivery_by_us')}
-                label="Delivery"
+                label=""
+                className='mt-4'
                 checked={editData.deliveredByUs}
                 onChange={(checked) =>
                   setEditData((prev) => ({ ...prev, deliveredByUs: checked }))
@@ -733,8 +711,10 @@ export const OrdersForm = () => {
                   />
                 </>
               )}
+        
             </div>
           )}
+ 
 
           {/* Menu Selection */}
           <button
