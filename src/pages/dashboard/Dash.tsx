@@ -1,11 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import {
   Calendar,
-  TrendingUp,
-  Package,
   AlertCircle,
-  Check,
-  Clock,
 } from 'lucide-react'
 import { useFetchDashboard } from '@/queries/dashboardQueries'
 
