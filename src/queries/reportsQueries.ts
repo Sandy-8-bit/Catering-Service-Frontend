@@ -30,7 +30,7 @@ export const useFetchExpensesReport = (
         params.period = 'monthly'
       }
 
-      const res = await axiosInstance.get('/api/reports/expenses', {
+      const res = await axiosInstance.get('/api/admin/reports/finance', {
         params,
       })
 
@@ -65,7 +65,7 @@ export const downloadReportPDF = async (
       params.period = 'monthly'
     }
 
-    const response = await axiosInstance.get('/api/reports/expenses', {
+    const response = await axiosInstance.get('/api/admin/reports/finance', {
       params,
       responseType: 'blob',
       headers: {

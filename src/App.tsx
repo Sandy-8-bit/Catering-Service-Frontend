@@ -7,6 +7,7 @@ import { appRoutes } from './routes/appRoutes'
 import DriverDashboardPage from '@/pages/driver/DriveDashboard'
 import DriverOrderPage from './pages/driver/DriverOrderPage'
 import DriverPendingOrdersPage from '@/pages/driver/DriverPendingOrdersPage'
+import ExpensePage from './pages/expense/ExpensePage'
 
 const AdditionalItemsPage = lazy(
   () => import('@/pages/additionalItemsPage/AdditionalItemsPage')
@@ -76,6 +77,8 @@ function App() {
               path={appRoutes.categories.path}
               element={<CategoriesPage />}
             />
+                    <Route path={appRoutes.expenses.path} element={<ExpensePage />} />
+
             <Route path={appRoutes.products.path} element={<ProductsPage />} />
             <Route path={appRoutes.recipes.path} element={<RecipesPage />} />
             <Route

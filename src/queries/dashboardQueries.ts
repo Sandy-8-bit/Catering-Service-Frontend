@@ -4,61 +4,16 @@ import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'
 import { useQuery } from '@tanstack/react-query'
 
-export interface DashboardOrder {
-  orderId: number
-  customerName: string
-  customerPhone: string
-  eventDate: string
-  totalPlates: number | null
-  grandTotalAmount: number | null
-  balanceAmount: number
-  orderStatus: string
-  paymentStatus: string
-}
-
-export interface DashboardPayment {
-  orderId: number
-  customerName: string
-  customerPhone: string
-  eventDate: string
-  grandTotalAmount: number | null
-  advanceAmount: number
-  balanceAmount: number
-  paymentStatus: string
-}
-
-export interface DashboardKPI {
-  totalRevenue: number
-  totalExpense: number
-  netProfit: number
-  totalPendingPayments: number
-  totalOrders: number
-  totalPlates: number
-}
-
-export interface DashboardData {
-  period: string
-  startDate: string
-  endDate: string
-  kpi: DashboardKPI
-  orders: {
-    pending: DashboardOrder[]
-    outForDelivery: DashboardOrder[]
-    completed: DashboardOrder[]
-  }
-  pendingPayments: DashboardPayment[]
-  returnableItems: unknown[]
-}
-
-export type PeriodType =   'MONTHLY'  
+export type PeriodType = 'MONTHLY'
 
 export const useFetchDashboard = (
   period: PeriodType,
   dateRange?: { startDate: string; endDate: string }
 ) => {
-  const fetchDashboard = async (): Promise<DashboardData> => {
+  const fetchDashboard = async () => {
     try {
       const token = authHandler()
+
       const params: Record<string, string> = {}
 
       if (dateRange) {
@@ -73,7 +28,34 @@ export const useFetchDashboard = (
         params,
       })
 
-      return (res.data?.data ?? res.data ?? {}) as DashboardData
+      const raw = res.data?.data ?? res.data ?? {}
+
+      const allOrders = raw?.orders?.orders || []
+
+      // 🔥 TRANSFORM HERE
+      const transformedOrders = {
+        pending: allOrders.filter(
+          (o: any) =>
+            o.orderStatus === 'Pending' ||
+            o.orderStatus === 'Order Placed'
+        ),
+        completed: allOrders.filter(
+          (o: any) => o.orderStatus === 'Order Completed'
+        ),
+        outForDelivery: allOrders.filter(
+          (o: any) => o.orderStatus === 'Out for Delivery'
+        ),
+      }
+
+      return {
+        period: raw.period,
+        startDate: raw.from,
+        endDate: raw.to,
+        kpi: raw.kpi,
+        orders: transformedOrders,
+        pendingPayments: raw.pendingPayments || [],
+        returnableItems: raw.returnableItems || [],
+      }
     } catch (error: unknown) {
       handleApiError(error, 'Dashboard')
       throw error

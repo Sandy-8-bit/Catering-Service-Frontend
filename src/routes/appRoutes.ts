@@ -4,6 +4,10 @@ export const appRoutes = {
   signInPage: '/signin',
   signUpPage: '/signup',
   errorPage: '/error',
+  expenses: {
+    path: '/expenses',
+    children: {},
+  },
 
   // -------- New Dashboard Parent Routes --------
   dashboard: {

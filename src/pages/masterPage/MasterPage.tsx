@@ -118,7 +118,15 @@ const MasterPage: React.FC = () => {
       btnText: t('configure'),
       navigateUrl: appRoutes.additionalItems.path,
     })
-    
+    cards.push({
+  icon: '/icons/sideNavIcons/expense-icon.svg', // create or reuse icon
+  title: t('side_nav_expense_management'),
+  desc: 'Track and manage all expenses',
+  label: t('side_nav_expense_management'),
+  labelColor: 'bg-orange-50 text-orange-700',
+  btnText: t('configure'),
+  navigateUrl: appRoutes.expenses.path, // make sure this route exists
+})
     // Add User Management card
     cards.push({
       icon: '/icons/sideNavIcons/rawMaterials-icon.svg',
