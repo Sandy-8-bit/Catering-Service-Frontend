@@ -32,7 +32,13 @@ const categoryIcons: Record<ExpenseCategory, string> = {
 }
 
 export default function ExpensePage() {
-  const { data: expenses = [], isLoading } = useFetchExpenses()
+
+      const [dateRange, setDateRange] = useState<{
+  startDate?: string
+  endDate?: string
+}>({})
+
+  const { data: expenses = [], isLoading } = useFetchExpenses(dateRange)
   const createExpense = useCreateExpense()
   const updateExpense = useUpdateExpense()
   const deleteExpense = useDeleteExpense()
@@ -40,6 +46,7 @@ export default function ExpensePage() {
   const [isOpen, setIsOpen] = useState(false)
   const [editing, setEditing] = useState<Expense | null>(null)
   const [formError, setFormError] = useState<string>('')
+
 
   const [form, setForm] = useState<ExpensePayload>({
     description: '',
@@ -124,6 +131,39 @@ export default function ExpensePage() {
             <h1 className="text-2xl font-semibold text-slate-900">Expenses</h1>
             <p className="text-sm text-slate-500">Manage your spending</p>
           </div>
+
+          <div className="flex flex-col sm:flex-row gap-3">
+  <input
+    type="date"
+    className="border px-3 py-2 rounded-lg"
+    value={dateRange.startDate || ''}
+    onChange={(e) =>
+      setDateRange((prev) => ({
+        ...prev,
+        startDate: e.target.value || undefined,
+      }))
+    }
+  />
+
+  <input
+    type="date"
+    className="border px-3 py-2 rounded-lg"
+    value={dateRange.endDate || ''}
+    onChange={(e) =>
+      setDateRange((prev) => ({
+        ...prev,
+        endDate: e.target.value || undefined,
+      }))
+    }
+  />
+
+  <button
+    onClick={() => setDateRange({})}
+    className="bg-gray-200 px-4 py-2 rounded-lg text-sm"
+  >
+    Clear
+  </button>
+</div>
           <button
             onClick={openCreate}
             className="bg-orange-500 hover:bg-orange-600 active:bg-orange-700 text-white px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 font-medium text-sm"

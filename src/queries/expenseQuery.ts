@@ -27,7 +27,10 @@ const expenseKey = (id: number | string) => [...EXPENSE_KEY, id] as const
 /**
  * 🔍 Fetch all expenses
  */
-export const useFetchExpenses = () => {
+export const useFetchExpenses = (params?: {
+  startDate?: string
+  endDate?: string
+}) => {
   const fetchExpenses = async (): Promise<Expense[]> => {
     try {
       const token = authHandler()
@@ -37,6 +40,10 @@ export const useFetchExpenses = () => {
         {
           headers: {
             Authorization: `Bearer ${token}`,
+          },
+          params: {
+            ...(params?.startDate && { startDate: params.startDate }),
+            ...(params?.endDate && { endDate: params.endDate }),
           },
         }
       )
@@ -49,12 +56,11 @@ export const useFetchExpenses = () => {
   }
 
   return useQuery({
-    queryKey: EXPENSE_KEY,
+    queryKey: [EXPENSE_KEY, params], // 🔥 important for refetch
     queryFn: fetchExpenses,
     staleTime: 1000 * 60 * 5,
   })
 }
-
 /**
  * 🔍 Fetch expense by ID
  */

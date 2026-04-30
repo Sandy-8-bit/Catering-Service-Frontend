@@ -36,7 +36,6 @@ export type ProductPayload = {
 }
 
 export type ProductCreateRequest = {
-  id: number
   request: ProductPayload
 }
 

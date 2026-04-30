@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import axiosInstance from '@/utils/axios'
 import { handleApiError } from '@/utils/handleApiError'
 
-export type ReportPeriod = 'weekly' | 'monthly' | 'yearly'
+export type ReportPeriod =  'MONTHLY'
 
 export interface ExpenseReport {
   period?: string

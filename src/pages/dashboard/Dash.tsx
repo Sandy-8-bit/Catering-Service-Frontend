@@ -2,6 +2,12 @@ import React, { useMemo, useState } from 'react'
 import {
   Calendar,
   AlertCircle,
+  TrendingUp,
+  Package,
+  CreditCard,
+  Truck,
+  CheckCircle,
+  Clock,
 } from 'lucide-react'
 import { useFetchDashboard } from '@/queries/dashboardQueries'
 
@@ -28,196 +34,372 @@ const Dashboard: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen text-red-600">
-        <AlertCircle className="mr-2" /> Error loading dashboard
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 px-4">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <p className="text-slate-700 font-medium">Error loading dashboard</p>
+        </div>
       </div>
     )
   }
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        Loading...
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-blue-600 animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium">Loading dashboard...</p>
+        </div>
       </div>
     )
   }
 
+  const pendingOrdersCount = data?.orders?.pending?.length || 0
+  const outForDeliveryCount = data?.orders?.outForDelivery?.length || 0
+  const completedCount = data?.orders?.completed?.length || 0
+
   return (
-    <div className="min-h-screen bg-amber-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
       {/* HEADER */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-amber-900">Dashboard</h1>
-        {data?.startDate && data?.endDate && (
-          <p className="text-gray-600">
-            {new Date(data.startDate).toLocaleDateString('en-IN')} -{' '}
-            {new Date(data.endDate).toLocaleDateString('en-IN')}
-          </p>
-        )}
-      </div>
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/50">
+        <div className="px-4 sm:px-6 py-4 mx-auto">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                Dashboard
+              </h1>
+              {data?.startDate && data?.endDate && (
+                <p className="text-sm text-slate-500 mt-1">
+                  {new Date(data.startDate).toLocaleDateString('en-IN', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}{' '}
+                  —{' '}
+                  {new Date(data.endDate).toLocaleDateString('en-IN', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </p>
+              )}
+            </div>
+              {/* DATE FILTER */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            <button
+              onClick={() => {
+                setPeriod('MONTHLY')
+                setDateRange(null)
+              }}
+              className="flex-1 sm:flex-none px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium text-sm hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200"
+            >
+              This Month
+            </button>
 
-      {/* PERIOD */}
-      <div className="bg-white p-4 rounded border mb-6">
-        <button
-          onClick={() => {
-            setPeriod('MONTHLY')
-            setDateRange(null)
-          }}
-          className="px-4 py-2 bg-amber-600 text-white rounded mr-2"
-        >
-          This Month
-        </button>
-
-        <button
-          onClick={() => setShowDatePicker(!showDatePicker)}
-          className="px-4 py-2 border rounded flex items-center gap-2"
-        >
-          <Calendar size={16} /> Custom Range
-        </button>
-
-        {showDatePicker && (
-          <div className="mt-4 flex gap-3 flex-wrap">
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="border p-2 rounded"
-            />
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="border p-2 rounded"
-            />
-            <button onClick={handleApply} className="bg-green-600 text-white px-4 rounded">
-              Apply
+            <button
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className="flex-1 sm:flex-none px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg font-medium text-sm hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <Calendar size={16} /> Custom Range
             </button>
           </div>
-        )}
+          </div>
+
+        
+
+          {showDatePicker && (
+            <div className="mt-4 pt-4 border-t border-slate-200 flex flex-col sm:flex-row gap-2">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <button
+                onClick={handleApply}
+                className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium text-sm transition-colors"
+              >
+                Apply
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* KPI */}
-      {stats && (
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-white p-4 rounded border">
-            <p>Total Revenue</p>
-            <h2>₹{stats.totalRevenue.toLocaleString('en-IN')}</h2>
-          </div>
+      {/* MAIN CONTENT */}
+      <div className="px-4 sm:px-6 py-6 mx-auto space-y-6 pb-8">
+        {/* KPI CARDS */}
+        {stats && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+            {/* Total Revenue */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium uppercase tracking-wide">
+                  Revenue
+                </p>
+                <div className="bg-green-100 p-2 rounded-lg">
+                  <TrendingUp className="w-4 h-4 text-green-600" />
+                </div>
+              </div>
+              <h2 className="text-lg sm:text-2xl font-bold text-slate-900">
+                ₹{(stats.totalRevenue ).toFixed(1)}
+              </h2>
+              <p className="text-xs text-slate-500 mt-2">Total income</p>
+            </div>
 
-          <div className="bg-white p-4 rounded border">
-            <p>Total Expense</p>
-            <h2>₹{stats.totalExpense.toLocaleString('en-IN')}</h2>
-          </div>
+            {/* Total Expense */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium uppercase tracking-wide">
+                  Expenses
+                </p>
+                <div className="bg-orange-100 p-2 rounded-lg">
+                  <Package className="w-4 h-4 text-orange-600" />
+                </div>
+              </div>
+              <h2 className="text-lg sm:text-2xl font-bold text-slate-900">
+                ₹{(stats.totalExpense ).toFixed(1)}
+              </h2>
+              <p className="text-xs text-slate-500 mt-2">Total cost</p>
+            </div>
 
-          <div className="bg-white p-4 rounded border">
-            <p>Net Profit</p>
-            <h2>₹{stats.netProfit.toLocaleString('en-IN')}</h2>
-            <p className="text-sm text-gray-500">
-              Margin:{' '}
-              {stats.totalRevenue > 0
-                ? ((stats.netProfit / stats.totalRevenue) * 100).toFixed(1)
-                : 0}
-              %
-            </p>
-          </div>
+            {/* Net Profit */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 hover:shadow-md transition-shadow col-span-2 sm:col-span-1">
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium uppercase tracking-wide">
+                  Profit
+                </p>
+                <div className="bg-blue-100 p-2 rounded-lg">
+                  <CreditCard className="w-4 h-4 text-blue-600" />
+                </div>
+              </div>
+              <h2 className="text-lg sm:text-2xl font-bold text-slate-900">
+                ₹{(stats.netProfit ).toFixed(1)}
+              </h2>
+              <p className="text-xs text-slate-500 mt-2">
+                Margin:{' '}
+                <span className="font-semibold text-slate-900">
+                  {stats.totalRevenue > 0
+                    ? ((stats.netProfit / stats.totalRevenue) * 100).toFixed(1)
+                    : 0}
+                  %
+                </span>
+              </p>
+            </div>
 
-          <div className="bg-white p-4 rounded border">
-            <p>Pending Payments</p>
-            <h2>₹{stats.totalPendingPayments.toLocaleString('en-IN')}</h2>
-          </div>
+            {/* Pending Payments */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium uppercase tracking-wide">
+                  Pending
+                </p>
+                <div className="bg-yellow-100 p-2 rounded-lg">
+                  <Clock className="w-4 h-4 text-yellow-600" />
+                </div>
+              </div>
+              <h2 className="text-lg sm:text-2xl font-bold text-slate-900">
+                ₹{(stats.totalPendingPayments ).toFixed(1)}
+              </h2>
+              <p className="text-xs text-slate-500 mt-2">Awaiting payment</p>
+            </div>
 
-          <div className="bg-white p-4 rounded border">
-            <p>Total Orders</p>
-            <h2>{stats.totalOrders}</h2>
-          </div>
+            {/* Total Orders */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium uppercase tracking-wide">
+                  Orders
+                </p>
+                <div className="bg-purple-100 p-2 rounded-lg">
+                  <Package className="w-4 h-4 text-purple-600" />
+                </div>
+              </div>
+              <h2 className="text-lg sm:text-2xl font-bold text-slate-900">
+                {stats.totalOrders}
+              </h2>
+              <p className="text-xs text-slate-500 mt-2">Total placed</p>
+            </div>
 
-          <div className="bg-white p-4 rounded border">
-            <p>Total Plates</p>
-            <h2>{stats.totalPlates}</h2>
+            {/* Total Plates */}
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between mb-3">
+                <p className="text-xs sm:text-sm text-slate-600 font-medium uppercase tracking-wide">
+                  Plates
+                </p>
+                <div className="bg-pink-100 p-2 rounded-lg">
+                  <Package className="w-4 h-4 text-pink-600" />
+                </div>
+              </div>
+              <h2 className="text-lg sm:text-2xl font-bold text-slate-900">
+                {stats.totalPlates}
+              </h2>
+              <p className="text-xs text-slate-500 mt-2">Total served</p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ORDER STATUS */}
-      {data?.orders && (
-        <div className="grid md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-yellow-100 p-4 rounded">
-            <p>Pending</p>
-            <h2>{data.orders.pending.length}</h2>
+        {/* ORDER STATUS OVERVIEW */}
+        {data?.orders && (
+          <div className="grid grid-cols-3 mt-3 mb-3 gap-3 sm:gap-4">
+            {/* Pending */}
+            <div className="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl border border-yellow-200 p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="w-5 h-5 text-amber-600" />
+                <p className="text-sm font-medium text-amber-900">Pending</p>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-bold text-amber-900">
+                {pendingOrdersCount}
+              </h3>
+            </div>
+
+            {/* Out for Delivery */}
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-blue-200 p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Truck className="w-5 h-5 text-blue-600" />
+                <p className="text-sm font-medium text-blue-900">In Transit</p>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-bold text-blue-900">
+                {outForDeliveryCount}
+              </h3>
+            </div>
+
+            {/* Completed */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <p className="text-sm font-medium text-green-900">Completed</p>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-bold text-green-900">
+                {completedCount}
+              </h3>
+            </div>
           </div>
+        )}
 
-          <div className="bg-blue-100 p-4 rounded">
-            <p>Out for Delivery</p>
-            <h2>{data.orders.outForDelivery.length}</h2>
-          </div>
+        {/* ORDERS TABLE */}
+        {data?.orders && (
+          <div className="bg-white mb-3 rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div className="px-4 sm:px-6 py-4 border-b border-slate-200">
+              <h2 className="text-lg font-bold text-slate-900">Recent Orders</h2>
+            </div>
 
-          <div className="bg-green-100 p-4 rounded">
-            <p>Completed</p>
-            <h2>{data.orders.completed.length}</h2>
-          </div>
-        </div>
-      )}
-
-      {/* ORDERS TABLE */}
-      {data?.orders && (
-        <div className="bg-white p-4 rounded border mb-6 overflow-auto">
-          <h2 className="mb-3 font-bold">Orders</h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th>ID</th>
-                <th>Name</th>
-                <th>Date</th>
-                <th>Plates</th>
-                <th>Total</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...data.orders.pending, ...data.orders.completed, ...data.orders.outForDelivery].map(
-                (o) => (
-                  <tr key={o.orderId} className="border-b text-center">
-                    <td>{o.orderId}</td>
-                    <td>{o.customerName}</td>
-                    <td>{o.eventDate}</td>
-                    <td>{o.totalPlates ?? '-'}</td>
-                    <td>₹{o.grandTotalAmount ?? 0}</td>
-                    <td>{o.orderStatus}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Customer
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Date
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-center text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Status
+                    </th>
                   </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {[
+                    ...data.orders.pending,
+                    ...data.orders.completed,
+                    ...data.orders.outForDelivery,
+                  ].map((o) => (
+                    <tr
+                      key={o.orderId}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="px-4 sm:px-6 py-4 text-slate-900 font-medium">
+                        {o.customerName}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 text-slate-600 text-xs sm:text-sm">
+                        {new Date(o.eventDate).toLocaleDateString('en-IN', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 text-right font-semibold text-slate-900">
+                        ₹{(o.grandTotalAmount ?? 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 text-center">
+                        <span
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+                            o.orderStatus === 'Pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : o.orderStatus === 'Completed'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}
+                        >
+                          {o.orderStatus}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
-      {/* PAYMENTS */}
-      {data?.pendingPayments && (
-        <div className="bg-white p-4 rounded border overflow-auto">
-          <h2 className="mb-3 font-bold">Pending Payments</h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b">
-                <th>Order</th>
-                <th>Name</th>
-                <th>Total</th>
-                <th>Advance</th>
-                <th>Balance</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.pendingPayments.map((p:any) => (
-                <tr key={p.orderId} className="border-b text-center">
-                  <td>{p.orderId}</td>
-                  <td>{p.customerName}</td>
-                  <td>₹{p.grandTotalAmount ?? 0}</td>
-                  <td>₹{p.advanceAmount}</td>
-                  <td>₹{p.balanceAmount}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {/* PENDING PAYMENTS TABLE */}
+        {data?.pendingPayments && data.pendingPayments.length > 0 && (
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-md transition-shadow">
+            <div className="px-4 sm:px-6 py-4 border-b border-slate-200">
+              <h2 className="text-lg font-bold text-slate-900">Pending Payments</h2>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Customer
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Total
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Paid
+                    </th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                      Due
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {data.pendingPayments.map((p: any) => (
+                    <tr
+                      key={p.orderId}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="px-4 sm:px-6 py-4 text-slate-900 font-medium">
+                        {p.customerName}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 text-right font-semibold text-slate-900">
+                        ₹{(p.grandTotalAmount ?? 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 text-right text-green-600 font-medium">
+                        ₹{(p.advanceAmount ?? 0).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-4 sm:px-6 py-4 text-right text-red-600 font-semibold">
+                        ₹{(p.balanceAmount ?? 0).toLocaleString('en-IN')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

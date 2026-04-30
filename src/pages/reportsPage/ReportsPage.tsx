@@ -4,7 +4,7 @@ import { downloadReportPDF, type ReportPeriod } from '@/queries/reportsQueries'
 import { Spinner } from '@/components/layout/Spinner'
 
 const ReportsPage: React.FC = () => {
-  const [period, setPeriod] = useState<ReportPeriod>('monthly')
+  const [period, setPeriod] = useState<ReportPeriod>('MONTHLY')
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -74,7 +74,7 @@ const ReportsPage: React.FC = () => {
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-amber-900 mb-4">Select Report Period</h2>
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            {(['weekly', 'monthly', 'yearly'] as ReportPeriod[]).map((p) => (
+            {(['MONTHLY'] as ReportPeriod[]).map((p) => (
               <button
                 key={p}
                 onClick={() => handlePeriodChange(p)}

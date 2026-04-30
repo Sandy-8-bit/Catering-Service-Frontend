@@ -121,7 +121,7 @@ const MasterPage: React.FC = () => {
     cards.push({
   icon: '/icons/sideNavIcons/expense-icon.svg', // create or reuse icon
   title: t('side_nav_expense_management'),
-  desc: 'Track and manage all expenses',
+  desc: t('Track and manage expenses'),
   label: t('side_nav_expense_management'),
   labelColor: 'bg-orange-50 text-orange-700',
   btnText: t('configure'),

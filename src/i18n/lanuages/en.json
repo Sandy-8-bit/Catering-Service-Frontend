@@ -450,5 +450,8 @@
   "discount_label": "Discount",
   "price_reduced_per_plate": "Price Reduced Per Plate",
   "discount_percentage": "Discount Percentage",
-  "discount_amount": "Discount Amount"
+  "discount_amount": "Discount Amount",
+    "side_nav_expense_management": "Expense Management",
+  "expense_desc": "Track and manage all expenses",
+    "Track and manage expenses":"Track and manage expenses"
 }

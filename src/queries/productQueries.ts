@@ -15,6 +15,7 @@ import { apiRoutes } from '@/routes/apiRoutes'
 import type {
   Product,
   ProductCreateRequest,
+  ProductPayload,
   ProductQueryParams,
 } from '@/types/product'
 import { authHandler } from '@/utils/authHandler'
@@ -98,7 +99,7 @@ export const useCreateProduct = () => {
   const queryClient = useQueryClient()
 
   const createProduct = async (
-    requests: ProductCreateRequest[]
+    requests: ProductPayload[]
   ): Promise<Product[]> => {
     try {
       const token = authHandler()

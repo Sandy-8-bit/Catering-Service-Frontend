@@ -241,8 +241,7 @@ useEffect(() => {
           // Create new product
           await createProduct([
             {
-              id: formProduct.id,
-              request: payload,
+            ...payload
             },
           ])
           showNotification('success', `${formProduct.primaryName} created successfully`)

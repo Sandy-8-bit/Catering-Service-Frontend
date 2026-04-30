@@ -472,19 +472,19 @@ export const OrdersPage = () => {
     [sourceOrders]
   )
 
-  const menuItemsSubtotal = useMemo(() => {
-    if (selectedOrder) {
-      const unitPriceSum =
-        selectedOrder.items?.reduce((sum, item) => {
-          const unitPrice =
-            item.unitPrice ||
-            (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
-          return sum + unitPrice
-        }, 0) || 0
-      return Math.round((selectedOrder.totalPlates || 1) * unitPriceSum)
-    }
-    return 0
-  }, [selectedOrder])
+  // const menuItemsSubtotal = useMemo(() => {
+  //   if (selectedOrder) {
+  //     const unitPriceSum =
+  //       selectedOrder.items?.reduce((sum, item) => {
+  //         const unitPrice =
+  //           item.unitPrice ||
+  //           (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
+  //         return sum + unitPrice
+  //       }, 0) || 0
+  //     return Math.round((selectedOrder.totalPlates || 1) * unitPriceSum)
+  //   }
+  //   return 0
+  // }, [selectedOrder])
 
   const additionalItemsSummary = useMemo(
     () =>
@@ -881,14 +881,14 @@ export const OrdersPage = () => {
                         ]}
                         messageWhenNoData={t('no_menu_items_order')}
                       />
-                      <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 p-3">
+                      {/* <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 p-3">
                         <p className="text-xs font-semibold text-amber-700 sm:text-sm">
                           {t('menu_items_subtotal')}
                         </p>
                         <p className="text-xs font-bold text-amber-900 sm:text-sm md:text-lg">
                           ₹{menuItemsSubtotal.toLocaleString()}
                         </p>
-                      </div>
+                      </div> */}
                     </>
                   ) : (
                     <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
