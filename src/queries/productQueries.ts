@@ -14,7 +14,6 @@
 import { apiRoutes } from '@/routes/apiRoutes'
 import type {
   Product,
-  ProductCreateRequest,
   ProductPayload,
   ProductQueryParams,
 } from '@/types/product'
