@@ -8,6 +8,7 @@ import DriverDashboardPage from '@/pages/driver/DriveDashboard'
 import DriverOrderPage from './pages/driver/DriverOrderPage'
 import DriverPendingOrdersPage from '@/pages/driver/DriverPendingOrdersPage'
 import ExpensePage from './pages/expense/ExpensePage'
+import FinancialReport from './pages/test'
 
 const AdditionalItemsPage = lazy(
   () => import('@/pages/additionalItemsPage/AdditionalItemsPage')
@@ -40,6 +41,9 @@ const CalculateRawMaterialsPage = lazy(
   () => import('@/pages/masterPage/CalculateRawMaterialsPage')
 )
 const UsersPage = lazy(() => import('@/pages/usersPage/UsersPage'))
+const DownloadReportsPage = lazy(
+  () => import('@/pages/reportsPage/DownloadReportsPage')
+)
 
 function App() {
   return (
@@ -53,6 +57,74 @@ function App() {
       <Routes>
         {/* Public Route */}
         <Route path={appRoutes.signInPage} element={<SignInPage />} />
+        <Route
+          path={'/test'}
+          element={
+            <FinancialReport
+              reportData={{
+                success: true,
+                message: 'Financial report generated for MONTHLY',
+                data: {
+                  totalGlobalIncome: 16000.0,
+                  totalGlobalMiscExpense: 0,
+                  totalGlobalNetProfit: 16000.0,
+                  totalGlobalPeopleServed: 120,
+                  orderDetails: [
+                    {
+                      orderId: 1,
+                      customerName: 'Santhosh V P',
+                      eventDate: '2026-05-05',
+                      totalPeople: 120,
+                      orderIncome: 16000.0,
+                      orderExpense: 0,
+                      orderProfit: 16000.0,
+                      menuItems: [
+                        {
+                          productName: 'சுக்கு பால்',
+                          productSecondaryName: null,
+                          quantity: 1,
+                          productUnitPrice: 40.0,
+                          productLineTotal: 40.0,
+                          productRawMaterialCost: 0,
+                          productProfit: 40.0,
+                          rawMaterials: [],
+                          perPlate: 40.0,
+                        },
+                        {
+                          productName: 'சின்ன வெங்காயம் சாம்பார்',
+                          productSecondaryName: null,
+                          quantity: 1,
+                          productUnitPrice: 60.0,
+                          productLineTotal: 60.0,
+                          productRawMaterialCost: 0,
+                          productProfit: 60.0,
+                          rawMaterials: [],
+                          perPlate: 60.0,
+                        },
+                      ],
+                      additionalMenuItems: [
+                        {
+                          productName: 'சுக்கு பால்',
+                          productSecondaryName: null,
+                          quantity: 100,
+                          productUnitPrice: 40.0,
+                          productLineTotal: 4000.0,
+                          productRawMaterialCost: 0,
+                          productProfit: 4000.0,
+                          rawMaterials: [],
+                          perPlate: 40.0,
+                        },
+                      ],
+                      additionalItems: [],
+                      rawMaterialUsage: null,
+                    },
+                  ],
+                },
+                timestamp: '2026-05-05T08:13:59.49958359',
+              }}
+            />
+          }
+        />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
@@ -70,6 +142,10 @@ function App() {
             />
             <Route path={appRoutes.reports.path} element={<ReportsPage />} />
             <Route
+              path={appRoutes.reports.children.download}
+              element={<DownloadReportsPage />}
+            />
+            <Route
               path={appRoutes.rawMaterials.path}
               element={<RawMaterialsPage />}
             />
@@ -77,7 +153,7 @@ function App() {
               path={appRoutes.categories.path}
               element={<CategoriesPage />}
             />
-                    <Route path={appRoutes.expenses.path} element={<ExpensePage />} />
+            <Route path={appRoutes.expenses.path} element={<ExpensePage />} />
 
             <Route path={appRoutes.products.path} element={<ProductsPage />} />
             <Route path={appRoutes.recipes.path} element={<RecipesPage />} />

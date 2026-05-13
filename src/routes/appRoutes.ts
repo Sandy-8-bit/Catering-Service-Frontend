@@ -23,7 +23,9 @@ export const appRoutes = {
   },
   reports: {
     path: '/reports',
-    children: {},
+    children: {
+      download: '/reports/download',
+    },
   },
   rawMaterials: {
     path: '/master/raw-materials',
