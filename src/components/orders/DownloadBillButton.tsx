@@ -59,6 +59,8 @@ interface BillCustomerInfo {
   customerPhone?: string
   customerAddress?: string
   totalPlates?: number
+  eventDate?: string
+  eventTime?: string
 }
 
 interface BillSummary {
@@ -69,7 +71,10 @@ interface BillSummary {
   profit?: number | null
 }
 
-type BillDataWithId = BillData & { orderId?: number }
+type BillDataWithId = BillData & {
+  orderId?: number
+  advanceAmount?: number | null // ADD
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -293,6 +298,44 @@ const s = StyleSheet.create({
     flex: 1,
     borderBottom: `0.4pt dotted ${C.border}`,
     paddingBottom: 1,
+  },
+  // Raw materials section
+  rmSection: {
+    flexDirection: 'column',
+    borderTop: `0.8pt solid ${C.borderDark}`,
+  },
+  rmSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.navy,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  rmSectionTitle: {
+    fontFamily: LATIN_B,
+    fontSize: 7,
+    color: C.white,
+    letterSpacing: 0.6,
+  },
+  rmTableHead: {
+    flexDirection: 'row',
+    backgroundColor: C.headerBg,
+    borderBottom: `0.5pt solid ${C.borderDark}`,
+    minHeight: 18,
+    alignItems: 'center',
+  },
+  rmRow: {
+    flexDirection: 'row',
+    minHeight: 14,
+    alignItems: 'center',
+    borderBottom: `0.25pt solid ${C.divider}`,
+  },
+  rmRowAlt: {
+    flexDirection: 'row',
+    minHeight: 14,
+    alignItems: 'center',
+    borderBottom: `0.25pt solid ${C.divider}`,
+    backgroundColor: C.rowAlt,
   },
   infoRowInline: {
     maxWidth: '100%',
@@ -538,6 +581,14 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   const customerItems: BillCustomerItem[] = data.customerItems ?? []
   const rawMaterials: BillRawMaterial[] = data.rawMaterials ?? []
   const customer = (data.customer ?? {}) as BillCustomerInfo
+
+  const resolvedDate = meta.date ?? customer.eventDate ?? undefined
+  const resolvedTime = meta.time ?? customer.eventTime?.slice(0, 5) ?? undefined // "07:00:00" → "07:00"
+  const resolvedAdvance =
+    meta.advance ??
+    (data.advanceAmount != null
+      ? `Rs. ${fmtMoney(data.advanceAmount)}`
+      : undefined)
   const summary = data as BillSummary
   const billTitle = resolveBillTitle(type)
 
@@ -555,22 +606,6 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
     rate: item.unitPrice != null ? String(item.unitPrice) : '—',
     total: item.lineTotal != null ? fmtMoney(item.lineTotal) : '—',
   }))
-
-  // Append raw materials for staff/owner
-  if (rawMaterials.length > 0 && (type === 'STAFF' || type === 'OWNER')) {
-    rawMaterials.forEach((mat, i) => {
-      rows.push({
-        sno: customerItems.length + i + 1,
-        particulars: mat.rawMaterialName ?? '—',
-        qty:
-          mat.requiredQuantity != null
-            ? `${mat.requiredQuantity} ${mat.unit ?? ''}`.trim()
-            : '—',
-        rate: '—',
-        total: '—',
-      })
-    })
-  }
 
   // Minimum 14 visible rows so the table looks full
   const MIN_ROWS = 14
@@ -633,34 +668,22 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
 
               {/* M/s */}
               <View style={s.infoRow}>
-                <Text style={s.infoLabel}>M/s</Text>
+                <Text style={s.infoLabel}>Address</Text>
                 <Text style={s.infoColon}>:</Text>
                 <Text style={s.infoValue}>
                   {dot(meta.ms ?? customer.customerAddress)}
                 </Text>
               </View>
 
-              {/* Place / Time / No — inline */}
-              <View style={s.infoRowInline}>
-                <View style={s.infoGroup}>
-                  <Text style={s.infoLabel2}>Place</Text>
-                  <Text style={s.infoColon}>:</Text>
-                  <Text style={s.infoValue}>{dot(meta.place)}</Text>
-                </View>
-                <View style={s.infoGroup}>
-                  <Text style={s.infoLabel2}>Time</Text>
-                  <Text style={s.infoColon}>:</Text>
-                  <Text style={s.infoValue}>{meta.time ?? '........'}</Text>
-                </View>
-                <View style={[s.infoGroup, { flex: 0.6 }]}>
-                  <Text style={s.infoLabel2}>No</Text>
-                  <Text style={s.infoColon}>:</Text>
-                  <Text style={s.infoValue}>{meta.no ?? '......'}</Text>
-                </View>
-              </View>
-
               {/* Cell / Advance — inline */}
               <View style={s.infoRowInline}>
+                <View style={[s.infoGroup, { flex: 0.6 }]}>
+                  <Text style={s.infoLabel2}>Customer No</Text>
+                  <Text style={s.infoColon}>:</Text>
+                  <Text style={s.infoValue}>
+                    {customer.customerId ?? '......'}
+                  </Text>
+                </View>
                 <View style={s.infoGroup}>
                   <Text style={s.infoLabel}>Cell No</Text>
                   <Text style={s.infoColon}>:</Text>
@@ -671,7 +694,9 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                 <View style={s.infoGroup}>
                   <Text style={s.infoLabel}>Advance</Text>
                   <Text style={s.infoColon}>:</Text>
-                  <Text style={s.infoValue}>{meta.advance ?? '........'}</Text>
+                  <Text style={s.infoValue}>
+                    {resolvedAdvance ?? '........'}
+                  </Text>
                 </View>
               </View>
             </View>
@@ -679,13 +704,15 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             {/* Day / Date */}
             <View style={s.customerRight}>
               <View style={s.dateGroup}>
-                <Text style={s.dateLabel}>Day</Text>
-                <Text style={s.dateValue}>{meta.day ?? '...............'}</Text>
-              </View>
-              <View style={s.dateGroup}>
                 <Text style={s.dateLabel}>Date</Text>
                 <Text style={s.dateValue}>
-                  {meta.date ?? '...............'}
+                  {resolvedDate ?? '...............'}
+                </Text>
+              </View>
+              <View style={s.dateGroup}>
+                <Text style={s.dateLabel}>Time</Text>
+                <Text style={s.dateValue}>
+                  {resolvedTime ?? '...............'}
                 </Text>
               </View>
             </View>
@@ -698,7 +725,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               <Text style={[s.th, s.colSno]}>S.No</Text>
               <Text style={[s.thLeft, s.colParticulars]}>Particulars</Text>
               <Text style={[s.th, s.colQty]}>QTY</Text>
-              <Text style={[s.th, s.colRate]}>RATE</Text>
+              <Text style={[s.th, s.colRate]}>PRICE/UNIT</Text>
               {/* Amount split header */}
               <View
                 style={[
@@ -714,7 +741,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                 <Text
                   style={{ fontFamily: LATIN_B, fontSize: 7, color: C.navy }}
                 >
-                  AMOUNT
+                  Total Cost
                 </Text>
               </View>
             </View>
@@ -733,8 +760,10 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                   {row.particulars}
                 </Text>
                 <Text style={s.tdQty}>{row.qty}</Text>
-                <Text style={s.tdRate}>{row.rate}</Text>
-                <Text style={s.tdRs}>{row.total}</Text>
+                <Text style={s.tdRate}>
+                  {type !== 'STAFF' ? row.rate : '—'}
+                </Text>
+                <Text style={s.tdRs}>{type !== 'STAFF' ? row.total : '—'}</Text>
               </View>
             ))}
 
@@ -752,6 +781,11 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               </View>
             ))}
           </View>
+
+          {rawMaterials.length > 0 &&
+            (type === 'STAFF' || type === 'OWNER') && (
+              <RawMaterialsTable rawMaterials={rawMaterials} type={type} />
+            )}
 
           {/* ── Footer: Tamil Note + Total ───────────────────────────────── */}
           <View style={s.footerBar}>
@@ -823,6 +857,80 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   )
 }
 
+const RawMaterialsTable: React.FC<{
+  rawMaterials: BillRawMaterial[]
+  type: BillType
+}> = ({ rawMaterials, type }) => {
+  const isStaff = type === 'STAFF'
+
+  return (
+    <View style={s.rmSection}>
+      {/* Section title bar */}
+      <View style={s.rmSectionHeader}>
+        <Text style={s.rmSectionTitle}>RAW MATERIALS</Text>
+      </View>
+
+      {/* Table head */}
+      <View style={s.rmTableHead}>
+        <Text style={[s.th, s.colSno]}>S.No</Text>
+        <Text style={[s.thLeft, { flex: 1 }]}>Material</Text>
+        {!isStaff && (
+          <>
+            <Text style={[s.th, s.colQty]}>QTY</Text>
+            <Text style={[s.th, s.colRate]}>PRICE/UNIT</Text>
+            <View
+              style={[
+                s.colRs,
+                {
+                  borderLeft: `0.25pt solid ${C.divider}`,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 3,
+                },
+              ]}
+            >
+              <Text style={{ fontFamily: LATIN_B, fontSize: 7, color: C.navy }}>
+                TOTAL COST
+              </Text>
+            </View>
+          </>
+        )}
+      </View>
+
+      {/* Rows */}
+      {rawMaterials.map((mat, i) => (
+        <View key={i} style={i % 2 === 0 ? s.rmRow : s.rmRowAlt}>
+          <Text style={s.tdSno}>{i + 1}</Text>
+          <Text
+            style={[
+              s.tdParticulars,
+              { flex: 1, fontFamily: TAMIL, fontWeight: 'bold' },
+            ]}
+          >
+            {mat.rawMaterialName ?? '—'}
+          </Text>
+          {!isStaff && (
+            <>
+              <Text style={s.tdQty}>
+                {mat.requiredQuantity != null
+                  ? `${mat.requiredQuantity} ${mat.unit ?? ''}`.trim()
+                  : '—'}
+              </Text>
+              <Text style={s.tdRate}>
+                {mat.purchasePricePerUnit != null
+                  ? `${fmtMoney(mat.purchasePricePerUnit)} / ${mat.purchaseUnit ?? mat.unit ?? 'unit'}`
+                  : '—'}
+              </Text>
+              <Text style={s.tdRs}>
+                {mat.totalCost != null ? fmtMoney(mat.totalCost) : '—'}
+              </Text>
+            </>
+          )}
+        </View>
+      ))}
+    </View>
+  )
+}
 // ─── Download Button Component ────────────────────────────────────────────────
 interface DownloadBillButtonProps {
   orderId: number

@@ -294,9 +294,13 @@ export interface BillCustomerItem {
 }
 
 export interface BillRawMaterial {
-  rawMaterialName?: string
-  requiredQuantity?: number
-  unit?: string
+  rawMaterialName: string
+  requiredQuantity: number
+  unit: string
+  pricePerUnit: string | null
+  purchasePricePerUnit: number
+  purchaseUnit: string
+  totalCost: number
 }
 
 export interface BillCustomer {
@@ -312,6 +316,7 @@ export interface BillData {
   customer?: BillCustomer | null
   customerItems?: BillCustomerItem[] | null
   rawMaterials?: BillRawMaterial[] | null
+  advanceAmount?: number | null
   totalAmount?: number | null
   customerItemsTotal?: number | null
   totalRawMaterialCost?: number | null
