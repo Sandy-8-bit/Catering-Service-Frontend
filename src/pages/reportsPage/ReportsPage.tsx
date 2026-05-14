@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Calendar, AlertCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   useFetchExpensesReport,
   type ReportPeriod,
@@ -10,6 +11,7 @@ import { appRoutes } from '@/routes/appRoutes'
 
 const ReportsPage: React.FC = () => {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   // ❌ start with undefined → prevents auto API call
   const [period, setPeriod] = useState<ReportPeriod | undefined>(undefined)
 
@@ -76,53 +78,54 @@ const ReportsPage: React.FC = () => {
   )
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 px-4 py-6 md:px-8">
+    <div className="min-h-screen bg-linear-to-br from-amber-50 via-white to-amber-50 px-4 py-6 sm:px-6 md:px-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold text-amber-900">
-          Expense Reports
+        <h1 className="mb-2 text-2xl sm:text-3xl font-bold text-amber-900">
+          {t('expense_reports')}
         </h1>
-        <p className="text-gray-600">View financial reports (live data)</p>
+        <p className="text-sm sm:text-base text-gray-600">{t('view_financial_reports')}</p>
       </div>
 
       {/* Controls */}
-      <div className="mb-8 rounded-xl border-2 border-amber-300 bg-white p-6">
-        <h2 className="mb-4 text-lg font-semibold text-amber-900">
-          Select Report
+      <div className="mb-8 rounded-xl border-2 border-amber-300 bg-white p-4 sm:p-6">
+        <h2 className="mb-4 text-base sm:text-lg font-semibold text-amber-900">
+          {t('select_report')}
         </h2>
 
-        <div className="mb-6 flex flex-wrap items-center gap-3">
+        <div className="mb-6 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3">
           {/* Monthly */}
           <button
             onClick={() => handlePeriodChange('MONTHLY')}
-            className={`rounded-lg px-6 py-2 font-semibold transition-all ${
+            className={`rounded-lg px-6 py-2 font-semibold transition-all text-sm sm:text-base ${
               !customDateRange && period === 'MONTHLY'
                 ? 'bg-amber-600 text-white shadow-md hover:bg-amber-700'
                 : 'border-2 border-amber-300 bg-white text-amber-600 hover:bg-amber-50'
             }`}
           >
-            Monthly
+            {t('monthly_report')}
           </button>
 
           {/* Custom */}
           <button
             onClick={() => setShowDatePicker(!showDatePicker)}
-            className={`flex items-center gap-2 rounded-lg px-6 py-2 font-semibold transition-all ${
+            className={`flex items-center gap-2 rounded-lg px-6 py-2 font-semibold transition-all text-sm sm:text-base ${
               showDatePicker
                 ? 'bg-amber-600 text-white shadow-md hover:bg-amber-700'
                 : 'border-2 border-amber-300 bg-white text-amber-600 hover:bg-amber-50'
             }`}
           >
             <Calendar className="h-4 w-4" />
-            Custom Date
+            {t('custom_date_range')}
           </button>
+          
           {data && (
-            <div className="flex items-end">
+            <div className="w-full sm:w-auto">
               <button
                 onClick={handleDownloadReport}
-                className="w-full rounded-lg bg-amber-600 px-4 py-2 font-semibold text-white shadow-md transition-all hover:bg-amber-700"
+                className="w-full sm:w-auto rounded-lg bg-amber-600 px-4 py-2 font-semibold text-white shadow-md transition-all hover:bg-amber-700 text-sm sm:text-base"
               >
-                Download Report
+                {t('download_report')}
               </button>
             </div>
           )}
@@ -130,47 +133,47 @@ const ReportsPage: React.FC = () => {
 
         {/* Date Picker Section */}
         {showDatePicker && (
-          <div className="mb-6 rounded-lg border-2 border-amber-200 bg-amber-50 p-6">
-            <h3 className="mb-4 font-semibold text-amber-900">
-              Select Date Range
+          <div className="mb-6 rounded-lg border-2 border-amber-200 bg-amber-50 p-4 sm:p-6">
+            <h3 className="mb-4 font-semibold text-amber-900 text-sm sm:text-base">
+              {t('select_date_range')}
             </h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-amber-900">
-                  Start Date
+                  {t('start_date')}
                 </label>
                 <input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full rounded border-2 border-amber-300 p-2 focus:border-amber-600 focus:outline-none"
+                  className="w-full rounded border-2 border-amber-300 p-2 focus:border-amber-600 focus:outline-none text-sm"
                 />
               </div>
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-amber-900">
-                  End Date
+                  {t('end_date')}
                 </label>
                 <input
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded border-2 border-amber-300 p-2 focus:border-amber-600 focus:outline-none"
+                  className="w-full rounded border-2 border-amber-300 p-2 focus:border-amber-600 focus:outline-none text-sm"
                 />
               </div>
 
-              <div className="flex items-end gap-3">
+              <div className="flex flex-col sm:col-span-2 lg:col-span-1 lg:flex-row items-end gap-3">
                 <button
                   onClick={handleDateRangeApply}
-                  className="flex-1 rounded-lg bg-amber-500 px-4 py-2 font-semibold text-white shadow-sm transition-all hover:bg-amber-600"
+                  className="flex-1 rounded-lg bg-amber-500 px-4 py-2 font-semibold text-white shadow-sm transition-all hover:bg-amber-600 text-sm"
                 >
-                  Apply
+                  {t('apply')}
                 </button>
                 <button
                   onClick={() => setShowDatePicker(false)}
-                  className="flex-1 rounded-lg border-2 border-amber-300 bg-white px-4 py-2 font-semibold text-amber-600 transition-all hover:bg-amber-50"
+                  className="flex-1 rounded-lg border-2 border-amber-300 bg-white px-4 py-2 font-semibold text-amber-600 transition-all hover:bg-amber-50 text-sm"
                 >
-                  Cancel
+                  {t('cancel')}
                 </button>
               </div>
             </div>
@@ -187,13 +190,13 @@ const ReportsPage: React.FC = () => {
 
       {/* Error */}
       {isError && (
-        <div className="text-center text-red-500">Failed to load report</div>
+        <div className="text-center text-red-500 text-sm sm:text-base">{t('failed_load_report')}</div>
       )}
 
       {/* No Selection State */}
       {!period && !customDateRange && !isLoading && (
-        <div className="text-center text-gray-500">
-          Select a period or date range to view report
+        <div className="text-center text-gray-500 text-sm sm:text-base">
+          {t('select_period_or_range')}
         </div>
       )}
 
@@ -201,11 +204,11 @@ const ReportsPage: React.FC = () => {
       {data && (
         <>
           {/* Summary */}
-          <div className="mb-8 grid gap-4 md:grid-cols-4">
-            <Card title="Income" value={data.totalGlobalIncome} />
-            <Card title="Expense" value={data.totalGlobalMiscExpense} />
-            <Card title="Profit" value={data.totalGlobalNetProfit} />
-            <Card title="People" value={data.totalGlobalPeopleServed} />
+          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card title={t('income')} value={data.totalGlobalIncome} />
+            <Card title={t('expense')} value={data.totalGlobalMiscExpense} />
+            <Card title={t('profit')} value={data.totalGlobalNetProfit} />
+            <Card title={t('people_served')} value={data.totalGlobalPeopleServed} />
           </div>
 
           {/* Orders */}
@@ -213,35 +216,37 @@ const ReportsPage: React.FC = () => {
             {data.orderDetails?.map((order: any) => (
               <div
                 key={order.orderId}
-                className="rounded-lg border bg-white p-4"
+                className="rounded-lg border bg-white p-4 sm:p-6"
               >
-                <h3 className="text-lg font-bold">{order.customerName}</h3>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">{order.customerName}</h3>
 
-                <p className="mb-2 text-sm text-gray-500">
-                  {order.eventDate} • {order.totalPeople} people
+                <p className="mb-2 mt-2 text-xs sm:text-sm text-gray-500">
+                  {order.eventDate} • {order.totalPeople} {t('people')}
                 </p>
 
                 {/* Menu */}
                 <div className="mb-3">
-                  <h4 className="font-semibold">Menu</h4>
+                  <h4 className="font-semibold text-sm sm:text-base text-slate-900 mb-2">{t('menu')}</h4>
                   {order.menuItems?.map((item: any, i: number) => (
-                    <div key={i} className="flex justify-between text-sm">
-                      <span>{item.productName}</span>
-                      <span>₹{item.productLineTotal}</span>
+                    <div key={i} className="flex justify-between text-xs sm:text-sm text-slate-700 mb-1">
+                      <span className="truncate">{item.productName}</span>
+                      <span className="ml-2 shrink-0">₹{item.productLineTotal}</span>
                     </div>
                   ))}
                 </div>
 
                 {/* Additional */}
-                <div>
-                  <h4 className="font-semibold">Additional</h4>
-                  {order.additionalMenuItems?.map((item: any, i: number) => (
-                    <div key={i} className="flex justify-between text-sm">
-                      <span>{item.productName}</span>
-                      <span>₹{item.productLineTotal}</span>
-                    </div>
-                  ))}
-                </div>
+                {order.additionalMenuItems?.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-sm sm:text-base text-slate-900 mb-2">{t('additional_items')}</h4>
+                    {order.additionalMenuItems?.map((item: any, i: number) => (
+                      <div key={i} className="flex justify-between text-xs sm:text-sm text-slate-700 mb-1">
+                        <span className="truncate">{item.productName}</span>
+                        <span className="ml-2 shrink-0">₹{item.productLineTotal}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -249,9 +254,9 @@ const ReportsPage: React.FC = () => {
       )}
 
       {/* Info */}
-      <div className="mt-10 rounded border bg-blue-50 p-4">
-        <AlertCircle className="mr-2 inline" />
-        Data is fetched securely using token from cookies
+      <div className="mt-10 rounded border bg-blue-50 p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2">
+        <AlertCircle className="h-5 w-5 shrink-0 text-blue-600 mt-0.5 sm:mt-0" />
+        <span className="text-sm text-blue-800">{t('data_fetch_secure')}</span>
       </div>
     </div>
   )
@@ -259,8 +264,8 @@ const ReportsPage: React.FC = () => {
 
 const Card = ({ title, value }: { title: string; value: number }) => (
   <div className="rounded-lg border bg-white p-4 text-center">
-    <p className="text-sm text-gray-500">{title}</p>
-    <p className="text-md font-bold">₹{value ?? 0}</p>
+    <p className="text-xs sm:text-sm text-gray-500">{title}</p>
+    <p className="text-base sm:text-lg font-bold text-slate-900 mt-1">₹{value ?? 0}</p>
   </div>
 )
 
