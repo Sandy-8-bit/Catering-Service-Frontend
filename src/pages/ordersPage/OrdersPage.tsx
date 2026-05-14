@@ -32,7 +32,7 @@ const DetailCell = ({
   label: string
   value: React.ReactNode
 }) => (
-  <div className="rounded-xl bg-gradient-to-br from-amber-50 to-white px-4 py-3 shadow-sm ring-1 ring-amber-200">
+  <div className="rounded-xl bg-linear-to-br from-amber-50 to-white px-4 py-3 shadow-sm ring-1 ring-amber-200">
     <p className="mb-1 text-xs font-semibold tracking-wider text-amber-600 uppercase">
       {label}
     </p>
@@ -71,8 +71,8 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
   }
 
   return (
-    <article className="overflow-hidden rounded-xl border-2 border-amber-300 bg-gradient-to-br from-white to-amber-50">
-      <div className="flex items-center justify-between border-b border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-5 py-3">
+    <article className="overflow-hidden rounded-xl border-2 border-amber-300 bg-linear-to-br from-white to-amber-50">
+      <div className="flex items-center justify-between border-b border-amber-200 bg-linear-to-r from-amber-50 to-yellow-50 px-5 py-3">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-amber-700" />
           <p className="text-xs font-bold tracking-widest text-amber-700 uppercase">
@@ -512,6 +512,17 @@ const additionalMenuItemsSummary = useMemo(
   [sourceOrders, t]
 )
 
+const requiredSubProductsSummary = useMemo(
+  () =>
+    buildQuantitySummary(
+      sourceOrders,
+      (order) => order.requiredSubProducts ?? [],
+      (item) => item?.subProductName || '',
+      (item, order) => (item.requiredQuantity || 0) * (order.totalPlates || 1)
+    ),
+  [sourceOrders]
+)
+
   const infoMessage =
     !isLoading && ordersForDate.length === 0 ? t('no_orders_scheduled') : null
 
@@ -558,7 +569,7 @@ const additionalMenuItemsSummary = useMemo(
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col overflow-hidden rounded-[12px] border border-amber-200 bg-amber-50 shadow-sm">
-      <header className="flex flex-col gap-3 border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+      <header className="flex flex-col gap-3 border-b border-amber-200 bg-linear-to-r from-amber-50 to-orange-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
         <div className="flex items-center gap-3">
           <span className="h-5 w-1 rounded-full bg-amber-700" />
           <h1 className="text-xs font-bold tracking-tight text-amber-900 sm:text-sm md:text-lg lg:text-xl">
@@ -639,7 +650,7 @@ const additionalMenuItemsSummary = useMemo(
 
       <section className="flex max-h-full flex-1 flex-col gap-0 overflow-hidden lg:flex-row">
         {/* left section */}
-        <div className="flex w-full flex-col gap-5 border-b border-amber-200 bg-gradient-to-b from-amber-50 to-yellow-50 p-4 lg:w-[360px] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0">
+        <div className="flex w-full flex-col gap-5 border-b border-amber-200 bg-linear-to-b from-amber-50 to-yellow-50 p-4 lg:w-[360px] lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-b-0">
           <InlineCalendar
             className="min-w-full!"
             showSelectedLabel={false}
@@ -804,7 +815,7 @@ const additionalMenuItemsSummary = useMemo(
           </div>
         </div>
         {/* right section */}
-        <div className="flex w-full flex-col gap-6 overflow-visible bg-gradient-to-b from-white to-yellow-50 p-4 shadow-[-1px_0_0_0_#dcc694] sm:p-6">
+        <div className="flex w-full flex-col gap-6 overflow-visible bg-linear-to-b from-white to-yellow-50 p-4 shadow-[-1px_0_0_0_#dcc694] sm:p-6">
           <div className="flex flex-col items-start gap-1">
             {selectedOrder ? (
               <button
@@ -1107,6 +1118,95 @@ const additionalMenuItemsSummary = useMemo(
                   <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
                     <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
                     {t('no_additional_items_planned')}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 overflow-hidden">
+              <div className="flex items-center gap-2">
+                <span className="h-4 w-0.5 rounded-full bg-amber-700" />
+                <h3 className="text-xs font-bold text-amber-900 sm:text-sm md:text-base">
+                  {selectedOrder
+                    ? t('required_sub_products_order')
+                    : t('required_sub_products')}
+                </h3>
+              </div>
+              <div className="w-full overflow-x-auto">
+                {selectedOrder ? (
+                  selectedOrder.requiredSubProducts &&
+                  selectedOrder.requiredSubProducts.length > 0 ? (
+                    <BillTable
+                      data={selectedOrder.requiredSubProducts.map((item) => ({
+                        subProductName: item.subProductName,
+                        quantity:
+                          (item.requiredQuantity || 0) *
+                          (selectedOrder.totalPlates || 1),
+                        unit: item.unit,
+                      }))}
+                      columns={[
+                        {
+                          key: 'subProductName',
+                          label: t('product_name'),
+                          width: '50%',
+                        },
+                        {
+                          key: 'quantity',
+                          label: t('quantity'),
+                          width: '30%',
+                          align: 'center',
+                          render: (value) => (
+                            <span className="font-semibold">{value}</span>
+                          ),
+                        },
+                        {
+                          key: 'unit',
+                          label: t('unit'),
+                          width: '20%',
+                          align: 'center',
+                          render: (value) => (
+                            <span className="text-xs text-zinc-600">
+                              {value || '-'}
+                            </span>
+                          ),
+                        },
+                      ]}
+                      messageWhenNoData={t('no_sub_products_order')}
+                    />
+                  ) : (
+                    <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
+                      <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
+                      {t('no_sub_products_order')}
+                    </p>
+                  )
+                ) : requiredSubProductsSummary.length > 0 ? (
+                  <BillTable
+                    data={requiredSubProductsSummary.map((item) => ({
+                      subProductName: item.label,
+                      quantity: item.quantity,
+                    }))}
+                    columns={[
+                      {
+                        key: 'subProductName',
+                        label: t('product_name'),
+                        width: '70%',
+                      },
+                      {
+                        key: 'quantity',
+                        label: t('quantity'),
+                        width: '30%',
+                        align: 'right',
+                        render: (value) => (
+                          <span className="font-semibold">{value}</span>
+                        ),
+                      },
+                    ]}
+                    messageWhenNoData={t('no_sub_products_planned')}
+                  />
+                ) : (
+                  <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
+                    <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
+                    {t('no_sub_products_planned')}
                   </p>
                 )}
               </div>

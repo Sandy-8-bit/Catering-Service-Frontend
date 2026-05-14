@@ -250,6 +250,8 @@
   "no_additional_items_planned": "இந்த தேதிக்கு கூடுதல் பொருட்கள் திட்டமிடப்படவில்லை.",
   "sub_products_in_order": "இந்த ஆர்டரில் துணை பொருட்கள்",
   "sub_products_required": "தேவைப்படும் துணை பொருட்கள்",
+  "required_sub_products_order": "தேவையான துணை பொருட்கள்",
+  "required_sub_products": "தேவையான துணை பொருட்கள்",
   "no_sub_products_order": "இந்த ஆர்டருடன் துணை பொருட்கள் இணைக்கப்படவில்லை.",
   "no_sub_products_planned": "இந்த தேதிக்கு துணை பொருட்கள் திட்டமிடப்படவில்லை.",
   "sub_product_name": "துணை பொருள்",

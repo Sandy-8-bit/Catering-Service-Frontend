@@ -247,6 +247,8 @@
   "no_additional_items_planned": "No additional items planned for this date.",
   "sub_products_in_order": "Sub products in this order",
   "sub_products_required": "Sub products required",
+  "required_sub_products_order": "Required Sub Products",
+  "required_sub_products": "Required Sub Products",
   "no_sub_products_order": "No sub products attached to this order.",
   "no_sub_products_planned": "No sub products planned for this date.",
   "sub_product_name": "Sub Product",
