@@ -5,7 +5,7 @@ import {
   useFetchExpensesReport,
   type ReportPeriod,
 } from '@/queries/reportsQueries'
-import FinancialReport, { type ReportResponse } from '../test'
+import FinancialReport, { type ReportResponse } from './PdfRenderer'
 
 export const DownloadReportsPage = () => {
   const [searchParams] = useSearchParams()

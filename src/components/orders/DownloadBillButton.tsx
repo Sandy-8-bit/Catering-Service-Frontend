@@ -1,9 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Download, Loader2 } from 'lucide-react'
 import { createPortal } from 'react-dom'
-import jsPDF from 'jspdf'
 import { toast } from 'react-hot-toast'
 import { useTranslation } from 'react-i18next'
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+  pdf,
+  Image,
+} from '@react-pdf/renderer'
 import {
   fetchOrderBill,
   type BillData,
@@ -11,6 +20,18 @@ import {
   type BillCustomerItem,
   type BillRawMaterial,
 } from '@/queries/ordersQueries'
+
+// ─── Font Registration ────────────────────────────────────────────────────────
+// Place NotoSansTamil-Regular.ttf in /public/fonts/
+// @react-pdf/renderer embeds the TTF into the PDF — Tamil glyphs render correctly.
+
+Font.register({
+  family: 'NotoSansTamil',
+  fonts: [
+    { src: '/fonts/NotoSansTamil-Regular.ttf', fontWeight: 'normal' },
+    { src: '/fonts/NotoSansTamil-Bold.ttf', fontWeight: 'bold' },
+  ],
+})
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -22,7 +43,7 @@ interface BillOption {
 
 interface BillMeta {
   to?: string
-  ms?: string // M/s field
+  ms?: string
   place?: string
   time?: string
   no?: string
@@ -48,383 +69,494 @@ interface BillSummary {
   profit?: number | null
 }
 
-// ─── PDF Layout Constants ─────────────────────────────────────────────────────
-
-const PAGE_W = 148 // A5 width in mm (close to the physical bill aspect ratio)
-const PAGE_H = 210 // A5 height in mm
-const ML = 8 // left margin
-const MR = 8 // right margin
-const CW = PAGE_W - ML - MR
+type BillDataWithId = BillData & { orderId?: number }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const hLine = (
-  doc: jsPDF,
-  y: number,
-  x1 = ML,
-  x2 = ML + CW,
-  lw = 0.3,
-  color: [number, number, number] = [30, 30, 30]
-) => {
-  doc.setDrawColor(...color)
-  doc.setLineWidth(lw)
-  doc.setLineDashPattern([], 0)
-  doc.line(x1, y, x2, y)
-}
-
-const vLine = (doc: jsPDF, x: number, y1: number, y2: number, lw = 0.3) => {
-  doc.setDrawColor(30, 30, 30)
-  doc.setLineWidth(lw)
-  doc.line(x, y1, x, y2)
-}
-
-const rect = (
-  doc: jsPDF,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  lw = 0.3
-) => {
-  doc.setDrawColor(30, 30, 30)
-  doc.setLineWidth(lw)
-  doc.rect(x, y, w, h)
-}
-
-const txt = (
-  doc: jsPDF,
-  text: string,
-  x: number,
-  y: number,
-  size: number,
-  style: 'normal' | 'bold' = 'normal',
-  color: [number, number, number] = [30, 30, 30],
-  align: 'left' | 'center' | 'right' = 'left'
-) => {
-  doc.setFontSize(size)
-  doc.setFont('helvetica', style)
-  doc.setTextColor(...color)
-  doc.text(text, x, y, { align })
-}
-
-const formatMoney = (value?: number | null) => {
-  if (value == null) {
-    return '--'
-  }
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 0,
+const fmtMoney = (v?: number | null): string => {
+  if (v == null) return '--'
+  return v.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
 }
 
-const resolveBillTitle = (type: BillType) => {
-  if (type === 'STAFF') {
-    return 'STAFF BILL'
-  }
-  if (type === 'OWNER') {
-    return 'OWNER BILL'
-  }
+const resolveBillTitle = (type: BillType): string => {
+  if (type === 'STAFF') return 'STAFF BILL'
+  if (type === 'OWNER') return 'OWNER BILL'
   return 'CUSTOMER BILL'
 }
 
-// ─── Main PDF Builder ─────────────────────────────────────────────────────────
+const dot = (v?: string | null): string =>
+  v || '................................'
 
-const buildPdf = (data: BillData, type: BillType, meta: BillMeta): jsPDF => {
+// ─── Design Tokens ────────────────────────────────────────────────────────────
+const C = {
+  navy: '#1B2A5C',
+  blue: '#1E3A8A',
+  blueLight: '#3B6FD4',
+  headerBg: '#E8EDF8',
+  rowAlt: '#F8F9FD',
+  border: '#C8CEDF',
+  borderDark: '#1B2A5C',
+  text: '#1A1A1A',
+  muted: '#4A5568',
+  light: '#718096',
+  white: '#FFFFFF',
+  divider: '#D1D9EF',
+  green: '#166534',
+  greenBg: '#DCFCE7',
+} as const
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+// All measurements in pt. A5 = 419.53 × 595.28 pt
+// Latin text: Helvetica (built-in, no TTF needed)
+// Tamil text: NotoSansTamil (TTF embedded)
+
+const LATIN = 'Helvetica'
+const LATIN_B = 'Helvetica-Bold'
+const TAMIL = 'NotoSansTamil'
+
+const s = StyleSheet.create({
+  // ── Page ──────────────────────────────────────────────────────────────────
+  page: {
+    fontFamily: LATIN,
+    fontSize: 8,
+    color: C.text,
+    backgroundColor: C.white,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
+
+  // Outer card with full border
+  card: {
+    flex: 1,
+    flexDirection: 'column',
+    border: `1pt solid ${C.borderDark}`,
+  },
+
+  // ── Header Band ───────────────────────────────────────────────────────────
+  headerBand: {
+    flexDirection: 'row',
+    backgroundColor: C.navy,
+    minHeight: 44,
+    alignItems: 'stretch',
+  },
+  logoSection: {
+    width: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRight: `0.5pt solid rgba(255,255,255,0.2)`,
+    paddingVertical: 6,
+  },
+  logoCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    border: `1.5pt solid rgba(255,255,255,0.5)`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoInitial: {
+    fontFamily: LATIN_B,
+    fontSize: 13,
+    color: C.white,
+  },
+  businessSection: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    gap: 2,
+  },
+  businessTagline: {
+    fontFamily: LATIN,
+    fontSize: 6,
+    color: 'rgba(255,255,255,0.55)',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+  },
+  businessName: {
+    fontFamily: LATIN_B,
+    fontSize: 14,
+    color: C.white,
+    letterSpacing: 0.5,
+  },
+  businessSub: {
+    fontFamily: LATIN,
+    fontSize: 8,
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.3,
+  },
+  contactSection: {
+    width: 100,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    gap: 4,
+    borderLeft: `0.5pt solid rgba(255,255,255,0.2)`,
+  },
+  contactLine: {
+    fontFamily: LATIN,
+    fontSize: 7,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  contactMuted: {
+    fontFamily: LATIN,
+    fontSize: 6,
+    color: 'rgba(255,255,255,0.5)',
+  },
+
+  // ── Bill Type + Address Strip ─────────────────────────────────────────────
+  metaStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.headerBg,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderBottom: `0.5pt solid ${C.border}`,
+    gap: 0,
+  },
+  billTypePill: {
+    backgroundColor: C.navy,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 2,
+    marginRight: 8,
+  },
+  billTypePillText: {
+    fontFamily: LATIN_B,
+    fontSize: 6.5,
+    color: C.white,
+    letterSpacing: 0.8,
+  },
+  billNoLabel: {
+    fontFamily: LATIN,
+    fontSize: 7,
+    color: C.light,
+    marginRight: 3,
+  },
+  billNoValue: {
+    fontFamily: LATIN_B,
+    fontSize: 9,
+    color: C.navy,
+    marginRight: 10,
+  },
+  addressText: {
+    fontFamily: LATIN,
+    fontSize: 6.5,
+    color: C.muted,
+    flex: 1,
+  },
+
+  // ── Customer Section ──────────────────────────────────────────────────────
+  customerSection: {
+    flexDirection: 'row',
+    borderBottom: `0.5pt solid ${C.border}`,
+  },
+  customerLeft: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    gap: 6,
+    borderRight: `0.5pt solid ${C.border}`,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 0,
+  },
+  infoLabel: {
+    fontFamily: LATIN_B,
+    fontSize: 6.5,
+    color: C.light,
+    width: 40,
+    paddingTop: 0.5,
+  },
+  infoLabel2: {
+    fontFamily: LATIN_B,
+    fontSize: 6.5,
+    color: C.light,
+    width: 30,
+    paddingTop: 0.5,
+  },
+  infoColon: {
+    fontFamily: LATIN,
+    fontSize: 7,
+    color: C.light,
+    marginRight: 4,
+  },
+  infoValue: {
+    fontFamily: LATIN,
+    fontSize: 7.5,
+    color: C.text,
+    flex: 1,
+    borderBottom: `0.4pt dotted ${C.border}`,
+    paddingBottom: 1,
+  },
+  infoRowInline: {
+    maxWidth: '100%',
+    flexDirection: 'row',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 12,
+  },
+  infoGroup: {
+    flexDirection: 'row',
+    display: 'flex',
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  customerRight: {
+    width: 90,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  dateGroup: {
+    gap: 2,
+  },
+  dateLabel: {
+    fontFamily: LATIN_B,
+    fontSize: 6.5,
+    color: C.light,
+  },
+  dateValue: {
+    fontFamily: LATIN,
+    fontSize: 7.5,
+    color: C.text,
+    borderBottom: `0.4pt dotted ${C.border}`,
+    paddingBottom: 1,
+  },
+
+  // ── Table ─────────────────────────────────────────────────────────────────
+  tableWrapper: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+
+  // Table header
+  tableHead: {
+    flexDirection: 'row',
+    backgroundColor: C.headerBg,
+    borderBottom: `0.8pt solid ${C.borderDark}`,
+    borderTop: `0.5pt solid ${C.border}`,
+    minHeight: 22,
+    alignItems: 'center',
+  },
+
+  // Column widths
+  colSno: { width: 20 },
+  colParticulars: { flex: 1 },
+  colQty: { width: 42 },
+  colRate: { width: 44 },
+  colRs: { width: 44 },
+
+  // TH cells
+  th: {
+    fontFamily: LATIN_B,
+    fontSize: 7,
+    color: C.navy,
+    textAlign: 'center',
+    paddingVertical: 3,
+  },
+  thLeft: {
+    fontFamily: LATIN_B,
+    fontSize: 7,
+    color: C.navy,
+    paddingLeft: 6,
+    paddingVertical: 3,
+  },
+
+  // TD cells
+  tableRow: {
+    flexDirection: 'row',
+    minHeight: 15,
+    alignItems: 'center',
+    borderBottom: `0.25pt solid ${C.divider}`,
+  },
+  tableRowAlt: {
+    flexDirection: 'row',
+    minHeight: 15,
+    alignItems: 'center',
+    borderBottom: `0.25pt solid ${C.divider}`,
+    backgroundColor: C.rowAlt,
+  },
+  tdSno: {
+    width: 20,
+    textAlign: 'center',
+    fontFamily: LATIN,
+    fontSize: 7,
+    color: C.light,
+    paddingVertical: 2,
+  },
+
+  // ← KEY FIX: explicit fontFamily: TAMIL on product name column
+  tdParticulars: {
+    flex: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    fontFamily: TAMIL, // explicit Tamil font — do not change to LATIN
+    fontWeight: 'bold', // NotoSansTamil Bold weight
+    fontSize: 7.5,
+    color: C.text,
+    borderLeft: `0.25pt solid ${C.divider}`,
+  },
+  tdQty: {
+    width: 42,
+    textAlign: 'center',
+    fontFamily: LATIN,
+    fontSize: 7,
+    color: C.muted,
+    borderLeft: `0.25pt solid ${C.divider}`,
+    paddingVertical: 2,
+  },
+  tdRate: {
+    width: 44,
+    textAlign: 'center',
+    fontFamily: LATIN,
+    fontSize: 7,
+    color: C.muted,
+    borderLeft: `0.25pt solid ${C.divider}`,
+    paddingVertical: 2,
+  },
+  tdRs: {
+    width: 44,
+    textAlign: 'right',
+    paddingRight: 6,
+    fontFamily: LATIN_B,
+    fontSize: 7,
+    color: C.text,
+    borderLeft: `0.25pt solid ${C.divider}`,
+    paddingVertical: 2,
+  },
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+  footerBar: {
+    flexDirection: 'row',
+    borderTop: `1pt solid ${C.borderDark}`,
+  },
+  footerNoteCol: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    justifyContent: 'center',
+    gap: 3,
+    borderRight: `0.5pt solid ${C.border}`,
+  },
+
+  // ← KEY FIX: explicit fontFamily: TAMIL on footer Tamil notes
+  footerNote: {
+    fontFamily: TAMIL, // explicit Tamil font — do not change to LATIN
+    fontWeight: 'normal',
+    fontSize: 7,
+    color: C.muted,
+  },
+  footerTotalCol: {
+    width: 110,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    gap: 2,
+  },
+  footerTotalChip: {
+    backgroundColor: C.headerBg,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 2,
+    marginBottom: 2,
+  },
+  footerTotalChipText: {
+    fontFamily: LATIN_B,
+    fontSize: 6.5,
+    color: C.navy,
+    letterSpacing: 0.5,
+  },
+  footerTotalValue: {
+    fontFamily: LATIN_B,
+    fontSize: 13,
+    color: C.navy,
+  },
+
+  // ── Summary / Signoff ─────────────────────────────────────────────────────
+  signoffBar: {
+    flexDirection: 'row',
+    borderTop: `0.5pt solid ${C.border}`,
+    minHeight: 26,
+  },
+  signoffLeft: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    justifyContent: 'center',
+    gap: 3,
+    borderRight: `0.5pt solid ${C.border}`,
+  },
+  signoffStat: {
+    fontFamily: LATIN,
+    fontSize: 7,
+    color: C.muted,
+  },
+  signoffStatBold: {
+    fontFamily: LATIN_B,
+    fontSize: 7.5,
+    color: C.blueLight,
+  },
+  signoffRight: {
+    width: 110,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+  },
+  signoffFor: {
+    fontFamily: LATIN_B,
+    fontSize: 6.5,
+    color: C.navy,
+    textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+})
+
+// ─── Row Entry ────────────────────────────────────────────────────────────────
+interface RowEntry {
+  sno: number
+  particulars: string
+  qty: string
+  rate: string
+  total: string
+}
+
+// ─── PDF Document ─────────────────────────────────────────────────────────────
+interface BillDocProps {
+  data: BillDataWithId
+  type: BillType
+  meta: BillMeta
+}
+
+const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   const customerItems: BillCustomerItem[] = data.customerItems ?? []
   const rawMaterials: BillRawMaterial[] = data.rawMaterials ?? []
   const customer = (data.customer ?? {}) as BillCustomerInfo
   const summary = data as BillSummary
   const billTitle = resolveBillTitle(type)
-  const totalValue =
+
+  const totalValue: number | null | undefined =
     summary.totalAmount ??
     (type === 'STAFF'
       ? summary.customerItemsTotal
-      : (customerItems ?? []).reduce(
-          (acc, item) => acc + (item.lineTotal ?? 0),
-          0
-        ))
+      : customerItems.reduce((acc, item) => acc + (item.lineTotal ?? 0), 0))
 
-  const doc = new jsPDF({ unit: 'mm', format: [PAGE_W, PAGE_H] })
+  // Build rows from customerItems
+  const rows: RowEntry[] = customerItems.map((item, i) => ({
+    sno: i + 1,
+    particulars: item.productName ?? '—',
+    qty: item.quantity != null ? String(item.quantity) : '—',
+    rate: item.unitPrice != null ? String(item.unitPrice) : '—',
+    total: item.lineTotal != null ? fmtMoney(item.lineTotal) : '—',
+  }))
 
-  // ── Outer border ────────────────────────────────────────────────────────────
-  rect(doc, ML - 2, 6, CW + 4, PAGE_H - 12, 0.5)
-
-  let y = 10
-
-  // ── HEADER BLOCK ────────────────────────────────────────────────────────────
-  // Top row: logo | business name | contact info
-  const headerH = 22
-  const logoX = ML
-  const logoW = 20
-  const contactX = PAGE_W - MR - 38
-  const nameX = ML + logoW + 3
-  const nameW = contactX - nameX - 2
-
-  // Logo placeholder box (replace with actual image via doc.addImage)
-  rect(doc, logoX, y, logoW, headerH, 0.3)
-  txt(
-    doc,
-    'LOGO',
-    logoX + logoW / 2,
-    y + headerH / 2 + 1.5,
-    6,
-    'bold',
-    [160, 160, 160],
-    'center'
-  )
-  // ^ Replace the above two lines with:
-  // doc.addImage(logoBase64, 'PNG', logoX, y, logoW, headerH)
-
-  // Business name (center column)
-  txt(
-    doc,
-    'VENKATESHWARA',
-    nameX + nameW / 2,
-    y + 7,
-    11,
-    'bold',
-    [10, 10, 100],
-    'center'
-  )
-  txt(
-    doc,
-    'MESS & CATTERING',
-    nameX + nameW / 2,
-    y + 13,
-    11,
-    'bold',
-    [10, 10, 100],
-    'center'
-  )
-
-  // Bill type tag (small box above business name area)
-  const tagW = 22
-  const tagX = nameX + nameW / 2 - tagW / 2
-  rect(doc, tagX, y + 0.5, tagW, 5, 0.3)
-  txt(
-    doc,
-    billTitle,
-    tagX + tagW / 2,
-    y + 4.2,
-    5.8,
-    'bold',
-    [30, 30, 30],
-    'center'
-  )
-
-  // Contact info (right column)
-  txt(doc, 'Cell: 99946 20966', contactX, y + 5, 7, 'normal', [30, 30, 30])
-  txt(doc, '82207 77007', contactX, y + 10, 7, 'normal', [30, 30, 30])
-  txt(doc, 'Google Pay Number', contactX, y + 15, 6.5, 'normal', [80, 80, 80])
-  txt(doc, '96777 20966', contactX, y + 20, 7, 'normal', [30, 30, 30])
-
-  y += headerH + 1
-
-  // ── Divider line under header ────────────────────────────────────────────────
-  hLine(doc, y, ML - 2, ML + CW + 2, 0.4)
-  y += 4
-
-  // ── Bill Number + Address row ────────────────────────────────────────────────
-  txt(doc, 'No.', ML, y, 8, 'normal', [80, 80, 80])
-  txt(doc, String(data.orderId ?? '—'), ML + 6, y, 9, 'bold', [10, 10, 100])
-  txt(
-    doc,
-    'Pattanam Road, Vellalore, Coimbatore - 641 111.',
-    ML + 20,
-    y,
-    7,
-    'normal',
-    [60, 60, 60]
-  )
-
-  y += 5
-  hLine(doc, y, ML - 2, ML + CW + 2, 0.3)
-  y += 5
-
-  // ── Customer Info Block ─────────────────────────────────────────────────────
-  // Left column: To / M/s / Place / Cell No  |  Right column: Day / Date
-  const rightColX = PAGE_W - MR - 38
-  vLine(doc, rightColX - 2, y - 4, y + 28)
-
-  const labelColor: [number, number, number] = [60, 60, 60]
-  const dotLeader = (val?: string) =>
-    val ? val : '..............................'
-
-  const infoRows: [string, string][] = [
-    ['To', dotLeader(meta.to ?? customer.customerName)],
-    ['M/s', dotLeader(meta.ms ?? customer.customerAddress)],
-    [
-      `Place  :  ${dotLeader(meta.place)}   Time : ${meta.time ?? '........'}   No: ${meta.no ?? '........'}`,
-      '',
-    ],
-    [
-      `Cell No  :  ${dotLeader(meta.cellNo ?? customer.customerPhone)}   Advance: ${meta.advance ?? '........'}`,
-      '',
-    ],
-  ]
-
-  infoRows.forEach(([left, right], i) => {
-    txt(doc, left, ML, y, 7.5, 'normal', labelColor)
-    if (right) {
-      txt(doc, right, ML + 14, y, 7.5, 'normal', [30, 30, 30])
-    }
-    if (i === 1) {
-      // Day / Date on right for rows 0 & 1
-    }
-    y += 6
-  })
-
-  // Day / Date on the right column
-  const infoStartY = y - 4 * 6 // rewind to where we started info rows
-  txt(doc, 'Day :', rightColX, infoStartY + 3, 7.5, 'normal', labelColor)
-  txt(
-    doc,
-    meta.day ?? '..............',
-    rightColX + 8,
-    infoStartY + 3,
-    7.5,
-    'normal',
-    [30, 30, 30]
-  )
-  txt(doc, 'Date :', rightColX, infoStartY + 14, 7.5, 'normal', labelColor)
-  txt(
-    doc,
-    meta.date ?? '..............',
-    rightColX + 10,
-    infoStartY + 14,
-    7.5,
-    'normal',
-    [30, 30, 30]
-  )
-
-  y += 1
-  hLine(doc, y, ML - 2, ML + CW + 2, 0.4)
-
-  // ── Table header ─────────────────────────────────────────────────────────────
-  const tableTop = y
-  const rowH = 7.5
-  const col = {
-    sno: ML,
-    snoW: 10,
-    particulars: ML + 10,
-    particularsW: CW - 10 - 22 - 22 - 18,
-    qty: ML + 10 + (CW - 10 - 22 - 22 - 18),
-    qtyW: 22,
-    rate: ML + 10 + (CW - 10 - 22 - 22 - 18) + 22,
-    rateW: 22,
-    amtRs: ML + 10 + (CW - 10 - 22 - 22 - 18) + 44,
-    amtRsW: 12,
-    amtP: ML + 10 + (CW - 10 - 22 - 22 - 18) + 44 + 12,
-    amtPW: 6,
-  }
-
-  // Header row fill (light blue-grey to match the physical bill header)
-  doc.setFillColor(220, 225, 245)
-  doc.rect(ML - 2, y, CW + 4, rowH, 'F')
-
-  y += rowH - 2
-  txt(doc, 'S.No.', col.sno, y, 7, 'bold', [30, 30, 100], 'left')
-  txt(
-    doc,
-    'Particulars',
-    col.particulars + col.particularsW / 2,
-    y,
-    7,
-    'bold',
-    [30, 30, 100],
-    'center'
-  )
-  txt(
-    doc,
-    'QTY.',
-    col.qty + col.qtyW / 2,
-    y,
-    7,
-    'bold',
-    [30, 30, 100],
-    'center'
-  )
-  txt(
-    doc,
-    'RATE',
-    col.rate + col.rateW / 2,
-    y,
-    7,
-    'bold',
-    [30, 30, 100],
-    'center'
-  )
-  txt(
-    doc,
-    'AMOUNT',
-    col.amtRs + col.amtRsW / 2,
-    y,
-    7,
-    'bold',
-    [30, 30, 100],
-    'center'
-  )
-  y += 2
-  txt(
-    doc,
-    'Rs.',
-    col.amtRs + col.amtRsW / 2 - 3,
-    y,
-    6.5,
-    'normal',
-    [30, 30, 100],
-    'center'
-  )
-  txt(
-    doc,
-    'P.',
-    col.amtP + col.amtPW / 2,
-    y,
-    6.5,
-    'normal',
-    [30, 30, 100],
-    'center'
-  )
-  y += 2
-
-  hLine(doc, y, ML - 2, ML + CW + 2, 0.4)
-
-  // Vertical column dividers in header
-  const colDividers = [
-    col.particulars,
-    col.qty,
-    col.rate,
-    col.amtRs,
-    col.amtP,
-    ML + CW + 2,
-  ]
-  colDividers.forEach((x) => vLine(doc, x, tableTop, y))
-
-  // ── Table rows ────────────────────────────────────────────────────────────────
-  const tableDataStart = y
-  const itemRowH = 7.5
-  const MAX_ITEM_ROWS = 14
-
-  // Combine customer items + raw materials into rows
-  type RowEntry = {
-    sno: number
-    particulars: string
-    qty: string
-    rate: string
-    total: string
-  }
-  const rows: RowEntry[] = []
-
-  customerItems.forEach((item, i) => {
-    rows.push({
-      sno: i + 1,
-      particulars: item.productName ?? '—',
-      qty: item.quantity != null ? String(item.quantity) : '—',
-      rate: item.unitPrice != null ? `${item.unitPrice}` : '—',
-      total: item.lineTotal != null ? `${item.lineTotal}` : '—',
-    })
-  })
-
+  // Append raw materials for staff/owner
   if (rawMaterials.length > 0 && (type === 'STAFF' || type === 'OWNER')) {
     rawMaterials.forEach((mat, i) => {
       rows.push({
@@ -432,7 +564,7 @@ const buildPdf = (data: BillData, type: BillType, meta: BillMeta): jsPDF => {
         particulars: mat.rawMaterialName ?? '—',
         qty:
           mat.requiredQuantity != null
-            ? `${mat.requiredQuantity} ${mat.unit ?? ''}`
+            ? `${mat.requiredQuantity} ${mat.unit ?? ''}`.trim()
             : '—',
         rate: '—',
         total: '—',
@@ -440,202 +572,261 @@ const buildPdf = (data: BillData, type: BillType, meta: BillMeta): jsPDF => {
     })
   }
 
-  // Pad with empty rows to fill the table
-  const totalDisplayRows = Math.max(rows.length, MAX_ITEM_ROWS)
+  // Minimum 14 visible rows so the table looks full
+  const MIN_ROWS = 14
+  const emptyCount = Math.max(0, MIN_ROWS - rows.length)
+  const emptyRows = Array.from({ length: emptyCount })
 
-  for (let i = 0; i < totalDisplayRows; i++) {
-    const row = rows[i]
-    const ry = y + i * itemRowH
+  return (
+    <Document>
+      <Page size="A5" style={s.page}>
+        <View style={s.card}>
+          {/* ── Header Band ──────────────────────────────────────────────── */}
+          <View style={s.headerBand}>
+            {/* Logo */}
+            <View style={s.logoSection}>
+              <Image
+                src="/Images/logo.jpg"
+                style={{ width: 36, height: 36, objectFit: 'contain' }}
+              />
+            </View>
 
-    if (row) {
-      txt(
-        doc,
-        String(row.sno),
-        col.sno + col.snoW / 2,
-        ry + 5,
-        7.5,
-        'normal',
-        [30, 30, 30],
-        'center'
-      )
-      const nameLines = doc.splitTextToSize(
-        row.particulars,
-        col.particularsW - 2
-      ) as string[]
-      doc.setFontSize(7.5)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(30, 30, 30)
-      doc.text(nameLines, col.particulars + 1, ry + 5)
-      txt(
-        doc,
-        row.qty,
-        col.qty + col.qtyW / 2,
-        ry + 5,
-        7.5,
-        'normal',
-        [30, 30, 30],
-        'center'
-      )
-      txt(
-        doc,
-        row.rate,
-        col.rate + col.rateW / 2,
-        ry + 5,
-        7.5,
-        'normal',
-        [30, 30, 30],
-        'center'
-      )
-      txt(
-        doc,
-        row.total,
-        col.amtRs + col.amtRsW - 1,
-        ry + 5,
-        7.5,
-        'bold',
-        [30, 30, 30],
-        'right'
-      )
-    }
+            {/* Business name */}
+            <View style={s.businessSection}>
+              <Text style={s.businessTagline}>Catering Services</Text>
+              <Text style={s.businessName}>VENKATESHWARA</Text>
+              <Text style={s.businessSub}>MESS & CATERING</Text>
+            </View>
 
-    // Row bottom line
-    hLine(doc, ry + itemRowH, ML - 2, ML + CW + 2, 0.15, [180, 180, 180])
-  }
+            {/* Contact */}
+            <View style={s.contactSection}>
+              <Text style={s.contactLine}>99946 20966</Text>
+              <Text style={s.contactLine}>82207 77007</Text>
+              <Text style={s.contactMuted}>Google Pay</Text>
+              <Text style={s.contactLine}>96777 20966</Text>
+            </View>
+          </View>
 
-  // Vertical column dividers for table body
-  const tableBodyBottom = y + totalDisplayRows * itemRowH
-  colDividers.forEach((x) => vLine(doc, x, tableDataStart, tableBodyBottom))
-  vLine(doc, ML - 2, tableDataStart, tableBodyBottom)
-  hLine(doc, tableBodyBottom, ML - 2, ML + CW + 2, 0.4)
+          {/* ── Meta Strip: Bill type + No + Address ────────────────────── */}
+          <View style={s.metaStrip}>
+            <View style={s.billTypePill}>
+              <Text style={s.billTypePillText}>{billTitle}</Text>
+            </View>
+            <Text style={s.billNoLabel}>No.</Text>
+            <Text style={s.billNoValue}>{data.orderId ?? '—'}</Text>
+            <Text style={s.addressText}>
+              Pattanam Road, Vellalore, Coimbatore – 641 111
+            </Text>
+          </View>
 
-  y = tableBodyBottom
+          {/* ── Customer Info ─────────────────────────────────────────────── */}
+          <View style={s.customerSection}>
+            <View style={s.customerLeft}>
+              {/* To */}
+              <View style={s.infoRow}>
+                <Text style={s.infoLabel}>To</Text>
+                <Text style={s.infoColon}>:</Text>
+                <Text style={s.infoValue}>
+                  {dot(meta.to ?? customer.customerName)}
+                </Text>
+              </View>
 
-  // ── Footer row: Tamil note + Total ──────────────────────────────────────────
-  const footerH = 14
-  const footerMidX = PAGE_W * 0.6
+              {/* M/s */}
+              <View style={s.infoRow}>
+                <Text style={s.infoLabel}>M/s</Text>
+                <Text style={s.infoColon}>:</Text>
+                <Text style={s.infoValue}>
+                  {dot(meta.ms ?? customer.customerAddress)}
+                </Text>
+              </View>
 
-  vLine(doc, footerMidX, y, y + footerH)
+              {/* Place / Time / No — inline */}
+              <View style={s.infoRowInline}>
+                <View style={s.infoGroup}>
+                  <Text style={s.infoLabel2}>Place</Text>
+                  <Text style={s.infoColon}>:</Text>
+                  <Text style={s.infoValue}>{dot(meta.place)}</Text>
+                </View>
+                <View style={s.infoGroup}>
+                  <Text style={s.infoLabel2}>Time</Text>
+                  <Text style={s.infoColon}>:</Text>
+                  <Text style={s.infoValue}>{meta.time ?? '........'}</Text>
+                </View>
+                <View style={[s.infoGroup, { flex: 0.6 }]}>
+                  <Text style={s.infoLabel2}>No</Text>
+                  <Text style={s.infoColon}>:</Text>
+                  <Text style={s.infoValue}>{meta.no ?? '......'}</Text>
+                </View>
+              </View>
 
-  // Tamil note on left
-  txt(
-    doc,
-    'குறிப்பு : கலைகாத பாத்திரத்திற்கு',
-    ML,
-    y + 5,
-    7,
-    'normal',
-    [40, 40, 40]
+              {/* Cell / Advance — inline */}
+              <View style={s.infoRowInline}>
+                <View style={s.infoGroup}>
+                  <Text style={s.infoLabel}>Cell No</Text>
+                  <Text style={s.infoColon}>:</Text>
+                  <Text style={s.infoValue}>
+                    {dot(meta.cellNo ?? customer.customerPhone)}
+                  </Text>
+                </View>
+                <View style={s.infoGroup}>
+                  <Text style={s.infoLabel}>Advance</Text>
+                  <Text style={s.infoColon}>:</Text>
+                  <Text style={s.infoValue}>{meta.advance ?? '........'}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Day / Date */}
+            <View style={s.customerRight}>
+              <View style={s.dateGroup}>
+                <Text style={s.dateLabel}>Day</Text>
+                <Text style={s.dateValue}>{meta.day ?? '...............'}</Text>
+              </View>
+              <View style={s.dateGroup}>
+                <Text style={s.dateLabel}>Date</Text>
+                <Text style={s.dateValue}>
+                  {meta.date ?? '...............'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* ── Table ────────────────────────────────────────────────────── */}
+          <View style={s.tableWrapper}>
+            {/* Table Head */}
+            <View style={s.tableHead}>
+              <Text style={[s.th, s.colSno]}>S.No</Text>
+              <Text style={[s.thLeft, s.colParticulars]}>Particulars</Text>
+              <Text style={[s.th, s.colQty]}>QTY</Text>
+              <Text style={[s.th, s.colRate]}>RATE</Text>
+              {/* Amount split header */}
+              <View
+                style={[
+                  s.colRs,
+                  {
+                    borderLeft: `0.25pt solid ${C.divider}`,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    paddingVertical: 3,
+                  },
+                ]}
+              >
+                <Text
+                  style={{ fontFamily: LATIN_B, fontSize: 7, color: C.navy }}
+                >
+                  AMOUNT
+                </Text>
+              </View>
+            </View>
+
+            {/* Data rows */}
+            {rows.map((row, i) => (
+              <View key={i} style={i % 2 === 0 ? s.tableRow : s.tableRowAlt}>
+                <Text style={s.tdSno}>{row.sno}</Text>
+                {/* Product name — always NotoSansTamil, fontFamily set inline to guarantee it */}
+                <Text
+                  style={[
+                    s.tdParticulars,
+                    { fontFamily: TAMIL, fontWeight: 'bold' },
+                  ]}
+                >
+                  {row.particulars}
+                </Text>
+                <Text style={s.tdQty}>{row.qty}</Text>
+                <Text style={s.tdRate}>{row.rate}</Text>
+                <Text style={s.tdRs}>{row.total}</Text>
+              </View>
+            ))}
+
+            {/* Padding empty rows */}
+            {emptyRows.map((_, i) => (
+              <View
+                key={`e-${i}`}
+                style={(rows.length + i) % 2 === 0 ? s.tableRow : s.tableRowAlt}
+              >
+                <Text style={s.tdSno}> </Text>
+                <Text style={[s.tdParticulars, { fontFamily: TAMIL }]}> </Text>
+                <Text style={s.tdQty}> </Text>
+                <Text style={s.tdRate}> </Text>
+                <Text style={s.tdRs}> </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* ── Footer: Tamil Note + Total ───────────────────────────────── */}
+          <View style={s.footerBar}>
+            <View style={s.footerNoteCol}>
+              {/* Tamil footer note — fontFamily: TAMIL set inline for guaranteed rendering */}
+              <Text
+                style={[
+                  s.footerNote,
+                  { fontFamily: TAMIL, fontWeight: 'normal' },
+                ]}
+              >
+                குறிப்பு : கலைகாத பாத்திரத்திற்கு
+              </Text>
+              <Text
+                style={[
+                  s.footerNote,
+                  { fontFamily: TAMIL, fontWeight: 'normal' },
+                ]}
+              >
+                200 ரூபாய் வசூலிக்கப்படும்
+              </Text>
+            </View>
+            <View style={s.footerTotalCol}>
+              <View style={s.footerTotalChip}>
+                <Text style={s.footerTotalChipText}>TOTAL AMOUNT</Text>
+              </View>
+              <Text style={s.footerTotalValue}>Rs. {fmtMoney(totalValue)}</Text>
+            </View>
+          </View>
+
+          {/* ── Signoff Bar ───────────────────────────────────────────────── */}
+          <View style={s.signoffBar}>
+            <View style={s.signoffLeft}>
+              {type === 'OWNER' ? (
+                <>
+                  <Text style={s.signoffStat}>
+                    Raw Material Cost: Rs.{' '}
+                    {fmtMoney(summary.totalRawMaterialCost)}
+                    {'   '}
+                    Sub-Product Cost: Rs.{' '}
+                    {fmtMoney(summary.totalSubProductCost)}
+                  </Text>
+                  <Text style={s.signoffStatBold}>
+                    Net Profit: Rs. {fmtMoney(summary.profit)}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={s.signoffStat}>
+                    Total Plates: {customer.totalPlates ?? '--'}
+                    {'     '}
+                    Items: {customerItems.length}
+                  </Text>
+                  {type === 'STAFF' && (
+                    <Text style={s.signoffStatBold}>Internal Copy</Text>
+                  )}
+                </>
+              )}
+            </View>
+            <View style={s.signoffRight}>
+              <Text style={s.signoffFor}>
+                For VENKATESHWARA{'\n'}MESS & CATERING
+              </Text>
+            </View>
+          </View>
+        </View>
+      </Page>
+    </Document>
   )
-  txt(doc, '200 ரூபாய் வசூலிக்கப்படும்', ML, y + 10, 7, 'normal', [40, 40, 40])
-
-  // Total on right
-  txt(
-    doc,
-    'Total',
-    footerMidX + (PAGE_W - MR - footerMidX) / 2,
-    y + 5.5,
-    8,
-    'bold',
-    [30, 30, 100],
-    'center'
-  )
-  if (data.totalAmount != null) {
-    txt(
-      doc,
-      `Rs. ${formatMoney(totalValue)}`,
-      footerMidX + (PAGE_W - MR - footerMidX) / 2,
-      y + 11,
-      9,
-      'bold',
-      [10, 10, 10],
-      'center'
-    )
-  } else {
-    txt(
-      doc,
-      `Rs. ${formatMoney(totalValue)}`,
-      footerMidX + (PAGE_W - MR - footerMidX) / 2,
-      y + 11,
-      9,
-      'bold',
-      [10, 10, 10],
-      'center'
-    )
-  }
-
-  hLine(doc, y + footerH, ML - 2, ML + CW + 2, 0.4)
-  y += footerH
-
-  // ── Summary row (bill-type specific) ───────────────────────────────────────
-  const matH = 14
-  vLine(doc, footerMidX, y, y + matH)
-
-  if (type === 'OWNER') {
-    txt(
-      doc,
-      `Raw: Rs. ${formatMoney(summary.totalRawMaterialCost)}  Sub: Rs. ${formatMoney(summary.totalSubProductCost)}`,
-      ML,
-      y + 5,
-      7,
-      'normal',
-      [40, 40, 40]
-    )
-    txt(
-      doc,
-      `Profit: Rs. ${formatMoney(summary.profit)}`,
-      ML,
-      y + 10,
-      7.5,
-      'bold',
-      [30, 30, 100]
-    )
-  } else if (type === 'STAFF') {
-    txt(
-      doc,
-      `Plates: ${customer.totalPlates ?? '--'}  Items: ${customerItems.length}`,
-      ML,
-      y + 5,
-      7.5,
-      'normal',
-      [40, 40, 40]
-    )
-    txt(doc, 'Internal copy', ML, y + 10, 7.5, 'bold', [30, 30, 100])
-  } else {
-    txt(
-      doc,
-      `Plates: ${customer.totalPlates ?? '--'}  Items: ${customerItems.length}`,
-      ML,
-      y + 5,
-      7.5,
-      'normal',
-      [40, 40, 40]
-    )
-  }
-
-  txt(
-    doc,
-    `For VENKATESHWARA MESS & CATTERING`,
-    footerMidX + 2,
-    y + 5,
-    6.5,
-    'bold',
-    [30, 30, 100]
-  )
-
-  hLine(doc, y + matH, ML - 2, ML + CW + 2, 0.4)
-
-  // Close outer border bottom
-  rect(doc, ML - 2, 6, CW + 4, PAGE_H - 12, 0.5)
-
-  return doc
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
-
+// ─── Download Button Component ────────────────────────────────────────────────
 interface DownloadBillButtonProps {
   orderId: number
   compact?: boolean
-  // Bill meta fields (matching physical bill layout)
   to?: string
   ms?: string
   place?: string
@@ -649,7 +840,7 @@ interface DownloadBillButtonProps {
 
 const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
   orderId,
-  compact,
+  compact = false,
   to,
   ms,
   place,
@@ -661,17 +852,21 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
   date,
 }) => {
   const { t } = useTranslation()
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState<boolean>(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
-  const [position, setPosition] = useState({ top: 0, left: 0 })
+  const [position, setPosition] = useState<{ top: number; left: number }>({
+    top: 0,
+    left: 0,
+  })
   const [loadingType, setLoadingType] = useState<BillType | null>(null)
 
+  // Recalculate dropdown position whenever it opens
   useEffect(() => {
     if (isOpen && buttonRef.current) {
-      const rect = buttonRef.current.getBoundingClientRect()
+      const r = buttonRef.current.getBoundingClientRect()
       setPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: Math.max(window.scrollX, rect.right + window.scrollX - 240),
+        top: r.bottom + window.scrollY + 6,
+        left: Math.max(8, r.right + window.scrollX - 236),
       })
     }
   }, [isOpen])
@@ -695,15 +890,22 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
   ]
 
   const meta: BillMeta = { to, ms, place, time, no, cellNo, advance, day, date }
+  const isAnyLoading = loadingType !== null
 
-  const handleDownload = async (option: BillOption) => {
+  const handleDownload = async (option: BillOption): Promise<void> => {
     setIsOpen(false)
     setLoadingType(option.type)
     try {
       const data = await fetchOrderBill(orderId, option.type)
-      const doc = buildPdf({ ...data, orderId }, option.type, meta)
-      const filename = `order-${orderId}-${option.type.toLowerCase()}-bill.pdf`
-      doc.save(filename)
+      const blob = await pdf(
+        <BillDoc data={{ ...data, orderId }} type={option.type} meta={meta} />
+      ).toBlob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `order-${orderId}-${option.type.toLowerCase()}-bill.pdf`
+      link.click()
+      URL.revokeObjectURL(url)
       toast.success(t('bill_downloaded_success', { billType: option.label }))
     } catch {
       toast.error(t('bill_downloaded_error', { billType: option.label }))
@@ -712,10 +914,6 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
     }
   }
 
-  const handleClose = () => setIsOpen(false)
-
-  const isAnyLoading = loadingType !== null
-
   return (
     <>
       <button
@@ -723,144 +921,170 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
         type="button"
         disabled={isAnyLoading}
         onClick={() => setIsOpen((prev) => !prev)}
-        className={`download-bill-button flex cursor-pointer flex-row items-center border-2 border-[#F1F1F1] bg-white font-semibold text-black shadow-sm outline-0 transition-colors duration-200 select-none hover:bg-gray-100 active:bg-gray-200 ${
+        className={[
+          'inline-flex cursor-pointer items-center font-semibold select-none',
+          'border border-[#E4E4E7] bg-white text-[#18181B] shadow-sm',
+          'transition-colors duration-150 hover:bg-[#F4F4F5] active:bg-[#E4E4E7]',
+          'outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
           compact
-            ? 'gap-1 rounded-lg px-2 py-1.5 text-xs'
-            : 'gap-2 rounded-[9px] px-3 py-3 text-sm'
-        } ${isAnyLoading ? 'cursor-not-allowed opacity-70' : ''}`}
+            ? 'gap-1 rounded-[6px] px-2 py-1.5 text-xs'
+            : 'gap-2 rounded-[8px] px-3 py-2.5 text-sm',
+          isAnyLoading ? 'cursor-not-allowed opacity-60' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         {isAnyLoading ? (
           <Loader2
             className={
               compact
-                ? 'h-3 w-3 animate-spin text-zinc-500'
-                : 'h-4 w-4 animate-spin text-zinc-500'
+                ? 'h-3 w-3 animate-spin text-zinc-400'
+                : 'h-4 w-4 animate-spin text-zinc-400'
             }
           />
         ) : (
           <Download
             className={
-              compact ? 'h-3 w-3 text-zinc-700' : 'h-4 w-4 text-zinc-700'
+              compact ? 'h-3 w-3 text-zinc-500' : 'h-4 w-4 text-zinc-500'
             }
           />
         )}
-        {t('download_bill')}
+        <span>{t('download_bill')}</span>
         <ChevronDown
-          className={`text-zinc-400 transition-transform duration-200 ${compact ? 'h-3 w-3' : 'h-3.5 w-3.5'} ${
-            isOpen ? 'rotate-180' : ''
-          }`}
+          className={[
+            'text-zinc-400 transition-transform duration-150',
+            compact ? 'h-3 w-3' : 'h-3.5 w-3.5',
+            isOpen ? 'rotate-180' : '',
+          ].join(' ')}
         />
       </button>
 
       {isOpen &&
         createPortal(
           <>
-            <div className="download-bill-overlay" onClick={handleClose} />
+            {/* Click-away overlay */}
             <div
-              className="download-bill-menu"
               style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 40,
+              }}
+              onClick={() => setIsOpen(false)}
+            />
+
+            {/* Dropdown panel */}
+            <div
+              style={{
+                position: 'absolute',
                 top: `${position.top}px`,
                 left: `${position.left}px`,
+                zIndex: 50,
+                width: '236px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #E4E4E7',
+                borderRadius: '10px',
+                boxShadow:
+                  '0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04)',
+                overflow: 'hidden',
               }}
             >
-              <p className="download-bill-header">{t('select_bill_type')}</p>
-              <ul className="download-bill-items">
+              {/* Header label */}
+              <div
+                style={{
+                  padding: '8px 14px',
+                  borderBottom: '1px solid #F3F4F6',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#9CA3AF',
+                  }}
+                >
+                  {t('select_bill_type')}
+                </span>
+              </div>
+
+              {/* Options list */}
+              <ul style={{ listStyle: 'none', margin: 0, padding: '4px 0' }}>
                 {billOptions.map((option) => (
                   <li key={option.type}>
                     <button
                       type="button"
                       disabled={loadingType === option.type}
                       onClick={() => handleDownload(option)}
-                      className="download-bill-item"
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        width: '100%',
+                        gap: '2px',
+                        padding: '8px 14px',
+                        textAlign: 'left',
+                        background: 'none',
+                        border: 'none',
+                        cursor:
+                          loadingType === option.type
+                            ? 'not-allowed'
+                            : 'pointer',
+                        opacity: loadingType === option.type ? 0.55 : 1,
+                        transition: 'background-color 120ms',
+                      }}
+                      onMouseEnter={(e) =>
+                        ((
+                          e.currentTarget as HTMLButtonElement
+                        ).style.backgroundColor = '#FEF9EC')
+                      }
+                      onMouseLeave={(e) =>
+                        ((
+                          e.currentTarget as HTMLButtonElement
+                        ).style.backgroundColor = 'transparent')
+                      }
                     >
-                      <span className="download-bill-item-title">
+                      <span
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          color: '#18181B',
+                        }}
+                      >
                         {loadingType === option.type ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin text-orange-500" />
+                          <Loader2
+                            style={{
+                              width: 13,
+                              height: 13,
+                              color: '#F59E0B',
+                              animation: 'spin 1s linear infinite',
+                            }}
+                          />
                         ) : (
-                          <Download className="h-3.5 w-3.5 text-orange-500" />
+                          <Download
+                            style={{ width: 13, height: 13, color: '#F59E0B' }}
+                          />
                         )}
                         {option.label}
                       </span>
-                      <span className="download-bill-item-desc">
+                      <span
+                        style={{
+                          paddingLeft: '19px',
+                          fontSize: '11px',
+                          color: '#9CA3AF',
+                        }}
+                      >
                         {option.description}
                       </span>
                     </button>
                   </li>
                 ))}
               </ul>
-              <style>{`
-              .download-bill-overlay {
-                position: fixed;
-                inset: 0;
-                z-index: 30;
-              }
-              
-              .download-bill-menu {
-                position: fixed;
-                z-index: 40;
-                width: 240px;
-                overflow: hidden;
-                border-radius: 0.75rem;
-                border: 1px solid #e4e4e7;
-                background-color: white;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-                ring: 1px white;
-              }
-              
-              .download-bill-header {
-                border-bottom: 1px solid #f3f4f6;
-                padding: 0.5rem 1rem;
-                font-size: 0.625rem;
-                font-weight: bold;
-                letter-spacing: 0.1em;
-                color: #9ca3af;
-                text-transform: uppercase;
-              }
-              
-              .download-bill-items {
-                padding: 0.25rem 0;
-              }
-              
-              .download-bill-item {
-                display: flex;
-                width: 100%;
-                flex-direction: column;
-                gap: 0.125rem;
-                padding: 0.625rem 1rem;
-                text-align: left;
-                transition-property: background-color, color;
-                transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-                transition-duration: 150ms;
-                background: none;
-                border: none;
-                cursor: pointer;
-                color: inherit;
-              }
-              
-              .download-bill-item:hover {
-                background-color: #fef3c7;
-              }
-              
-              .download-bill-item:disabled {
-                cursor: not-allowed;
-                opacity: 0.6;
-              }
-              
-              .download-bill-item-title {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-size: 0.875rem;
-                font-weight: 600;
-                color: #18181b;
-              }
-              
-              .download-bill-item-desc {
-                padding-left: 1.25rem;
-                font-size: 0.75rem;
-                color: #a1a5ab;
-              }
-            `}</style>
+
+              {/* CSS keyframes for spinner */}
+              <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
             </div>
           </>,
           document.body

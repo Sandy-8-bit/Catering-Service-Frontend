@@ -8,7 +8,7 @@ import DriverDashboardPage from '@/pages/driver/DriveDashboard'
 import DriverOrderPage from './pages/driver/DriverOrderPage'
 import DriverPendingOrdersPage from '@/pages/driver/DriverPendingOrdersPage'
 import ExpensePage from './pages/expense/ExpensePage'
-import FinancialReport from './pages/test'
+import FinancialReport from './pages/reportsPage/PdfRenderer'
 
 const AdditionalItemsPage = lazy(
   () => import('@/pages/additionalItemsPage/AdditionalItemsPage')
