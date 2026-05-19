@@ -391,7 +391,7 @@ const s = StyleSheet.create({
   // Column widths
   colSno: { width: 20 },
   colParticulars: { flex: 1 },
-  colQty: { width: 42 },
+  colQty: { width: 58 },
   colRate: { width: 44 },
   colRs: { width: 44 },
 
@@ -565,7 +565,11 @@ const s = StyleSheet.create({
 interface RowEntry {
   sno: number
   particulars: string
-  qty: string
+  productName: string
+  qty: number | null
+  totalPlates: number | null
+  isMenuItem: boolean
+  qtyDisplay: string
   rate: string
   total: string
 }
@@ -598,14 +602,38 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
       ? summary.customerItemsTotal
       : customerItems.reduce((acc, item) => acc + (item.lineTotal ?? 0), 0))
 
-  // Build rows from customerItems
-  const rows: RowEntry[] = customerItems.map((item, i) => ({
-    sno: i + 1,
-    particulars: item.productName ?? '—',
-    qty: item.quantity != null ? String(item.quantity) : '—',
-    rate: item.unitPrice != null ? String(item.unitPrice) : '—',
-    total: item.lineTotal != null ? fmtMoney(item.lineTotal) : '—',
-  }))
+  // Build rows from customerItems with new format: qty | qty×plates
+  const rows: RowEntry[] = customerItems.map((item, i) => {
+    const qty = item.quantity ?? null
+    const totalPlates = customer.totalPlates ?? null
+    const isMenuItem = item.isMenuItem === true
+    const plateTotal =
+      isMenuItem && qty != null && totalPlates != null
+        ? qty * totalPlates
+        : null
+    const qtyDisplay =
+      qty != null
+        ? isMenuItem && plateTotal != null
+          ? `${qty} | ${plateTotal}`
+          : String(qty)
+        : '—'
+    // Multiply total cost by plates if menu item
+    const totalCost =
+      isMenuItem && item.lineTotal != null && totalPlates != null
+        ? item.lineTotal * totalPlates
+        : (item.lineTotal ?? null)
+    return {
+      sno: i + 1,
+      particulars: item.productName ?? '—',
+      productName: item.productName ?? '—',
+      qty,
+      totalPlates,
+      isMenuItem,
+      qtyDisplay,
+      rate: item.unitPrice != null ? String(item.unitPrice) : '—',
+      total: totalCost != null ? fmtMoney(totalCost) : '—',
+    }
+  })
 
   // Minimum 14 visible rows so the table looks full
   const MIN_ROWS = 14
@@ -724,7 +752,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             <View style={s.tableHead}>
               <Text style={[s.th, s.colSno]}>S.No</Text>
               <Text style={[s.thLeft, s.colParticulars]}>Particulars</Text>
-              <Text style={[s.th, s.colQty]}>QTY</Text>
+              <Text style={[s.th, s.colQty]}>QTY | Total QTY</Text>
               <Text style={[s.th, s.colRate]}>PRICE/UNIT</Text>
               {/* Amount split header */}
               <View
@@ -759,7 +787,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                 >
                   {row.particulars}
                 </Text>
-                <Text style={s.tdQty}>{row.qty}</Text>
+                <Text style={s.tdQty}>{row.qtyDisplay}</Text>
                 <Text style={s.tdRate}>
                   {type !== 'STAFF' ? row.rate : '—'}
                 </Text>
@@ -787,27 +815,9 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               <RawMaterialsTable rawMaterials={rawMaterials} type={type} />
             )}
 
-          {/* ── Footer: Tamil Note + Total ───────────────────────────────── */}
+          {/* ── Footer: Total Amount ───────────────────────────────── */}
           <View style={s.footerBar}>
-            <View style={s.footerNoteCol}>
-              {/* Tamil footer note — fontFamily: TAMIL set inline for guaranteed rendering */}
-              <Text
-                style={[
-                  s.footerNote,
-                  { fontFamily: TAMIL, fontWeight: 'normal' },
-                ]}
-              >
-                குறிப்பு : கலைகாத பாத்திரத்திற்கு
-              </Text>
-              <Text
-                style={[
-                  s.footerNote,
-                  { fontFamily: TAMIL, fontWeight: 'normal' },
-                ]}
-              >
-                200 ரூபாய் வசூலிக்கப்படும்
-              </Text>
-            </View>
+            <View style={s.footerNoteCol} />
             <View style={s.footerTotalCol}>
               <View style={s.footerTotalChip}>
                 <Text style={s.footerTotalChipText}>TOTAL AMOUNT</Text>
@@ -1036,7 +1046,7 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
           'outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
           compact
             ? 'gap-1 rounded-[6px] px-2 py-1.5 text-xs'
-            : 'gap-2 rounded-[8px] px-3 py-2.5 text-sm',
+            : 'gap-2 rounded-xl px-3 py-2.5 text-sm',
           isAnyLoading ? 'cursor-not-allowed opacity-60' : '',
         ]
           .filter(Boolean)

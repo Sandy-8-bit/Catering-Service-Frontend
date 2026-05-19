@@ -291,6 +291,7 @@ export interface BillCustomerItem {
   quantity?: number
   unitPrice?: number
   lineTotal?: number
+  isMenuItem?: boolean
 }
 
 export interface BillRawMaterial {
