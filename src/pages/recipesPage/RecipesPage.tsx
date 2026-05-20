@@ -1,4 +1,4 @@
-  import { useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 import GenericTable, { type DataCell } from '@/components/common/GenericTable'
@@ -20,11 +20,11 @@ const RecipesPage = () => {
     navigate(detailPath)
   }
 
-
   const recipeTableColumns: DataCell[] = [
     {
       headingTitle: 'Product',
       className: 'min-w-[220px]',
+      accessVar: 'primaryName',
       render: (_value, row: Product) => (
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-zinc-900">

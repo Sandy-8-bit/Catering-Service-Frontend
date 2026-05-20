@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useCallback,
   useLayoutEffect,
+  useMemo,
 } from 'react'
 import { motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
@@ -56,6 +57,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   const [shake, setShake] = useState(false)
   const [wasSubmitted, setWasSubmitted] = useState(false)
   const [highlightIndex, setHighlightIndex] = useState<number>(-1)
+  const [searchQuery, setSearchQuery] = useState('')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -240,18 +242,41 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
     }
   }, [autoScroll, highlightIndex])
 
+  const filteredOptions = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) return options
+
+    return options.filter((option) =>
+      option.label.toLowerCase().includes(query)
+    )
+  }, [options, searchQuery])
+
+  const closeDropdown = useCallback(() => {
+    setIsOpen(false)
+    setHighlightIndex(-1)
+    setSearchQuery('')
+  }, [])
+
+  const openDropdown = useCallback(() => {
+    setIsOpen(true)
+    setHighlightIndex(-1)
+    setSearchQuery('')
+  }, [])
+
   const toggleDropdown = () => {
     if (!disabled) {
-      setIsOpen((prev) => !prev)
-      setHighlightIndex(-1)
+      if (isOpen) {
+        closeDropdown()
+      } else {
+        openDropdown()
+      }
     }
   }
 
   const handleSelect = (option: DropdownOption) => {
     onChange(option)
-    setIsOpen(false)
     setWasSubmitted(false)
-    setHighlightIndex(-1)
+    closeDropdown()
   }
 
   const isInvalid = required && selected.id === 0 && wasSubmitted
@@ -267,19 +292,24 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
     }
 
     if (e.key === 'ArrowDown') {
-      setHighlightIndex((prev) => (prev + 1) % options.length)
+      if (filteredOptions.length > 0) {
+        setHighlightIndex((prev) => (prev + 1) % filteredOptions.length)
+      }
       e.preventDefault()
     } else if (e.key === 'ArrowUp') {
-      setHighlightIndex((prev) => (prev === 0 ? options.length - 1 : prev - 1))
+      if (filteredOptions.length > 0) {
+        setHighlightIndex((prev) =>
+          prev <= 0 ? filteredOptions.length - 1 : prev - 1
+        )
+      }
       e.preventDefault()
     } else if (e.key === 'Enter') {
-      if (highlightIndex >= 0) {
-        handleSelect(options[highlightIndex])
+      if (highlightIndex >= 0 && filteredOptions[highlightIndex]) {
+        handleSelect(filteredOptions[highlightIndex])
       }
       e.preventDefault()
     } else if (e.key === 'Escape') {
-      setIsOpen(false)
-      setHighlightIndex(-1)
+      closeDropdown()
     }
   }
 
@@ -356,7 +386,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
         createPortal(
           <div
             ref={portalRef}
-            className={`scrollbar-visible custom-scrollbar z-[99999999999] mt-1 max-h-[250px] overflow-y-scroll rounded-xl border border-[#F1F1F1] bg-white text-sm shadow-lg ${dropDownClassName}`}
+            className={`scrollbar-visible custom-scrollbar mt-1 max-h-[250px] overflow-y-scroll rounded-xl border border-[#F1F1F1] bg-white text-sm shadow-lg ${dropDownClassName}`}
             style={{
               position: 'absolute',
               top: portalStyle.top,
@@ -365,6 +395,23 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
               zIndex: 99999999999,
             }}
           >
+            <div className="sticky top-0 z-10 border-b border-[#F1F1F1] bg-white px-3 py-2">
+              <input
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  setHighlightIndex(0)
+                }}
+                onClick={(e) => e.stopPropagation()}
+                placeholder={`Search ${title?.toLowerCase() || 'options'}`}
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 transition-colors outline-none placeholder:text-slate-400 focus:border-orange-400"
+                type="text"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck={false}
+                autoFocus
+              />
+            </div>
             {/* ✅ Show clear option only if allowClear is true */}
             {allowClear && selected.id !== 0 && (
               <button
@@ -392,9 +439,9 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
                 </svg>
               </button>
             )}
-            {options.length > 0 ? (
+            {filteredOptions.length > 0 ? (
               <>
-                {options.map((option, idx) => (
+                {filteredOptions.map((option, idx) => (
                   <button
                     key={option.label}
                     ref={(el) => {

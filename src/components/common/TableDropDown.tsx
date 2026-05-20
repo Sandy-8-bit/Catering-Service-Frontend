@@ -34,8 +34,18 @@ const TableDropDown: React.FC<TableDropdownProps> = ({
   onChange,
 }) => {
   const [isOpen, setIsOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [highlightIndex, setHighlightIndex] = useState<number>(-1)
   const containerRef = useRef<HTMLDivElement>(null)
   const isInteractive = isEditMode && !disabled
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const optionRefs = useRef<(HTMLButtonElement | null)[]>([])
+
+  const filteredOptions = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return options
+    return options.filter((o) => o.label.toLowerCase().includes(q))
+  }, [options, searchQuery])
 
   const displayOption = useMemo<DropdownOption>(() => {
     if (selected) return selected
@@ -51,6 +61,7 @@ const TableDropDown: React.FC<TableDropdownProps> = ({
         !containerRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false)
+        setSearchQuery('')
       }
     }
 
@@ -58,12 +69,71 @@ const TableDropDown: React.FC<TableDropdownProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen, isInteractive])
 
+  // clear refs when options change
+  useEffect(() => {
+    optionRefs.current = []
+  }, [filteredOptions])
+
   useEffect(() => {
     if (!isInteractive) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsOpen(false)
+      setSearchQuery('')
     }
   }, [isInteractive])
+
+  const toggleOpen = () => {
+    const opening = !isOpen
+    setIsOpen(opening)
+    if (opening) {
+      setHighlightIndex(filteredOptions.length ? 0 : -1)
+    } else {
+      setSearchQuery('')
+      setHighlightIndex(-1)
+    }
+    // focus input when opening
+    setTimeout(() => {
+      if (inputRef.current) inputRef.current.focus()
+    }, 0)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        setIsOpen(true)
+        setHighlightIndex(0)
+        e.preventDefault()
+      }
+      return
+    }
+
+    if (e.key === 'ArrowDown') {
+      setHighlightIndex((prev) =>
+        filteredOptions.length ? (prev + 1) % filteredOptions.length : 0
+      )
+      e.preventDefault()
+    } else if (e.key === 'ArrowUp') {
+      setHighlightIndex((prev) =>
+        filteredOptions.length
+          ? prev <= 0
+            ? filteredOptions.length - 1
+            : prev - 1
+          : 0
+      )
+      e.preventDefault()
+    } else if (e.key === 'Enter') {
+      if (highlightIndex >= 0 && filteredOptions[highlightIndex]) {
+        handleSelect(filteredOptions[highlightIndex])
+      } else if (filteredOptions[0]) {
+        handleSelect(filteredOptions[0])
+      }
+      e.preventDefault()
+    } else if (e.key === 'Escape') {
+      setIsOpen(false)
+      setSearchQuery('')
+      setHighlightIndex(-1)
+    }
+  }
 
   const handleSelect = (option: DropdownOption) => {
     onChange(option)
@@ -99,38 +169,76 @@ const TableDropDown: React.FC<TableDropdownProps> = ({
         onChange={() => {}}
       />
 
-      <button
-        type="button"
-        disabled={!isInteractive}
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={`flex w-full items-center justify-between bg-transparent py-2 text-left text-sm font-medium transition-colors ${
-          isInteractive
-            ? 'cursor-pointer border-b border-gray-300 bg-white px-2 text-[#1F1F21] hover:border-gray-400 focus:border-orange-500'
-            : 'cursor-default border-transparent bg-transparent text-[#1F1F21]'
-        }`}
-      >
-        <span className={displayOption.id === 0 ? 'text-slate-400' : ''}>
-          {displayLabel}
-        </span>
-        {isEditMode && (
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          >
-            <path
-              d="M6 9l6 6 6-6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </button>
+      {isInteractive ? (
+        <div
+          className={`flex w-full items-center justify-between rounded-sm border border-slate-200 bg-white px-2 py-1 text-sm ${className}`}
+        >
+          <input
+            ref={inputRef}
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+              setHighlightIndex(0)
+            }}
+            onFocus={() => setIsOpen(true)}
+            onKeyDown={handleKeyDown}
+            placeholder={displayLabel}
+            className="w-full bg-transparent text-sm text-slate-700 outline-none"
+          />
+          {isEditMode && (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            >
+              <path
+                d="M6 9l6 6 6-6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={!isInteractive}
+          onClick={toggleOpen}
+          className={`flex w-full items-center justify-between bg-transparent py-2 text-left text-sm font-medium transition-colors ${
+            isInteractive
+              ? 'cursor-pointer border-b border-gray-300 bg-white px-2 text-[#1F1F21] hover:border-gray-400 focus:border-orange-500'
+              : 'cursor-default border-transparent bg-transparent text-[#1F1F21]'
+          }`}
+        >
+          <span className={displayOption.id === 0 ? 'text-slate-400' : ''}>
+            {displayLabel}
+          </span>
+          {isEditMode && (
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            >
+              <path
+                d="M6 9l6 6 6-6"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </button>
+      )}
 
       {isInteractive && isOpen && (
         <motion.ul
@@ -140,24 +248,34 @@ const TableDropDown: React.FC<TableDropdownProps> = ({
           transition={{ duration: 0.15 }}
           className={`absolute left-0 z-50 mt-3 max-h-48 w-full overflow-y-auto rounded-sm border border-zinc-100 bg-white text-sm ${dropdownClassName}`}
         >
-          {options.length === 0 && (
-            <li className="px-3 py-2 text-slate-500">No options available</li>
+          {filteredOptions.length === 0 && (
+            <li className="px-3 py-2 text-slate-500">
+              {searchQuery.trim().length > 0
+                ? 'No results found'
+                : 'No options available'}
+            </li>
           )}
-          {options.map((option) => {
+          {filteredOptions.map((option, idx) => {
             const isActive = option.id === displayOption.id
+            const isHighlighted = idx === highlightIndex
             return (
               <button
                 key={option.id}
+                ref={(el) => {
+                  optionRefs.current[idx] = el
+                }}
                 type="button"
                 onClick={() => handleSelect(option)}
                 className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left transition-colors ${
-                  isActive
-                    ? 'bg-orange-500/5 text-orange-700'
-                    : 'text-zinc-500 hover:bg-zinc-50'
+                  isHighlighted
+                    ? 'bg-slate-100'
+                    : isActive
+                      ? 'bg-orange-500/5 text-orange-700'
+                      : 'text-zinc-500 hover:bg-zinc-50'
                 }`}
               >
                 <span>{option.label}</span>
-                {isActive && (
+                {(isActive || isHighlighted) && (
                   <svg
                     width="16"
                     height="16"
