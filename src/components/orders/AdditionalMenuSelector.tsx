@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Spinner from '@/components/common/Spinner'
 import { useFetchProducts } from '@/queries/productQueries'
@@ -22,7 +22,23 @@ interface MasterCategoryGroup {
   }[]
 }
 
-type ProductTypeFilter = 'all' | 'veg' | 'nonveg'
+interface ProductMasterCategoryRef {
+  masterCategoryId: number
+  masterCategoryName: string
+}
+
+interface ProductCategoryRef {
+  categoryId: number
+  categoryPrimaryName: string
+  masterCategories?: ProductMasterCategoryRef[]
+}
+
+type ProductWithMetadata = Product & {
+  productTypeDisplay?: string
+  categories?: ProductCategoryRef[]
+}
+
+type ProductTypeFilter = 'all' | 'Vegetarian' | 'Non-Vegetarian'
 
 const getProductTypeDisplay = (productType?: string): string => {
   if (productType === 'VEG') return 'Vegetarian'
@@ -31,12 +47,40 @@ const getProductTypeDisplay = (productType?: string): string => {
 }
 
 const getProductType = (product: Product): 'VEG' | 'NON_VEG' | undefined => {
-  // Try to get productType directly
-  if ((product as any).productType) return (product as any).productType
-  // Fallback to productTypeDisplay
-  const display = (product as any).productTypeDisplay
-  if (display === 'Vegetarian') return 'VEG'
-  if (display === 'Non-Vegetarian') return 'NON_VEG'
+  const typedProduct = product as ProductWithMetadata
+  const display = String(typedProduct.productTypeDisplay ?? '')
+    .trim()
+    .toLowerCase()
+
+  if (display.includes('non') && display.includes('veg')) {
+    return 'NON_VEG'
+  }
+
+  if (display.includes('veg')) {
+    return 'VEG'
+  }
+
+  const rawProductType = String(typedProduct.productType ?? '')
+    .trim()
+    .toUpperCase()
+
+  if (
+    rawProductType === 'NON_VEG' ||
+    rawProductType === 'NON-VEG' ||
+    rawProductType === 'NONVEG' ||
+    rawProductType === 'NON_VEGETARIAN'
+  ) {
+    return 'NON_VEG'
+  }
+
+  if (
+    rawProductType === 'VEG' ||
+    rawProductType === 'VEGETARIAN' ||
+    rawProductType === 'V'
+  ) {
+    return 'VEG'
+  }
+
   return undefined
 }
 
@@ -52,7 +96,7 @@ const AdditionalMenuSelector = ({
   onChange,
 }: AdditionalMenuSelectorProps) => {
   const { t } = useTranslation()
-  const safeItems = selectedItems || []
+  const safeItems = useMemo(() => selectedItems ?? [], [selectedItems])
   const { data: products = [], isLoading } = useFetchProducts()
   const [quantityDrafts, setQuantityDrafts] = useState<Record<number, string>>(
     {}
@@ -69,8 +113,9 @@ const AdditionalMenuSelector = ({
     return products.filter((product) => {
       if (selectedProductType === 'all') return true
       const productType = getProductType(product)
-      if (selectedProductType === 'veg') return productType === 'VEG'
-      if (selectedProductType === 'nonveg') return productType === 'NON_VEG'
+      if (selectedProductType === 'Vegetarian') return productType === 'VEG'
+      if (selectedProductType === 'Non-Vegetarian')
+        return productType === 'NON_VEG'
       return true
     })
   }, [products, selectedProductType])
@@ -80,10 +125,11 @@ const AdditionalMenuSelector = ({
     const masterMap = new Map<number, MasterCategoryGroup>()
 
     filteredProducts.forEach((product) => {
-      const categories = (product as any).categories || []
-      categories.forEach((category: any) => {
-        const masterCategories = category.masterCategories || []
-        masterCategories.forEach((masterCat: any) => {
+      const typedProduct = product as ProductWithMetadata
+      const categories = typedProduct.categories ?? []
+      categories.forEach((category) => {
+        const masterCategories = category.masterCategories ?? []
+        masterCategories.forEach((masterCat) => {
           if (!masterMap.has(masterCat.masterCategoryId)) {
             masterMap.set(masterCat.masterCategoryId, {
               masterCategoryId: masterCat.masterCategoryId,
@@ -143,28 +189,39 @@ const AdditionalMenuSelector = ({
 
   // Get filtered products based on all filters
   const displayedProducts = useMemo(() => {
-    return masterCategoryGroups.flatMap((masterGroup) => {
-      // If master category is selected, only show that group
+    const seen = new Set<number>()
+    const grouped = masterCategoryGroups.flatMap((masterGroup) => {
       if (
         selectedMasterCategory !== null &&
         masterGroup.masterCategoryId !== selectedMasterCategory
-      ) {
+      )
         return []
-      }
 
       return masterGroup.categoryGroups.flatMap((categoryGroup) => {
-        // If category is selected, only show that category
         if (
           selectedCategory !== null &&
           categoryGroup.categoryId !== selectedCategory
-        ) {
+        )
           return []
-        }
-
         return categoryGroup.products
       })
     })
-  }, [masterCategoryGroups, selectedMasterCategory, selectedCategory])
+
+    // Deduplicate + re-apply type filter as safety guard
+    return grouped.filter((product) => {
+      if (seen.has(product.id)) return false
+      seen.add(product.id)
+      if (selectedProductType === 'all') return true
+      const type = getProductType(product)
+      if (selectedProductType === 'Vegetarian') return type === 'VEG'
+      return type === 'NON_VEG'
+    })
+  }, [
+    masterCategoryGroups,
+    selectedMasterCategory,
+    selectedCategory,
+    selectedProductType,
+  ])
 
   const productsById = useMemo(() => {
     const map = new Map<number, Product>()
@@ -173,18 +230,6 @@ const AdditionalMenuSelector = ({
     })
     return map
   }, [products])
-
-  useEffect(() => {
-    setQuantityDrafts((prev) => {
-      const next: Record<number, string> = {}
-      safeItems.forEach((item) => {
-        if (item.productId in prev) {
-          next[item.productId] = prev[item.productId]
-        }
-      })
-      return next
-    })
-  }, [safeItems])
 
   const updateItems = (nextItems: OrderAdditionalMenuItem[]) =>
     onChange(nextItems)
@@ -303,7 +348,7 @@ const AdditionalMenuSelector = ({
             <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
               {t('product_type') || 'Product Type'}
             </p>
-                        <div className="mb-2 flex gap-3 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+            <div className="scrollbar-hide mb-2 flex gap-3 overflow-x-auto pb-2 whitespace-nowrap">
               <button
                 type="button"
                 onClick={() => setSelectedProductType('all')}
@@ -318,9 +363,9 @@ const AdditionalMenuSelector = ({
 
               <button
                 type="button"
-                onClick={() => setSelectedProductType('veg')}
+                onClick={() => setSelectedProductType('Vegetarian')}
                 className={`rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition ${
-                  selectedProductType === 'veg'
+                  selectedProductType === 'Vegetarian'
                     ? 'bg-amber-600 text-white shadow-md'
                     : 'border-2 border-amber-200 bg-white text-amber-700 hover:border-amber-300 hover:bg-amber-50'
                 }`}
@@ -330,9 +375,9 @@ const AdditionalMenuSelector = ({
 
               <button
                 type="button"
-                onClick={() => setSelectedProductType('nonveg')}
+                onClick={() => setSelectedProductType('Non-Vegetarian')}
                 className={`rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition ${
-                  selectedProductType === 'nonveg'
+                  selectedProductType === 'Non-Vegetarian'
                     ? 'bg-amber-600 text-white shadow-md'
                     : 'border-2 border-amber-200 bg-white text-amber-700 hover:border-amber-300 hover:bg-amber-50'
                 }`}
@@ -348,7 +393,7 @@ const AdditionalMenuSelector = ({
               <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
                 {t('category') || 'Category'}
               </p>
-              <div className="mb-2 flex gap-3 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+              <div className="scrollbar-hide mb-2 flex gap-3 overflow-x-auto pb-2 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => {
@@ -391,7 +436,7 @@ const AdditionalMenuSelector = ({
               <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
                 {t('subcategory') || 'Subcategory'}
               </p>
-              <div className="mb-2 flex gap-3 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+              <div className="scrollbar-hide mb-2 flex gap-3 overflow-x-auto pb-2 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => setSelectedCategory(null)}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Spinner from '@/components/common/Spinner'
 import { useFetchProducts } from '@/queries/productQueries'
@@ -22,6 +22,22 @@ interface MasterCategoryGroup {
   }[]
 }
 
+interface ProductMasterCategoryRef {
+  masterCategoryId: number
+  masterCategoryName: string
+}
+
+interface ProductCategoryRef {
+  categoryId: number
+  categoryPrimaryName: string
+  masterCategories?: ProductMasterCategoryRef[]
+}
+
+type ProductWithMetadata = Product & {
+  productTypeDisplay?: string
+  categories?: ProductCategoryRef[]
+}
+
 type ProductTypeFilter = 'all' | 'Vegetarian' | 'Non-Vegetarian'
 
 const getProductTypeDisplay = (productType?: string): string => {
@@ -31,12 +47,41 @@ const getProductTypeDisplay = (productType?: string): string => {
 }
 
 const getProductType = (product: Product): 'VEG' | 'NON_VEG' | undefined => {
-  // Try to get productType directly
-  if ((product as any).productType) return (product as any).productType
-  // Fallback to productTypeDisplay
-  const display = (product as any).productTypeDisplay
-  if (display === 'Vegetarian') return 'VEG'
-  if (display === 'Non-Vegetarian') return 'NON_VEG'
+  const typedProduct = product as ProductWithMetadata
+  const display = String(typedProduct.productTypeDisplay ?? '')
+    .trim()
+    .toLowerCase()
+
+  // Prefer display text because some payloads carry stale/incorrect enum values.
+  if (display.includes('non') && display.includes('veg')) {
+    return 'NON_VEG'
+  }
+
+  if (display.includes('veg')) {
+    return 'VEG'
+  }
+
+  const rawProductType = String(typedProduct.productType ?? '')
+    .trim()
+    .toUpperCase()
+
+  if (
+    rawProductType === 'NON_VEG' ||
+    rawProductType === 'NON-VEG' ||
+    rawProductType === 'NONVEG' ||
+    rawProductType === 'NON_VEGETARIAN'
+  ) {
+    return 'NON_VEG'
+  }
+
+  if (
+    rawProductType === 'VEG' ||
+    rawProductType === 'VEGETARIAN' ||
+    rawProductType === 'V'
+  ) {
+    return 'VEG'
+  }
+
   return undefined
 }
 
@@ -75,7 +120,7 @@ const ProductMenuSelector = ({
   onChange,
 }: ProductMenuSelectorProps) => {
   const { t } = useTranslation()
-  const safeItems = selectedItems || []
+  const safeItems = useMemo(() => selectedItems ?? [], [selectedItems])
   const { data: products = [], isLoading } = useFetchProducts()
   const [quantityDrafts, setQuantityDrafts] = useState<Record<number, string>>(
     {}
@@ -99,15 +144,20 @@ const ProductMenuSelector = ({
     })
   }, [products, selectedProductType])
 
+  const selectedTypeCount = useMemo(() => {
+    return filteredProducts.length
+  }, [filteredProducts])
+
   // Group products by master categories
   const masterCategoryGroups = useMemo<MasterCategoryGroup[]>(() => {
     const masterMap = new Map<number, MasterCategoryGroup>()
 
     filteredProducts.forEach((product) => {
-      const categories = (product as any).categories || []
-      categories.forEach((category: any) => {
-        const masterCategories = category.masterCategories || []
-        masterCategories.forEach((masterCat: any) => {
+      const typedProduct = product as ProductWithMetadata
+      const categories = typedProduct.categories ?? []
+      categories.forEach((category) => {
+        const masterCategories = category.masterCategories ?? []
+        masterCategories.forEach((masterCat) => {
           if (!masterMap.has(masterCat.masterCategoryId)) {
             masterMap.set(masterCat.masterCategoryId, {
               masterCategoryId: masterCat.masterCategoryId,
@@ -167,28 +217,39 @@ const ProductMenuSelector = ({
 
   // Get filtered products based on all filters
   const displayedProducts = useMemo(() => {
-    return masterCategoryGroups.flatMap((masterGroup) => {
-      // If master category is selected, only show that group
+    const seen = new Set<number>()
+    const grouped = masterCategoryGroups.flatMap((masterGroup) => {
       if (
         selectedMasterCategory !== null &&
         masterGroup.masterCategoryId !== selectedMasterCategory
-      ) {
+      )
         return []
-      }
 
       return masterGroup.categoryGroups.flatMap((categoryGroup) => {
-        // If category is selected, only show that category
         if (
           selectedCategory !== null &&
           categoryGroup.categoryId !== selectedCategory
-        ) {
+        )
           return []
-        }
-
         return categoryGroup.products
       })
     })
-  }, [masterCategoryGroups, selectedMasterCategory, selectedCategory])
+
+    // Deduplicate + re-apply type filter as safety guard
+    return grouped.filter((product) => {
+      if (seen.has(product.id)) return false
+      seen.add(product.id)
+      if (selectedProductType === 'all') return true
+      const type = getProductType(product)
+      if (selectedProductType === 'Vegetarian') return type === 'VEG'
+      return type === 'NON_VEG'
+    })
+  }, [
+    masterCategoryGroups,
+    selectedMasterCategory,
+    selectedCategory,
+    selectedProductType,
+  ])
 
   const productsById = useMemo(() => {
     const map = new Map<number, Product>()
@@ -197,19 +258,6 @@ const ProductMenuSelector = ({
     })
     return map
   }, [products])
-
-  useEffect(() => {
-    setQuantityDrafts((prev) => {
-      const next: Record<number, string> = {}
-      safeItems.forEach((item) => {
-        const productId = getOrderItemProductId(item)
-        if (productId && productId in prev) {
-          next[productId] = prev[productId]
-        }
-      })
-      return next
-    })
-  }, [safeItems])
 
   const updateItems = (nextItems: OrderItem[]) => onChange(nextItems)
 
@@ -321,10 +369,15 @@ const ProductMenuSelector = ({
         <div className="space-y-7 sm:space-y-9">
           {/* Product Type Filter Chips */}
           <div className="space-y-3">
-            <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
-              {t('product_type') || 'Product Type'}
-            </p>
-                      <div className="mb-2 flex gap-3 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+            <div className="flex items-center justify-between gap-3">
+              <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
+                {t('product_type') || 'Product Type'}
+              </p>
+              <span className="rounded-full bg-zinc-100 px-3 py-1 text-[11px] font-semibold text-zinc-600">
+                {selectedTypeCount} {t('items') || 'items'}
+              </span>
+            </div>
+            <div className="scrollbar-hide mb-2 flex gap-3 overflow-x-auto pb-2 whitespace-nowrap">
               <button
                 type="button"
                 onClick={() => setSelectedProductType('all')}
@@ -348,7 +401,7 @@ const ProductMenuSelector = ({
               >
                 {t('vegetarian') || 'Veg'}
               </button>
-               <button
+              <button
                 type="button"
                 onClick={() => setSelectedProductType('Non-Vegetarian')}
                 className={`rounded-full px-4 py-2 text-xs font-medium whitespace-nowrap transition ${
@@ -368,7 +421,7 @@ const ProductMenuSelector = ({
               <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
                 {t('category') || 'Category'}
               </p>
-                        <div className="mb-2 flex gap-3 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+              <div className="scrollbar-hide mb-2 flex gap-3 overflow-x-auto pb-2 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => {
@@ -411,7 +464,7 @@ const ProductMenuSelector = ({
               <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
                 {t('subcategory') || 'Subcategory'}
               </p>
-              <div className="mb-2 flex gap-3 overflow-x-auto whitespace-nowrap pb-2 scrollbar-hide">
+              <div className="scrollbar-hide mb-2 flex gap-3 overflow-x-auto pb-2 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => setSelectedCategory(null)}
@@ -444,60 +497,74 @@ const ProductMenuSelector = ({
 
           {/* Products Grid */}
           {displayedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {displayedProducts.map((product) => {
                 const selectedLine = safeItems.find(
                   (item) => getOrderItemProductId(item) === product.id
                 )
                 const isSelected = Boolean(selectedLine)
+                const productType = getProductType(product)
+                const accentClass =
+                  productType === 'NON_VEG'
+                    ? 'from-red-500/10 via-white to-white'
+                    : 'from-green-500/10 via-white to-white'
                 return (
                   <div
                     key={product.id}
-                    className={`flex flex-col gap-3 rounded-md border p-3 transition ${
+                    className={`group flex flex-col gap-3 overflow-hidden rounded-2xl border p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
                       isSelected
-                        ? 'border-zinc-300 bg-white shadow-sm'
-                        : 'border-[#E4E4E7]/50 bg-white shadow-sm hover:border-zinc-900'
+                        ? 'border-zinc-300 bg-white'
+                        : 'border-[#E4E4E7]/60 bg-white hover:border-zinc-900/25'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-zinc-900 sm:text-sm">
-                          {product.primaryName}
-                        </p>
-                        <p className="text-[10px] text-zinc-500 sm:text-xs">
+                    <div
+                      className={`-mx-4 -mt-4 h-1 bg-linear-to-r ${accentClass}`}
+                    />
+
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-sm font-semibold text-zinc-900 sm:text-[15px]">
+                            {product.primaryName}
+                          </p>
+                          {getProductType(product) && (
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                getProductType(product) === 'VEG'
+                                  ? 'bg-green-50 text-green-700'
+                                  : 'bg-red-50 text-red-700'
+                              }`}
+                            >
+                              {getProductTypeDisplay(getProductType(product))}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 line-clamp-2 text-xs text-zinc-500 sm:text-sm">
                           {product.secondaryName || t('orders_signature_dish')}
                         </p>
-                        {getProductType(product) && (
-                          <p
-                            className={`text-[10px] font-medium ${
-                              getProductType(product) === 'VEG'
-                                ? 'text-green-600'
-                                : 'text-red-600'
-                            }`}
-                          >
-                            {getProductTypeDisplay(getProductType(product))}
-                          </p>
-                        )}
                       </div>
                     </div>
-                    <span className="text-xs font-semibold text-zinc-900 sm:text-sm">
-                      {formatCurrency(product.price ?? 0)}
-                    </span>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-sm font-semibold text-zinc-900 sm:text-base">
+                        {formatCurrency(product.price ?? 0)}
+                      </span>
+                      {isSelected && (
+                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700">
+                          {selectedLine?.quantity ?? 1} selected
+                        </span>
+                      )}
+                    </div>
+
                     {isSelected ? (
-                      <div
-                        className="flex items-center gap-2 rounded-lg p-2 shadow-sm"
-                        style={{
-                          background:
-                            'linear-gradient(to right, rgb(245, 245, 245), rgb(228, 228, 231))',
-                        }}
-                      >
+                      <div className="flex items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-2">
                         <button
                           type="button"
                           aria-label={t('decrease_quantity')}
                           onClick={() =>
                             product.id && handleQuantityChange(product.id, -1)
                           }
-                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-red-500 text-white transition hover:bg-red-600 active:scale-95"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-red-500 text-white transition hover:bg-red-600 active:scale-95"
                         >
                           <Minus size={14} strokeWidth={2.5} />
                         </button>
@@ -523,7 +590,7 @@ const ProductMenuSelector = ({
                               selectedLine?.quantity ?? 1
                             )
                           }
-                          className="h-8 w-12 rounded-md border-2 border-zinc-200 bg-white text-center text-sm font-bold text-zinc-900 transition outline-none focus:border-zinc-900 focus:shadow-md"
+                          className="h-9 w-14 rounded-lg border-2 border-zinc-200 bg-white text-center text-sm font-bold text-zinc-900 transition outline-none focus:border-zinc-900 focus:shadow-md"
                         />
                         <button
                           type="button"
@@ -531,7 +598,7 @@ const ProductMenuSelector = ({
                           onClick={() =>
                             product.id && handleQuantityChange(product.id, 1)
                           }
-                          className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md bg-green-500 text-white transition hover:bg-green-600 active:scale-95"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-green-500 text-white transition hover:bg-green-600 active:scale-95"
                         >
                           <Plus size={14} strokeWidth={2.5} />
                         </button>
@@ -541,7 +608,7 @@ const ProductMenuSelector = ({
                         type="button"
                         state="default"
                         onClick={() => handleAddProduct(product.id)}
-                        className="rounded-sm border border-[#E4E4E7] px-3 py-1.5 text-[10px] font-semibold tracking-wide uppercase sm:text-xs"
+                        className="rounded-lg border border-[#E4E4E7] px-3 py-2 text-[10px] font-semibold tracking-wide uppercase sm:text-xs"
                       >
                         {t('add')}
                       </ButtonSm>
