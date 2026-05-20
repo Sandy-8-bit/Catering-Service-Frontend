@@ -35,6 +35,18 @@ const RecipesPage = () => {
       ),
     },
     {
+      headingTitle: 'Secondary Name',
+      className: 'min-w-[220px]',
+      accessVar: 'secondaryName',
+      render: (_value, row: Product) => (
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold text-zinc-900">
+            {row.secondaryName ?? '—'}
+          </span>
+        </div>
+      ),
+    },
+    {
       headingTitle: t('product_category'),
       className: 'min-w-[160px]',
       render: (_value, row: Product) => (
