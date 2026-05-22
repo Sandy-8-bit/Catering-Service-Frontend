@@ -45,8 +45,10 @@ const DriverOrderPage = () => {
   const { data, isLoading, isError } = useFetchDriverOrderDelivery({
     orderId: parsedOrderId,
   })
-  const order: DriverOrderDetail | undefined = data?.[0]
-
+const order: DriverOrderDetail | undefined = Array.isArray(data)
+  ? data?.[0]
+  : (data as any)?.data ?? (data as any)
+  
   const [vessels, setVessels] = useState<
     { id?: number; name: string; quantityGiven: number }[]
   >([])
