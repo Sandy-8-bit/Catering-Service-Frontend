@@ -96,7 +96,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
       setVesselReturns(
         order.vessels.map((v) => ({ id: v.id, quantityReturned: 0 }))
       )
-      setAmountCollected(order.orderBalanceAmount)
+     
     }
   }, [order])
 
@@ -168,7 +168,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
     setIsStartingOrder(true)
     updateVessels(
       {
-        driverId: order!.driverId,
+        driverId: order!.driverId ?? null,
         orderId: order!.orderId,
         vessels: pendingVessels,
       },
@@ -181,13 +181,19 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
             setVessels(data.data[0]?.vessels || [])
           }
         },
-        onError: (err: any) => {
-          setError(
-            err?.response?.data?.message ||
-              t('driver_failed_start_order')
-          )
-          setIsStartingOrder(false)
-        },
+ onError: (err: any) => {
+  console.log('START ORDER ERROR', err)
+  console.log('RESPONSE', err?.response)
+  console.log('DATA', err?.response?.data)
+
+  setError(
+    err?.response?.data?.message ||
+    err?.message ||
+    'Failed to start order'
+  )
+
+  setIsStartingOrder(false)
+}
       }
     )
   }
@@ -195,18 +201,10 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
   const handleCloseOrder = async () => {
     setError('')
     setSuccess('')
-    if (amountCollected <= 0) {
-      setError(t('driver_enter_valid_amount_collected'))
-      return
-    }
-    if (!paymentMode) {
-      setError(t('driver_select_payment_mode'))
-      return
-    }
     setIsCloseOrderLoading(true)
     completeReturn(
       {
-        deliveryId: order!.id,
+        deliveryId: order!.orderId,
         vessels: vesselReturns,
         amountCollected,
         paymentMode,
@@ -599,6 +597,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
                         <p className="text-xs text-zinc-400">
                           {t('driver_given')}: {vessel.quantityGiven}
                         </p>
+                        <p className="text-xs text-zinc-400">returned: {vessel.quantityReturned}</p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <label className="text-[11px] text-zinc-400">
@@ -632,30 +631,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
               )}
             </div>
 
-            {/* Vessel Return Summary */}
-            {order?.vessels && order.vessels.length > 0 && (
-              <div className="flex flex-col gap-2 rounded-lg border border-blue-100 px-3 py-2.5">
-                <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                  ✓ {t('driver_vessel_return_summary') || 'Vessel Return Status'}
-                </p>
-                <div className="flex flex-col gap-1.5">
-                  {order.vessels.map((vessel) => {
-                 
-                    return (
-                      <div key={vessel.id} className="flex items-center justify-between">
-                        <span className="text-sm text-black-900">
-                          {vessel.name}
-                        </span>
-                        <span className="text-xs font-medium text-blue-700">
-                          Returned: <span className="font-bold">{vessel.quantityReturned}</span> / {vessel.quantityGiven}
-                         
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+
 
             {/* Amount Collected */}
             <div className="flex flex-col gap-2">
@@ -670,7 +646,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
                   type="number"
                   min={0}
                   step={0.01}
-                  value={balanceAmount || ''}
+                  value={amountCollected  || ''}
                   onChange={(e) => setAmountCollected(Number(e.target.value))}
                   className="w-full rounded-lg border border-zinc-300 py-2.5 pr-4 pl-7 text-sm focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   placeholder="0.00"
@@ -744,7 +720,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
             {/* Close button */}
             <button
               onClick={handleCloseOrder}
-              disabled={isCloseOrderLoading || amountCollected <= 0}
+              disabled={isCloseOrderLoading}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 py-3 text-sm font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
               type="button"
             >

@@ -133,40 +133,56 @@ export const useUpdateDeliveryVessels = () => {
     orderId,
     vessels,
   }: {
-    driverId: number
+    driverId: number | null
     orderId: number
     vessels: VesselPayload[]
   }) => {
     try {
       const token = authHandler()
 
+      const payload = {
+        orderId,
+        vessels,
+        ...(driverId != null && { driverId }),
+      }
+
+      console.log(
+        '[Update Delivery Vessels] Payload:',
+        payload,
+      )
+
       const res = await axiosInstance.post(
-        `${apiRoutes.driverDeliveries}`,
-        {
-          driverId,
-          orderId,
-          vessels,
-        }, // ✅ correct request body
+        apiRoutes.driverDeliveries,
+        payload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       )
 
       return res.data
-    } catch (error: unknown) {
-      handleApiError(error, 'Update Delivery Vessels')
-      throw error
+    } catch (error) {
+      console.error(
+        '[Update Delivery Vessels] Error:',
+        error,
+      )
+
+      throw handleApiError(
+        error,
+        'Update Delivery Vessels',
+      )
     }
   }
 
   return useMutation({
     mutationFn: updateVessels,
+
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ['DRIVER_ORDER_DELIVERY'],
       })
+
       queryClient.invalidateQueries({
         queryKey: ['DRIVER_DASHBOARD'],
       })
