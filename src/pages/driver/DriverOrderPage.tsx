@@ -652,14 +652,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
                   placeholder="0.00"
                 />
               </div>
-              <div className="flex justify-between text-xs text-zinc-500">
-                <span>{t('driver_balance_to_collect')}</span>
-                <span
-                  className={`font-semibold ${order?.orderBalanceAmount > 0 ? 'text-orange-600' : 'text-green-600'}`}
-                >
-                  ₹{order?.orderBalanceAmount.toFixed(2)}
-                </span>
-              </div>
+            
             </div>
 
             {/* Payment Summary */}
