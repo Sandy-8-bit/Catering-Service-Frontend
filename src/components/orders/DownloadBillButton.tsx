@@ -594,6 +594,8 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
     (data.advanceAmount != null
       ? `Rs. ${fmtMoney(data.advanceAmount)}`
       : undefined)
+  const resolvedDeliveryCharge =
+    data.deliveryCharge != null ? fmtMoney(data.deliveryCharge) : '--'
   const summary = data as BillSummary
   const billTitle = resolveBillTitle(type)
 
@@ -858,7 +860,9 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               )}
             </View>
               <View style={s.signoffRight}>
-                <Text style={s.signoffFor}>DeliveryCharges : ₹200</Text>
+                <Text style={s.signoffFor}>
+                  Delivery Charges: Rs. {resolvedDeliveryCharge}
+                </Text>
               </View>
           </View>
         </View>
