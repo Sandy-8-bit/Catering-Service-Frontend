@@ -46,15 +46,15 @@ const RecipesPage = () => {
         </div>
       ),
     },
-    {
-      headingTitle: t('product_category'),
-      className: 'min-w-[160px]',
-      render: (_value, row: Product) => (
-        <span className="text-sm font-medium text-zinc-700">
-          {row.categoryIds?.length ? row.categoryIds.join(', ') : '—'}
-        </span>
-      ),
-    },
+    // {
+    //   headingTitle: t('product_category'),
+    //   className: 'min-w-[160px]',
+    //   render: (_value, row: Product) => (
+    //     <span className="text-sm font-medium text-zinc-700">
+    //       {row.categoryIds?.length ? row.categoryIds.join(', ') : '—'}
+    //     </span>
+    //   ),
+    // },
     {
       headingTitle: t('product_price'),
       className: 'min-w-[120px] text-right',

@@ -34,6 +34,7 @@ interface RecipeRow {
   // Shared
   qtyPerUnit: number
   unit: string
+  notes: string
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -54,6 +55,7 @@ const createEmptyRow = (ingredientType: IngredientType): RecipeRow => ({
   subProductPrimaryName: '',
   qtyPerUnit: 0,
   unit: ingredientType === 'SUB_PRODUCT' ? 'portion' : '',
+  notes: '',
 })
 
 const isDraftRow = (row: RecipeRow) => row.localId < 0
@@ -88,6 +90,7 @@ const normalizeRows = (rows: RecipeRow[]): RecipeItemPayload[] =>
           rawMaterialId: row.rawMaterialId,
           qtyPerUnit: row.qtyPerUnit,
           unit: row.unit.trim().toLowerCase(),
+          notes: row.notes.trim() || undefined,
         }
       }
       return {
@@ -95,6 +98,7 @@ const normalizeRows = (rows: RecipeRow[]): RecipeItemPayload[] =>
         subProductId: row.subProductId,
         qtyPerUnit: row.qtyPerUnit,
         unit: row.unit.trim().toLowerCase(),
+        notes: row.notes.trim() || undefined,
       }
     })
     .sort((a, b) => {
@@ -156,6 +160,7 @@ const mapRecipeToRow = (
           recipe.unit ??
           '')
         : (recipe.subProduct?.unit ?? recipe.unit ?? ''),
+    notes: recipe.notes ?? '',
   }
 }
 
@@ -408,6 +413,24 @@ const RecipeDetailsPage = () => {
       },
     },
     {
+      headingTitle: 'Notes',
+      className: 'min-w-[200px]',
+      render: (_, row: RecipeRow) => (
+        <TableInput
+          title=""
+          type="str"
+          inputValue={row.notes}
+          isEditMode={isEditMode}
+          onChange={(val) =>
+            updateRow(row.localId, {
+              notes: val,
+            })
+          }
+          placeholder="Add notes..."
+        />
+      ),
+    },
+    {
       headingTitle: 'Actions',
       className: 'w-24 text-center',
       render: (_, row: RecipeRow) =>
@@ -498,6 +521,24 @@ const RecipeDetailsPage = () => {
         <span className="text-sm font-medium text-zinc-700">
           {row.unit || 'portion'} qt
         </span>
+      ),
+    },
+    {
+      headingTitle: 'Notes',
+      className: 'min-w-[200px]',
+      render: (_, row: RecipeRow) => (
+        <TableInput
+          title=""
+          type="str"
+          inputValue={row.notes}
+          isEditMode={isEditMode}
+          onChange={(val) =>
+            updateRow(row.localId, {
+              notes: val,
+            })
+          }
+          placeholder="Add notes..."
+        />
       ),
     },
     {
@@ -651,6 +692,48 @@ const RecipeDetailsPage = () => {
             }
           />
         </div>
+
+        {/* ── Notes Section ──────────────────────────────────────────────── */}
+        {(() => {
+          const itemsWithNotes = editData.filter(
+            (row) => !isRowEmpty(row) && row.notes.trim()
+          )
+          if (itemsWithNotes.length === 0) return null
+
+          return (
+            <div className="flex flex-col gap-4 rounded-[12px] border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-center gap-2">
+                <span className="h-4 w-0.5 rounded-full bg-amber-500" />
+                <h2 className="text-sm font-bold tracking-wide text-amber-900 uppercase">
+                  Notes
+                </h2>
+              </div>
+              <div className="space-y-3">
+                {itemsWithNotes.map((row) => (
+                  <div
+                    key={row.localId}
+                    className="space-y-1 rounded-lg bg-white p-3"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-zinc-100 text-xs font-semibold text-zinc-600">
+                        •
+                      </span>
+                      <h3 className="text-sm font-semibold text-zinc-800">
+                        {row.ingredientType === 'RAW_MATERIAL'
+                          ? row.rawMaterialPrimaryName
+                          : row.subProductPrimaryName}
+                      </h3>
+                      <span className="text-xs text-zinc-500">
+                        ({row.qtyPerUnit} {row.unit})
+                      </span>
+                    </div>
+                    <p className="text-sm text-zinc-700 ml-7">{row.notes}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
       </section>
     </main>
   )

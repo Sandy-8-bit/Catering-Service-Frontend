@@ -38,6 +38,7 @@ export interface Recipe {
   subProductName?: string | null
   qtyPerUnit: number
   unit: string
+  notes?: string
 }
 
 export interface RecipeItemPayload {
@@ -46,6 +47,7 @@ export interface RecipeItemPayload {
   subProductId?: number
   qtyPerUnit: number
   unit: string
+  notes?: string
 }
 
 export interface RecipeBulkUpdatePayload {
