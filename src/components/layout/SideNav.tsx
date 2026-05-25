@@ -24,11 +24,12 @@ interface NavigationItem {
   section: NavigationSection
 }
 
-const NAVIGATION_SECTIONS: Array<{ key: NavigationSection; titleKey: string }> = [
-  { key: 'main', titleKey: 'side_nav_main_menu' },
-  { key: 'orders', titleKey: 'side_nav_order_management' },
-  { key: 'settings', titleKey: 'side_nav_settings' },
-]
+const NAVIGATION_SECTIONS: Array<{ key: NavigationSection; titleKey: string }> =
+  [
+    { key: 'main', titleKey: 'side_nav_main_menu' },
+    { key: 'orders', titleKey: 'side_nav_order_management' },
+    { key: 'settings', titleKey: 'side_nav_settings' },
+  ]
 
 const SideNav: React.FC = () => {
   const { t } = useTranslation()
@@ -60,38 +61,38 @@ const SideNav: React.FC = () => {
   }
 
   const navigationItems: NavigationItem[] = useMemo(() => {
-const items: NavigationItem[] = [
-  {
-    label: t('side_nav_dashboard'),
-    path: appRoutes.dashboard.path,
-    icon: <LayoutDashboard className="h-6 w-6" />,
-    section: 'main',
-  },
-  {
-    label: t('side_nav_order_management'),
-    path: appRoutes.orders.path,
-    icon: <ShoppingCart className="h-6 w-6" />,
-    section: 'orders',
-  },
-  {
-    label: t('side_nav_expenses'),
-    path: appRoutes.expenses.path,
-    icon: <Wallet className="h-6 w-6" />,
-    section: 'orders',
-  },
-  {
-    label: t('side_nav_master_configuration'),
-    path: appRoutes.master.path,
-    icon: <Settings className="h-6 w-6" />,
-    section: 'settings',
-  },
-  {
-    label: t('side_nav_reports'),
-    path: appRoutes.reports.path,
-    icon: <BarChart3 className="h-6 w-6" />,
-    section: 'settings',
-  },
-]
+    const items: NavigationItem[] = [
+      {
+        label: t('side_nav_dashboard'),
+        path: appRoutes.dashboard.path,
+        icon: <LayoutDashboard className="h-6 w-6" />,
+        section: 'main',
+      },
+      {
+        label: t('side_nav_order_management'),
+        path: appRoutes.orders.path,
+        icon: <ShoppingCart className="h-6 w-6" />,
+        section: 'orders',
+      },
+      {
+        label: t('side_nav_expenses'),
+        path: appRoutes.expenses.path,
+        icon: <Wallet className="h-6 w-6" />,
+        section: 'orders',
+      },
+      {
+        label: t('side_nav_master_configuration'),
+        path: appRoutes.master.path,
+        icon: <Settings className="h-6 w-6" />,
+        section: 'settings',
+      },
+      {
+        label: t('side_nav_reports'),
+        path: appRoutes.reports.path,
+        icon: <BarChart3 className="h-6 w-6" />,
+        section: 'settings',
+      },
+    ]
 
     if (normalizedRole === 'STAFF') {
       return items.filter((item) => item.path === appRoutes.orders.path)
@@ -120,7 +121,9 @@ const items: NavigationItem[] = [
       <div className="md:hidden">
         {/* 🔝 Top Nav */}
         <div className="flex items-center justify-between bg-white px-4 py-3 shadow-md">
-          <span className="font-semibold text-slate-800">{t('side_nav_brand')}</span>
+          <span className="font-semibold text-slate-800">
+            {t('side_nav_brand')}
+          </span>
           <button onClick={() => setMenuOpen(true)}>
             <Menu className="h-6 w-6" />
           </button>
@@ -163,7 +166,6 @@ const items: NavigationItem[] = [
             </div>
           </div>
         )}
-
       </div>
     )
   }
@@ -179,10 +181,10 @@ const items: NavigationItem[] = [
 
       <div
         style={{ zoom: 0.85 }}
-        className="floating-container bg-linear-to-br from-amber-50 via-white to-amber-50  relative hidden min-h-[125vh] border-r border-gray-200 bg-[#FAFAFA] md:flex"
+        className="floating-container relative z-[999999999] hidden min-h-[125vh] border-r border-gray-200 bg-[#FAFAFA] bg-linear-to-br from-amber-50 via-white to-amber-50 md:flex"
       >
         <motion.section
-          className={`flex h-[115vh] flex-col gap-4 overflow-hidden bg-amber-50  px-2.5 pt-4 transition-all duration-300 select-none ${isExpanded ? 'w-[280px]' : 'w-[100px]'}`}
+          className={`flex h-[115vh] flex-col gap-4 overflow-hidden bg-amber-50 px-2.5 pt-4 transition-all duration-300 select-none ${isExpanded ? 'w-[280px]' : 'w-[100px]'}`}
           animate={{ x: 0, opacity: 1 }}
         >
           <motion.div
@@ -191,27 +193,27 @@ const items: NavigationItem[] = [
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.4 }}
           >
-     <button
-  onClick={() => toggleExpansion()}
-  className={`${
-    isExpanded
-      ? 'h-14 w-14 self-center'
-      : 'h-16 w-16 self-center'
-  } flex items-center justify-center`}
->
-  <img
-    src="/icons/logo-icon.svg"
-    alt="Logo"
-    className="h-full w-full object-contain"
-  />
-</button>
+            <button
+              onClick={() => toggleExpansion()}
+              className={`${
+                isExpanded ? 'h-14 w-14 self-center' : 'h-16 w-16 self-center'
+              } flex items-center justify-center`}
+            >
+              <img
+                src="/icons/logo-icon.svg"
+                alt="Logo"
+                className="h-full w-full object-contain"
+              />
+            </button>
 
             {isExpanded && (
               <div className="flex w-full flex-col">
                 <span className="text-md min-w-max font-semibold text-slate-900">
                   {t('side_nav_brand')}
                 </span>
-                <span className="text-sm text-slate-500">{t('side_nav_admin')}</span>
+                <span className="text-sm text-slate-500">
+                  {t('side_nav_admin')}
+                </span>
               </div>
             )}
             <button
@@ -318,7 +320,7 @@ const NavigationButton: React.FC<NavigationButtonProps> = ({
       className={`Navigation-button-container w-full cursor-pointer rounded-[12px] border-2 border-transparent transition-all duration-300 ease-in-out ${isExpanded ? `flex items-center justify-start gap-3 px-4 py-2 ${isActive ? 'border-2! border-[#eeeeee]! bg-white text-slate-600' : ''}` : `flex scale-90 flex-col items-center px-1.5 py-2 text-center`}`}
     >
       <div
-        className={`flex items-center justify-center rounded-[10px] transition-all text-slate-600 ${isExpanded ? 'h-11 w-11 bg-white/20' : `mb-1 h-12 w-12 ${isActive ? 'bg-orange-500 text-white' : ''}`}`}
+        className={`flex items-center justify-center rounded-[10px] text-slate-600 transition-all ${isExpanded ? 'h-11 w-11 bg-white/20' : `mb-1 h-12 w-12 ${isActive ? 'bg-orange-500 text-white' : ''}`}`}
       >
         {icon}
       </div>

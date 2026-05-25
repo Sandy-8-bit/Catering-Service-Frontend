@@ -285,7 +285,6 @@ const pdf = StyleSheet.create({
   colTotal: { flex: 1.5, textAlign: 'right' },
   colProfit: { flex: 1.5, textAlign: 'right' },
   colPerPlate: { flex: 1.5, textAlign: 'right' },
-  colRawCost: { flex: 1.5, textAlign: 'right' },
   // ── Order banner ──
   orderBanner: {
     backgroundColor: INDIGO_LIGHT,
@@ -476,7 +475,6 @@ const MenuItemsTable: FC<{ items: MenuItem[]; title: string }> = ({
       <Text style={[pdf.thText, pdf.colQty]}>Qty</Text>
       <Text style={[pdf.thText, pdf.colUnit]}>Unit</Text>
       <Text style={[pdf.thText, pdf.colPerPlate]}>Plate</Text>
-      <Text style={[pdf.thText, pdf.colRawCost]}>Raw</Text>
       <Text style={[pdf.thText, pdf.colTotal]}>Total</Text>
       <Text style={[pdf.thText, pdf.colProfit]}>Profit</Text>
     </View>
@@ -499,9 +497,6 @@ const MenuItemsTable: FC<{ items: MenuItem[]; title: string }> = ({
           </Text>
           <Text style={[pdf.tdText, pdf.colPerPlate]}>
             {fmt(item.perPlate)}
-          </Text>
-          <Text style={[pdf.tdText, pdf.colRawCost]}>
-            {fmt(item.productRawMaterialCost)}
           </Text>
           <Text style={[pdf.tdBold, pdf.colTotal]}>
             {fmt(item.productLineTotal)}
@@ -820,7 +815,6 @@ const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
           <Th align="right">Qty</Th>
           <Th align="right">Unit Price</Th>
           <Th align="right">Per Plate</Th>
-          <Th align="right">Raw Cost</Th>
           <Th align="right">Line Total</Th>
           <Th align="right">Profit</Th>
         </tr>
@@ -829,7 +823,7 @@ const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
         {items.length === 0 ? (
           <tr>
             <td
-              colSpan={7}
+              colSpan={6}
               style={{
                 padding: 14,
                 textAlign: 'center',
@@ -874,7 +868,6 @@ const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
               <Td align="right">{item.quantity}</Td>
               <Td align="right">{fmt(item.productUnitPrice)}</Td>
               <Td align="right">{fmt(item.perPlate)}</Td>
-              <Td align="right">{fmt(item.productRawMaterialCost)}</Td>
               <Td align="right" bold>
                 {fmt(item.productLineTotal)}
               </Td>
