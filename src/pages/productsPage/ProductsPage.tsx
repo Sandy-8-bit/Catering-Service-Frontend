@@ -59,11 +59,16 @@ export const ProductsPage = () => {
     useDeleteProduct()
 
   // State
-  const [formState, setFormState] = useState<FormState>({ type: null, product: null })
+  const [formState, setFormState] = useState<FormState>({
+    type: null,
+    product: null,
+  })
   const [allProducts, setAllProducts] = useState<TransformedProduct[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState<TransformedProduct | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState<TransformedProduct | null>(
+    null
+  )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [notification, setNotification] = useState<{
     type: 'success' | 'error'
@@ -71,14 +76,18 @@ export const ProductsPage = () => {
   } | null>(null)
 
   // Safe category options
-  const categoryOptions = Array.isArray(categoryOptionsData) ? categoryOptionsData : []
+  const categoryOptions = Array.isArray(categoryOptionsData)
+    ? categoryOptionsData
+    : []
 
   // Transform API products to match Product type
   const transformProduct = useCallback((product: any): TransformedProduct => {
     try {
       // Extract category IDs from the categories array
       const categoryIds = Array.isArray(product.categories)
-        ? product.categories.map((cat: any) => cat.categoryId || cat.id).filter(Boolean)
+        ? product.categories
+            .map((cat: any) => cat.categoryId || cat.id)
+            .filter(Boolean)
         : []
 
       const transformed: TransformedProduct = {
@@ -95,7 +104,9 @@ export const ProductsPage = () => {
             ? 'VEG'
             : 'NON_VEG'
           : 'VEG',
-        subProducts: Array.isArray(product.subProducts) ? product.subProducts : [],
+        subProducts: Array.isArray(product.subProducts)
+          ? product.subProducts
+          : [],
       }
       return transformed
     } catch (error) {
@@ -115,26 +126,25 @@ export const ProductsPage = () => {
     }
   }, [])
 
-useEffect(() => {
-  try {
-    const list = Array.isArray(productsData)
-      ? productsData
-      : productsData ?? []
+  useEffect(() => {
+    try {
+      const list = Array.isArray(productsData)
+        ? productsData
+        : (productsData ?? [])
 
-    // 🔥 IMPORTANT FIX
-    if (!list || list.length === 0) {
-      console.log("Skipping empty response")
-      return
+      // 🔥 IMPORTANT FIX
+      if (!list || list.length === 0) {
+        console.log('Skipping empty response')
+        return
+      }
+
+      const transformed = list.map(transformProduct)
+      setAllProducts(transformed)
+      console.log('Products loaded:', transformed.length)
+    } catch (error) {
+      console.error('Error transforming products:', error)
     }
-
-    const transformed = list.map(transformProduct)
-    setAllProducts(transformed)
-    console.log('Products loaded:', transformed.length)
-
-  } catch (error) {
-    console.error('Error transforming products:', error)
-  }
-}, [productsData, transformProduct])
+  }, [productsData, transformProduct])
 
   // Show notification
   const showNotification = useCallback(
@@ -151,7 +161,9 @@ useEffect(() => {
     return allProducts.filter((product) => {
       const matchesSearch =
         product.primaryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.secondaryName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.secondaryName
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
         product.description.toLowerCase().includes(searchQuery.toLowerCase())
 
       const matchesCategory =
@@ -208,7 +220,10 @@ useEffect(() => {
 
       setAllProducts((prev) => prev.filter((p) => p.id !== deleteConfirm.id))
       setDeleteConfirm(null)
-      showNotification('success', `${deleteConfirm.primaryName} deleted successfully`)
+      showNotification(
+        'success',
+        `${deleteConfirm.primaryName} deleted successfully`
+      )
       await refetch()
     } catch (error) {
       console.error('Delete error:', error)
@@ -232,7 +247,8 @@ useEffect(() => {
           description: formProduct.description.trim(),
           price: Number(formProduct.price) || 0,
           categoryIds:
-            Array.isArray(formProduct.categoryIds) && formProduct.categoryIds.length > 0
+            Array.isArray(formProduct.categoryIds) &&
+            formProduct.categoryIds.length > 0
               ? formProduct.categoryIds
               : [],
           available: Boolean(formProduct.available),
@@ -244,17 +260,23 @@ useEffect(() => {
           // Create new product
           await createProduct([
             {
-            ...payload
+              ...payload,
             },
           ])
-          showNotification('success', `${formProduct.primaryName} created successfully`)
+          showNotification(
+            'success',
+            `${formProduct.primaryName} created successfully`
+          )
         } else if (formState.type === 'edit') {
           // Edit existing product
           await editProduct([formProduct])
           setAllProducts((prev) =>
             prev.map((p) => (p.id === formProduct.id ? formProduct : p))
           )
-          showNotification('success', `${formProduct.primaryName} updated successfully`)
+          showNotification(
+            'success',
+            `${formProduct.primaryName} updated successfully`
+          )
         }
 
         setFormState({ type: null, product: null })
@@ -278,8 +300,9 @@ useEffect(() => {
     [categoryOptions]
   )
 
-const isLoading = isProductsLoading || allProducts.length === 0
-  const isPending = isCreateProductPending || isEditProductsPending || isDeleteProductsPending
+  const isLoading = isProductsLoading
+  const isPending =
+    isCreateProductPending || isEditProductsPending || isDeleteProductsPending
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-yellow-50">
@@ -305,7 +328,7 @@ const isLoading = isProductsLoading || allProducts.length === 0
               whileTap={{ scale: 0.98 }}
               onClick={handleAddClick}
               disabled={isLoading || isPending}
-              className="flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-orange-700 active:shadow-md disabled:opacity-50 sm:w-auto w-full"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-600 px-6 py-3 font-semibold text-white shadow-lg transition hover:bg-orange-700 active:shadow-md disabled:opacity-50 sm:w-auto"
             >
               <Plus className="h-5 w-5" />
               <span>{t('add_product') || 'Add Product'}</span>
@@ -315,14 +338,14 @@ const isLoading = isProductsLoading || allProducts.length === 0
           {/* Search and Filter */}
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-orange-400" />
+              <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-orange-400" />
               <input
                 type="text"
                 placeholder={t('search_products') || 'Search products...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 disabled={isLoading}
-                className="w-full rounded-lg border-2 border-orange-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition placeholder:text-orange-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-orange-50"
+                className="w-full rounded-lg border-2 border-orange-200 bg-white py-2.5 pr-4 pl-10 text-sm transition outline-none placeholder:text-orange-300 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-orange-50"
               />
             </div>
 
@@ -330,19 +353,23 @@ const isLoading = isProductsLoading || allProducts.length === 0
               <select
                 value={selectedCategory ?? ''}
                 onChange={(e) =>
-                  setSelectedCategory(e.target.value ? parseInt(e.target.value) : null)
+                  setSelectedCategory(
+                    e.target.value ? parseInt(e.target.value) : null
+                  )
                 }
                 disabled={isLoading}
-                className="w-full appearance-none rounded-lg border-2 border-orange-200 bg-white py-2.5 pl-4 pr-10 text-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-orange-50"
+                className="w-full appearance-none rounded-lg border-2 border-orange-200 bg-white py-2.5 pr-10 pl-4 text-sm transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:bg-orange-50"
               >
-                <option value="">{t('all_categories') || 'All Categories'}</option>
+                <option value="">
+                  {t('all_categories') || 'All Categories'}
+                </option>
                 {categoryOptions.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.label}
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-orange-400" />
+              <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-orange-400" />
             </div>
           </div>
         </div>
@@ -353,22 +380,22 @@ const isLoading = isProductsLoading || allProducts.length === 0
         {isLoading ? (
           // Loading State - Skeleton
           <div className="space-y-4">
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
               {[...Array(12)].map((_, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.05 }}
-                  className="rounded-xl bg-white border border-orange-100 p-4 shadow-sm"
+                  className="rounded-xl border border-orange-100 bg-white p-4 shadow-sm"
                 >
                   <div className="animate-pulse space-y-4">
-                    <div className="h-6 bg-orange-100 rounded w-3/4" />
-                    <div className="h-3 bg-orange-100 rounded w-1/2" />
-                    <div className="h-16 bg-orange-100 rounded" />
+                    <div className="h-6 w-3/4 rounded bg-orange-100" />
+                    <div className="h-3 w-1/2 rounded bg-orange-100" />
+                    <div className="h-16 rounded bg-orange-100" />
                     <div className="flex gap-2">
-                      <div className="h-8 bg-orange-100 rounded flex-1" />
-                      <div className="h-8 bg-orange-100 rounded flex-1" />
+                      <div className="h-8 flex-1 rounded bg-orange-100" />
+                      <div className="h-8 flex-1 rounded bg-orange-100" />
                     </div>
                   </div>
                 </motion.div>
@@ -406,13 +433,14 @@ const isLoading = isProductsLoading || allProducts.length === 0
               {t('no_data') || 'No products found'}
             </p>
             <p className="mt-2 text-sm text-orange-600">
-              {t('try_adjusting_filters') || 'Try adjusting your search or filters'}
+              {t('try_adjusting_filters') ||
+                'Try adjusting your search or filters'}
             </p>
           </motion.div>
         ) : (
           // Products Grid - 1 col mobile, 2 tablet, 3 desktop, 4 lg, 6 xl
           <motion.div
-            className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
             initial="hidden"
             animate="visible"
             variants={{
@@ -430,17 +458,17 @@ const isLoading = isProductsLoading || allProducts.length === 0
                   hidden: { opacity: 0, y: 20 },
                   visible: { opacity: 1, y: 0 },
                 }}
-                className="group flex flex-col rounded-xl border border-orange-200 bg-white shadow-sm transition hover:shadow-md hover:border-orange-400"
+                className="group flex flex-col rounded-xl border border-orange-200 bg-white shadow-sm transition hover:border-orange-400 hover:shadow-md"
               >
                 {/* Product Header */}
                 <div className="flex-1 p-4">
                   <div className="mb-3 flex items-start justify-between gap-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-orange-900 truncate text-sm sm:text-base">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-sm font-bold text-orange-900 sm:text-base">
                         {product.primaryName}
                       </h3>
                       {product.secondaryName && (
-                        <p className="text-xs text-orange-600 truncate">
+                        <p className="truncate text-xs text-orange-600">
                           {product.secondaryName}
                         </p>
                       )}
@@ -448,26 +476,27 @@ const isLoading = isProductsLoading || allProducts.length === 0
                   </div>
 
                   {/* Description */}
-                  <p className="mb-3 line-clamp-2 text-xs sm:text-sm text-orange-700">
+                  <p className="mb-3 line-clamp-2 text-xs text-orange-700 sm:text-sm">
                     {product.description}
                   </p>
 
                   {/* Categories */}
-                  {Array.isArray(product.categoryIds) && product.categoryIds.length > 0 && (
-                    <div className="mb-3 flex flex-wrap gap-1">
-                      {product.categoryIds.map((catId) => {
-                        const label = getCategoryLabel(catId)
-                        return label ? (
-                          <span
-                            key={catId}
-                            className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700"
-                          >
-                            {label}
-                          </span>
-                        ) : null
-                      })}
-                    </div>
-                  )}
+                  {Array.isArray(product.categoryIds) &&
+                    product.categoryIds.length > 0 && (
+                      <div className="mb-3 flex flex-wrap gap-1">
+                        {product.categoryIds.map((catId) => {
+                          const label = getCategoryLabel(catId)
+                          return label ? (
+                            <span
+                              key={catId}
+                              className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700"
+                            >
+                              {label}
+                            </span>
+                          ) : null
+                        })}
+                      </div>
+                    )}
 
                   {/* Availability Badge */}
                   <div className="mb-3 flex items-center gap-2">
@@ -498,20 +527,24 @@ const isLoading = isProductsLoading || allProducts.length === 0
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleEditClick(product)}
                     disabled={isPending}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-orange-50 py-2 font-semibold text-orange-600 transition hover:bg-orange-100 active:bg-orange-200 disabled:opacity-50 text-xs sm:text-sm"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-orange-50 py-2 text-xs font-semibold text-orange-600 transition hover:bg-orange-100 active:bg-orange-200 disabled:opacity-50 sm:text-sm"
                   >
                     <Edit3 className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('edit') || 'Edit'}</span>
+                    <span className="hidden sm:inline">
+                      {t('edit') || 'Edit'}
+                    </span>
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleDeleteClick(product)}
                     disabled={isPending}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-red-50 py-2 font-semibold text-red-600 transition hover:bg-red-100 active:bg-red-200 disabled:opacity-50 text-xs sm:text-sm"
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-50 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100 active:bg-red-200 disabled:opacity-50 sm:text-sm"
                   >
                     <Trash2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('delete') || 'Delete'}</span>
+                    <span className="hidden sm:inline">
+                      {t('delete') || 'Delete'}
+                    </span>
                   </motion.button>
                 </div>
               </motion.div>
@@ -527,7 +560,7 @@ const isLoading = isProductsLoading || allProducts.length === 0
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold text-white shadow-lg sm:bottom-8 sm:right-8 ${
+            className={`fixed right-4 bottom-4 z-50 flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold text-white shadow-lg sm:right-8 sm:bottom-8 ${
               notification.type === 'success' ? 'bg-green-600' : 'bg-red-600'
             }`}
           >
@@ -596,15 +629,21 @@ function ProductFormModal({
     const newErrors: ValidationErrors = {}
 
     if (!formData.primaryName.trim()) {
-      newErrors.primaryName = t('product_name_required') || 'Product name is required'
+      newErrors.primaryName =
+        t('product_name_required') || 'Product name is required'
     }
 
     if (formData.price <= 0) {
-      newErrors.price = t('price_must_be_greater') || 'Price must be greater than 0'
+      newErrors.price =
+        t('price_must_be_greater') || 'Price must be greater than 0'
     }
 
-    if (!Array.isArray(formData.categoryIds) || formData.categoryIds.length === 0) {
-      newErrors.categoryIds = t('select_category') || 'Select at least one category'
+    if (
+      !Array.isArray(formData.categoryIds) ||
+      formData.categoryIds.length === 0
+    ) {
+      newErrors.categoryIds =
+        t('select_category') || 'Select at least one category'
     }
 
     setErrors(newErrors)
@@ -626,7 +665,10 @@ function ProductFormModal({
       categoryIds:
         Array.isArray(prev.categoryIds) && prev.categoryIds.includes(categoryId)
           ? prev.categoryIds.filter((id) => id !== categoryId)
-          : [...(Array.isArray(prev.categoryIds) ? prev.categoryIds : []), categoryId],
+          : [
+              ...(Array.isArray(prev.categoryIds) ? prev.categoryIds : []),
+              categoryId,
+            ],
     }))
   }, [])
 
@@ -645,10 +687,10 @@ function ProductFormModal({
         transition={{ type: 'spring', damping: 30, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
-        className="w-full max-w-2xl rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-2xl sm:p-8 max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-2xl sm:p-8"
       >
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between sticky -top-8 bg-white -mx-6 -mt-6 px-6 py-4 border-b border-orange-200 z-10">
+        <div className="sticky -top-8 z-10 -mx-6 -mt-6 mb-6 flex items-center justify-between border-b border-orange-200 bg-white px-6 py-4">
           <h2 className="text-2xl font-bold text-orange-900">
             {mode === 'add'
               ? t('add_product') || 'Add New Product'
@@ -658,7 +700,7 @@ function ProductFormModal({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="rounded-lg p-2 text-orange-600 hover:bg-orange-100 transition disabled:opacity-50"
+            className="rounded-lg p-2 text-orange-600 transition hover:bg-orange-100 disabled:opacity-50"
           >
             <X className="h-6 w-6" />
           </button>
@@ -667,7 +709,7 @@ function ProductFormModal({
         <div className="space-y-5">
           {/* Primary Name */}
           <div>
-            <label className="block text-sm font-semibold text-orange-900 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-orange-900">
               {t('product_name') || 'Product Name'} *
             </label>
             <input
@@ -677,7 +719,7 @@ function ProductFormModal({
                 setFormData({ ...formData, primaryName: e.target.value })
               }
               placeholder={t('enter_product_name') || 'Enter product name'}
-              className={`w-full rounded-lg border-2 bg-white px-4 py-3 text-sm outline-none transition ${
+              className={`w-full rounded-lg border-2 bg-white px-4 py-3 text-sm transition outline-none ${
                 errors.primaryName
                   ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
                   : 'border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
@@ -685,7 +727,7 @@ function ProductFormModal({
               disabled={isSubmitting}
             />
             {errors.primaryName && (
-              <p className="mt-1.5 text-xs sm:text-sm text-red-600 flex items-center gap-1">
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-red-600 sm:text-sm">
                 <AlertCircle className="h-4 w-4" />
                 {errors.primaryName}
               </p>
@@ -694,8 +736,9 @@ function ProductFormModal({
 
           {/* Secondary Name */}
           <div>
-            <label className="block text-sm font-semibold text-orange-900 mb-2">
-              {t('secondary_name') || 'Secondary Name'} ({t('optional') || 'Optional'})
+            <label className="mb-2 block text-sm font-semibold text-orange-900">
+              {t('secondary_name') || 'Secondary Name'} (
+              {t('optional') || 'Optional'})
             </label>
             <input
               type="text"
@@ -704,24 +747,27 @@ function ProductFormModal({
                 setFormData({ ...formData, secondaryName: e.target.value })
               }
               placeholder={t('e_g_italian_classic') || 'e.g., Italian Classic'}
-              className="w-full rounded-lg border-2 border-orange-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:opacity-50"
+              className="w-full rounded-lg border-2 border-orange-200 bg-white px-4 py-3 text-sm transition outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 disabled:opacity-50"
               disabled={isSubmitting}
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-orange-900 mb-2">
-              {t('description') || 'Description'} <span className="text-xs text-orange-600">(Optional)</span>
+            <label className="mb-2 block text-sm font-semibold text-orange-900">
+              {t('description') || 'Description'}{' '}
+              <span className="text-xs text-orange-600">(Optional)</span>
             </label>
             <textarea
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder={t('describe_your_product') || 'Describe your product'}
+              placeholder={
+                t('describe_your_product') || 'Describe your product'
+              }
               rows={3}
-              className={`w-full rounded-lg border-2 bg-white px-4 py-3 text-sm outline-none transition resize-none ${
+              className={`w-full resize-none rounded-lg border-2 bg-white px-4 py-3 text-sm transition outline-none ${
                 errors.description
                   ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
                   : 'border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
@@ -729,7 +775,7 @@ function ProductFormModal({
               disabled={isSubmitting}
             />
             {errors.description && (
-              <p className="mt-1.5 text-xs sm:text-sm text-red-600 flex items-center gap-1">
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-red-600 sm:text-sm">
                 <AlertCircle className="h-4 w-4" />
                 {errors.description}
               </p>
@@ -738,19 +784,22 @@ function ProductFormModal({
 
           {/* Price */}
           <div>
-            <label className="block text-sm font-semibold text-orange-900 mb-2">
+            <label className="mb-2 block text-sm font-semibold text-orange-900">
               {t('price') || 'Price'} (₹) *
             </label>
             <input
               type="number"
               value={formData.price || ''}
               onChange={(e) =>
-                setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })
+                setFormData({
+                  ...formData,
+                  price: parseFloat(e.target.value) || 0,
+                })
               }
               placeholder="0"
               min="0"
               step="0.01"
-              className={`w-full rounded-lg border-2 bg-white px-4 py-3 text-sm outline-none transition ${
+              className={`w-full rounded-lg border-2 bg-white px-4 py-3 text-sm transition outline-none ${
                 errors.price
                   ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
                   : 'border-orange-200 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20'
@@ -758,7 +807,7 @@ function ProductFormModal({
               disabled={isSubmitting}
             />
             {errors.price && (
-              <p className="mt-1.5 text-xs sm:text-sm text-red-600 flex items-center gap-1">
+              <p className="mt-1.5 flex items-center gap-1 text-xs text-red-600 sm:text-sm">
                 <AlertCircle className="h-4 w-4" />
                 {errors.price}
               </p>
@@ -767,7 +816,7 @@ function ProductFormModal({
 
           {/* Categories */}
           <div>
-            <label className="block text-sm font-semibold text-orange-900 mb-3">
+            <label className="mb-3 block text-sm font-semibold text-orange-900">
               {t('categories') || 'Categories'} *
             </label>
             {categoryOptions.length > 0 ? (
@@ -793,7 +842,7 @@ function ProductFormModal({
               <p className="text-sm text-orange-600">No categories available</p>
             )}
             {errors.categoryIds && (
-              <p className="mt-2 text-xs sm:text-sm text-red-600 flex items-center gap-1">
+              <p className="mt-2 flex items-center gap-1 text-xs text-red-600 sm:text-sm">
                 <AlertCircle className="h-4 w-4" />
                 {errors.categoryIds}
               </p>
@@ -802,7 +851,7 @@ function ProductFormModal({
 
           {/* Availability */}
           <div>
-            <label className="block text-sm font-semibold text-orange-900 mb-3">
+            <label className="mb-3 block text-sm font-semibold text-orange-900">
               {t('availability') || 'Availability'}
             </label>
             <div className="flex gap-3">
@@ -835,15 +884,13 @@ function ProductFormModal({
 
           {/* Product Type */}
           <div>
-            <label className="block text-sm font-semibold text-orange-900 mb-3">
+            <label className="mb-3 block text-sm font-semibold text-orange-900">
               {t('product_type') || 'Product Type'}
             </label>
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() =>
-                  setFormData({ ...formData, productType: 'VEG' })
-                }
+                onClick={() => setFormData({ ...formData, productType: 'VEG' })}
                 disabled={isSubmitting}
                 className={`flex-1 rounded-lg border-2 px-4 py-2.5 font-semibold transition ${
                   formData.productType === 'VEG'
@@ -872,14 +919,14 @@ function ProductFormModal({
         </div>
 
         {/* Form Actions */}
-        <div className="mt-8 flex gap-3 border-t border-orange-200 pt-6 sticky -bottom-8 bg-white -mx-6 -mb-6 px-6 py-4 z-10">
+        <div className="sticky -bottom-8 z-10 -mx-6 mt-8 -mb-6 flex gap-3 border-t border-orange-200 bg-white px-6 py-4 pt-6">
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="flex-1 rounded-lg border-2 border-orange-200 py-2.5 font-semibold text-orange-700 transition hover:bg-orange-50 disabled:opacity-50 text-sm sm:text-base"
+            className="flex-1 rounded-lg border-2 border-orange-200 py-2.5 text-sm font-semibold text-orange-700 transition hover:bg-orange-50 disabled:opacity-50 sm:text-base"
           >
             {t('cancel') || 'Cancel'}
           </motion.button>
@@ -888,14 +935,14 @@ function ProductFormModal({
             whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 rounded-lg bg-orange-600 py-2.5 font-semibold text-white shadow-lg transition hover:bg-orange-700 disabled:opacity-50 text-sm sm:text-base flex items-center justify-center gap-2"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-orange-600 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-orange-700 disabled:opacity-50 sm:text-base"
           >
             {isSubmitting && <Loader className="h-4 w-4 animate-spin" />}
             {isSubmitting
               ? t('saving') || 'Saving...'
               : mode === 'add'
-              ? t('create') || 'Create'
-              : t('update') || 'Update'}
+                ? t('create') || 'Create'
+                : t('update') || 'Update'}
           </motion.button>
         </div>
       </motion.form>
@@ -929,7 +976,7 @@ function DeleteConfirmModal({
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onCancel}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }}
@@ -946,11 +993,10 @@ function DeleteConfirmModal({
           {t('delete_product') || 'Delete Product?'}
         </h3>
 
-        <p className="mb-6 text-sm sm:text-base text-orange-700">
+        <p className="mb-6 text-sm text-orange-700 sm:text-base">
           {t('delete_confirmation') || 'Are you sure you want to delete'}{' '}
           <span className="font-semibold">{product.primaryName}</span>?{' '}
-          {t('this_action_cannot_be_undone') ||
-            'This action cannot be undone.'}
+          {t('this_action_cannot_be_undone') || 'This action cannot be undone.'}
         </p>
 
         <div className="flex gap-3">
@@ -960,7 +1006,7 @@ function DeleteConfirmModal({
             type="button"
             onClick={onCancel}
             disabled={isSubmitting}
-            className="flex-1 rounded-lg border-2 border-orange-200 py-2.5 font-semibold text-orange-700 transition hover:bg-orange-50 disabled:opacity-50 text-sm sm:text-base"
+            className="flex-1 rounded-lg border-2 border-orange-200 py-2.5 text-sm font-semibold text-orange-700 transition hover:bg-orange-50 disabled:opacity-50 sm:text-base"
           >
             {t('cancel') || 'Cancel'}
           </motion.button>
@@ -970,10 +1016,12 @@ function DeleteConfirmModal({
             type="button"
             onClick={handleConfirm}
             disabled={isSubmitting}
-            className="flex-1 rounded-lg bg-red-600 py-2.5 font-semibold text-white transition hover:bg-red-700 disabled:opacity-50 text-sm sm:text-base flex items-center justify-center gap-2"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50 sm:text-base"
           >
             {isSubmitting && <Loader className="h-4 w-4 animate-spin" />}
-            {isSubmitting ? t('deleting') || 'Deleting...' : t('delete') || 'Delete'}
+            {isSubmitting
+              ? t('deleting') || 'Deleting...'
+              : t('delete') || 'Delete'}
           </motion.button>
         </div>
       </motion.div>

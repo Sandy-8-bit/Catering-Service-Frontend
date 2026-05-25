@@ -26,15 +26,6 @@ import { t } from 'i18next'
 
 // ============= TYPES =============
 
-/**
- * DataCell Configuration:
- * - headingTitle: Column label (use "#DropDown" to mark as dropdown content - won't be rendered as column)
- * - accessVar: Data accessor - 'branch' or 'branch[1]' or function (row=>value)
- * - isArray: Auto-extract array[1] if true
- * - render: Custom renderer (value, row, index) => ReactNode
- * - isFrozenColumn: Sticky column on horizontal scroll
- * - actionButtonsSpace : custom buttons but must design it from scratch
- */
 export type DataCell = {
   headingTitle?: string
   isFrozenColumn?: boolean
@@ -70,15 +61,13 @@ export interface GenericTableProps {
   selectedRowIndices?: number[]
   onSelectionChange?: (selectedIndices: number[], selectedRows: any[]) => void
   onDeleteSelected?: () => void
-  // Dropdown row functionality
   isADropDown?: boolean
   isMultipleDropDownAllowed?: boolean
-  // more buttons in action space
   customActionButtons?: (row: any) => React.ReactNode
   messageWhenNoData?: string
 }
 
-// ============= SHIMMER COMPONENT =============
+// ============= SHIMMER =============
 
 const shimmer = {
   initial: { opacity: 0.3 },
@@ -103,7 +92,7 @@ const ShimmerBox = ({ className }: { className?: string }) => (
   </motion.div>
 )
 
-// ============= UTILITY FUNCTIONS =============
+// ============= UTILITIES =============
 
 function toRecords(input: any): { records: any[]; totalRecords?: number } {
   if (!input) return { records: [], totalRecords: 0 }
@@ -126,6 +115,12 @@ function getNestedValue(accessVar: string, obj: any) {
   }
   return cur
 }
+
+// ============= COLUMN WIDTH CONSTANT =============
+// Single source of truth for cell width — used in both header and body so they always align.
+const CELL_BASE_CLASS = 'min-w-[100px] w-[100px] max-w-[100px]'
+const SERNO_WIDTH_DEFAULT = 56
+const SERNO_WIDTH_SELECTABLE = 76
 
 // ============= MAIN COMPONENT =============
 
@@ -182,14 +177,12 @@ export default function GenericTable({
     [selectedRowIndices]
   )
 
-  // Separate regular columns from dropdown content columns
   const { regularColumns, dropdownColumn } = useMemo(() => {
     const regular = dataCell.filter((cell) => cell.headingTitle !== '#DropDown')
     const dropdown = dataCell.find((cell) => cell.headingTitle === '#DropDown')
     return { regularColumns: regular, dropdownColumn: dropdown }
   }, [dataCell])
 
-  // Split regular columns into frozen and scrollable
   const { frozenColumns, scrollableColumns } = useMemo(() => {
     const frozen = regularColumns.filter((cell) => cell.isFrozenColumn)
     const scrollable = regularColumns.filter((cell) => !cell.isFrozenColumn)
@@ -197,19 +190,23 @@ export default function GenericTable({
   }, [regularColumns])
 
   const hasFrozenColumns = frozenColumns.length > 0
-  const hasActions = Boolean(onEdit || onDelete || onView)
+  const hasActions = Boolean(
+    onEdit || onDelete || onView || isADropDown || customActionButtons
+  )
 
-  // Estimate action column width
+  const serNoWidth = isSelectable ? SERNO_WIDTH_SELECTABLE : SERNO_WIDTH_DEFAULT
+
   const estimatedActionWidth = useMemo(() => {
     if (actionWidth !== null) return actionWidth
     let buttonCount = 0
     if (onView && !isMasterTable) buttonCount++
     if (onEdit) buttonCount++
     if (onDelete) buttonCount++
-    if (isADropDown) buttonCount++ // Add dropdown toggle button
+    if (isADropDown) buttonCount++
     if (customActionButtons) buttonCount++
     if (buttonCount === 0) return 0
-    return buttonCount * 36 + (buttonCount - 1) * 8 + 16
+    // 32px per button + 6px gap + 16px padding
+    return buttonCount * 32 + (buttonCount - 1) * 6 + 16
   }, [
     onView,
     onEdit,
@@ -231,11 +228,7 @@ export default function GenericTable({
     } catch {
       raw = undefined
     }
-
-    if (cell.isArray && Array.isArray(raw)) {
-      return raw[1] ?? raw[0] ?? ''
-    }
-
+    if (cell.isArray && Array.isArray(raw)) return raw[1] ?? raw[0] ?? ''
     return raw
   }, [])
 
@@ -293,16 +286,11 @@ export default function GenericTable({
       if (raw === null || raw === undefined) return null
       if (Array.isArray(raw)) {
         const value = raw[1] ?? raw[0] ?? null
-        if (isDateValue(value)) {
-          const convertedDate = convertDateFormat(String(value))
-          return new Date(convertedDate)
-        }
+        if (isDateValue(value))
+          return new Date(convertDateFormat(String(value)))
         return value
       }
-      if (isDateValue(raw)) {
-        const convertedDate = convertDateFormat(String(raw))
-        return new Date(convertedDate)
-      }
+      if (isDateValue(raw)) return new Date(convertDateFormat(String(raw)))
       if (raw !== null && typeof raw === 'object') {
         if ('name' in raw) return (raw as any).name
         if ('label' in raw) return (raw as any).label
@@ -313,20 +301,17 @@ export default function GenericTable({
     [isDateValue, convertDateFormat]
   )
 
-  // ============= DROPDOWN LOGIC =============
+  // ============= DROPDOWN =============
 
   const toggleRowExpansion = useCallback(
     (globalIndex: number) => {
       if (!isADropDown) return
-
       setExpandedRows((prev) => {
         const newSet = new Set(prev)
         if (newSet.has(globalIndex)) {
           newSet.delete(globalIndex)
         } else {
-          if (!isMultipleDropDownAllowed) {
-            newSet.clear() // Close all other dropdowns
-          }
+          if (!isMultipleDropDownAllowed) newSet.clear()
           newSet.add(globalIndex)
         }
         return newSet
@@ -336,13 +321,11 @@ export default function GenericTable({
   )
 
   const isRowExpanded = useCallback(
-    (globalIndex: number) => {
-      return expandedRows.has(globalIndex)
-    },
+    (globalIndex: number) => expandedRows.has(globalIndex),
     [expandedRows]
   )
 
-  // ============= SELECTION LOGIC (Helpers - full logic after data processing) =============
+  // ============= SELECTION =============
 
   const isRowSelected = useCallback(
     (globalIndex: number) => {
@@ -359,7 +342,6 @@ export default function GenericTable({
 
   // ============= DATA PROCESSING =============
 
-  // Search filtering
   const searchableCells = regularColumns.filter(
     (c) => (c.searchable ?? true) === true
   )
@@ -370,14 +352,12 @@ export default function GenericTable({
     return records.filter((row) => {
       for (const cell of searchableCells) {
         const v = resolveCellValue(row, cell)
-        const searchStr = getStringValue(v)
-        if (searchStr.toLowerCase().includes(q)) return true
+        if (getStringValue(v).toLowerCase().includes(q)) return true
       }
       return false
     })
   }, [records, searchValue, searchableCells, resolveCellValue, getStringValue])
 
-  // Sorting
   const sorted = useMemo(() => {
     if (!sortConfig.key) return filtered
     const arr = [...filtered]
@@ -410,19 +390,8 @@ export default function GenericTable({
       if (sortB === null) return -1
 
       if (sortA instanceof Date && sortB instanceof Date) {
-        const timeA = sortA.getTime()
-        const timeB = sortB.getTime()
-        return sortConfig.direction === 'asc' ? timeA - timeB : timeB - timeA
-      }
-
-      if (sortA instanceof Date || sortB instanceof Date) {
-        const strA =
-          sortA instanceof Date ? sortA.toISOString() : getStringValue(sortA)
-        const strB =
-          sortB instanceof Date ? sortB.toISOString() : getStringValue(sortB)
-        return sortConfig.direction === 'asc'
-          ? strA.localeCompare(strB)
-          : strB.localeCompare(strA)
+        const diff = sortA.getTime() - sortB.getTime()
+        return sortConfig.direction === 'asc' ? diff : -diff
       }
 
       const numA = Number(sortA)
@@ -447,7 +416,6 @@ export default function GenericTable({
     resolveCellValue,
   ])
 
-  // Pagination
   const totalPages = Math.max(1, Math.ceil(sorted.length / itemsPerPage))
 
   const paginated = useMemo(() => {
@@ -462,31 +430,25 @@ export default function GenericTable({
   }, [records.length])
 
   useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages)
-    }
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages)
   }, [currentPage, totalPages])
 
   useEffect(() => {
     const handleScroll = () => {
       if (tableContainerRef.current) {
         setShowFrozenShadow(tableContainerRef.current.scrollLeft > 0)
-
-        // Sync custom scrollbar with table scroll
         if (scrollbarRef.current && hasFrozenColumns) {
           scrollbarRef.current.scrollLeft = tableContainerRef.current.scrollLeft
         }
       }
     }
-
-    const tableContainer = tableContainerRef.current
-    if (tableContainer) {
-      tableContainer.addEventListener('scroll', handleScroll)
-      return () => tableContainer.removeEventListener('scroll', handleScroll)
+    const el = tableContainerRef.current
+    if (el) {
+      el.addEventListener('scroll', handleScroll)
+      return () => el.removeEventListener('scroll', handleScroll)
     }
   }, [hasFrozenColumns])
 
-  // Sync table scroll with custom scrollbar scroll
   useEffect(() => {
     const handleScrollbarScroll = () => {
       if (
@@ -497,12 +459,10 @@ export default function GenericTable({
         tableContainerRef.current.scrollLeft = scrollbarRef.current.scrollLeft
       }
     }
-
-    const scrollbar = scrollbarRef.current
-    if (scrollbar && hasFrozenColumns) {
-      scrollbar.addEventListener('scroll', handleScrollbarScroll)
-      return () =>
-        scrollbar.removeEventListener('scroll', handleScrollbarScroll)
+    const el = scrollbarRef.current
+    if (el && hasFrozenColumns) {
+      el.addEventListener('scroll', handleScrollbarScroll)
+      return () => el.removeEventListener('scroll', handleScrollbarScroll)
     }
   }, [hasFrozenColumns])
 
@@ -512,30 +472,24 @@ export default function GenericTable({
     if (cell.sortable === false) return
     const key = cell.accessVar ?? cell.headingTitle ?? `column_${Date.now()}`
     setSortConfig((prev) => {
-      if (prev.key === key) {
+      if (prev.key === key)
         return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' }
-      }
       return { key, direction: 'asc' }
     })
   }, [])
 
-  // Selection handlers (now that sorted/paginated are available)
   const toggleRowSelection = useCallback(
     (globalIndex: number) => {
       if (!isSelectable || !onSelectionChange) return
-
       const newSelectedIndices = [...selectedRowIndices]
       if (selectedIndicesSet.has(globalIndex)) {
-        const indexToRemove = newSelectedIndices.indexOf(globalIndex)
-        if (indexToRemove > -1) {
-          newSelectedIndices.splice(indexToRemove, 1)
-        }
+        const i = newSelectedIndices.indexOf(globalIndex)
+        if (i > -1) newSelectedIndices.splice(i, 1)
       } else {
         newSelectedIndices.push(globalIndex)
       }
-
       const selectedRows = newSelectedIndices
-        .map((index) => sorted[index])
+        .map((i) => sorted[i])
         .filter(Boolean)
       onSelectionChange(newSelectedIndices, selectedRows)
     },
@@ -555,8 +509,7 @@ export default function GenericTable({
 
   const isAllCurrentPageSelected = useCallback(() => {
     if (!isSelectable || paginated.length === 0) return false
-    const currentPageIndices = getCurrentPageGlobalIndices()
-    return currentPageIndices.every((index) => selectedIndicesSet.has(index))
+    return getCurrentPageGlobalIndices().every((i) => selectedIndicesSet.has(i))
   }, [
     isSelectable,
     selectedIndicesSet,
@@ -566,23 +519,18 @@ export default function GenericTable({
 
   const toggleAllCurrentPageSelection = useCallback(() => {
     if (!isSelectable || !onSelectionChange) return
-
     const currentPageIndices = getCurrentPageGlobalIndices()
     let newSelectedIndices = [...selectedRowIndices]
-
     if (isAllCurrentPageSelected()) {
       newSelectedIndices = newSelectedIndices.filter(
-        (index) => !currentPageIndices.includes(index)
+        (i) => !currentPageIndices.includes(i)
       )
     } else {
-      const indicesToAdd = currentPageIndices.filter(
-        (index) => !selectedIndicesSet.has(index)
-      )
-      newSelectedIndices.push(...indicesToAdd)
+      const toAdd = currentPageIndices.filter((i) => !selectedIndicesSet.has(i))
+      newSelectedIndices.push(...toAdd)
     }
-
     const selectedRows = newSelectedIndices
-      .map((index) => sorted[index])
+      .map((i) => sorted[i])
       .filter(Boolean)
     onSelectionChange(newSelectedIndices, selectedRows)
   }, [
@@ -595,8 +543,11 @@ export default function GenericTable({
     sorted,
   ])
 
+  // ============= COLUMN CLASS — single source of truth =============
+  // If the cell has a custom className we use it, otherwise fall back to CELL_BASE_CLASS.
+  // This ensures header and body cells always get the EXACT same class string.
   const getColumnClassName = useCallback((cell: DataCell) => {
-    const base = cell.className ?? 'min-w-[104px] w-[104px] max-w-[104px]'
+    const base = cell.className ?? CELL_BASE_CLASS
     return `flex-none shrink-0 ${base}`
   }, [])
 
@@ -607,96 +558,68 @@ export default function GenericTable({
 
   // ============= RENDER HELPERS =============
 
-  const renderHeaderCell = useCallback(
+  const renderSortIndicator = useCallback(
     (cell: DataCell, idx: number) => {
-      const isSorted =
-        sortConfig.key ===
-        (cell.accessVar ?? cell.headingTitle ?? `column_${idx}`)
+      if (cell.sortable === false) return null
+      const key = cell.accessVar ?? cell.headingTitle ?? `column_${idx}`
+      const isSorted = sortConfig.key === key
       const isAsc = sortConfig.direction === 'asc'
-
       return (
-        <div
-          key={(cell.headingTitle ?? `column_${idx}`) + idx}
-          className={`px-1 ${getColumnClassName(cell)}`}
-          onClick={() => onSort(cell)}
-          role={cell.sortable === false ? undefined : 'button'}
+        <motion.div
+          animate={{ alignItems: isSorted ? 'flex-start' : 'center' }}
+          className="ml-1.5 flex w-4 flex-col gap-[2px]"
         >
-          <div className="flex cursor-pointer items-center gap-1 select-none">
-            <div className="text-sm font-medium text-[#1F1F21]">
-              {cell.headerRender ? cell.headerRender() : cell.headingTitle}
-            </div>
-            {cell.sortable !== false && (
-              <motion.div
-                animate={{
-                  alignItems: isSorted ? 'flex-start' : 'center',
-                  justifyContent: isSorted ? 'flex-start' : 'center',
-                }}
-                className="ml-2 flex w-4 flex-col gap-[2px]"
-              >
-                <motion.div
-                  style={{
-                    width: 4,
-                    height: 2,
-                    backgroundColor: isSorted ? '#30394a' : '#8caab6',
-                    borderRadius: 12,
-                  }}
-                  animate={{ width: isSorted ? (isAsc ? 5 : 12) : 12 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 250,
-                    damping: 12,
-                    mass: 0.5,
-                  }}
-                />
-                <motion.div
-                  style={{
-                    width: 4,
-                    height: 2,
-                    backgroundColor: isSorted ? '#30394a' : '#a2b4bf',
-                    borderRadius: 12,
-                  }}
-                  animate={{ width: isSorted ? 9 : 9 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 250,
-                    damping: 12,
-                    mass: 0.5,
-                  }}
-                />
-                <motion.div
-                  style={{
-                    width: 4,
-                    height: 2,
-                    backgroundColor: isSorted ? '#30394a' : '#a2b4bf',
-                    borderRadius: 12,
-                  }}
-                  animate={{ width: isSorted ? (isAsc ? 12 : 6) : 6 }}
-                  transition={{
-                    type: 'spring',
-                    stiffness: 250,
-                    damping: 12,
-                    mass: 0.5,
-                  }}
-                />
-              </motion.div>
-            )}
-          </div>
-        </div>
+          {[
+            isSorted ? (isAsc ? 5 : 12) : 12,
+            9,
+            isSorted ? (isAsc ? 12 : 6) : 6,
+          ].map((w, i) => (
+            <motion.div
+              key={i}
+              style={{
+                height: 2,
+                backgroundColor: isSorted ? '#30394a' : '#a2b4bf',
+                borderRadius: 12,
+              }}
+              animate={{ width: w }}
+              transition={{
+                type: 'spring',
+                stiffness: 250,
+                damping: 12,
+                mass: 0.5,
+              }}
+            />
+          ))}
+        </motion.div>
       )
     },
-    [sortConfig, getColumnClassName, onSort]
+    [sortConfig]
+  )
+
+  const renderHeaderCell = useCallback(
+    (cell: DataCell, idx: number) => (
+      <div
+        key={(cell.headingTitle ?? `column_${idx}`) + idx}
+        className={`flex items-center! justify-center! px-2! ${getColumnClassName(cell)}`}
+        onClick={() => onSort(cell)}
+        role={cell.sortable === false ? undefined : 'button'}
+      >
+        <div className="my-auto flex cursor-pointer items-center select-none">
+          <span className="truncate text-sm font-medium text-[#1F1F21]">
+            {cell.headerRender ? cell.headerRender() : cell.headingTitle}
+          </span>
+          {renderSortIndicator(cell, idx)}
+        </div>
+      </div>
+    ),
+    [getColumnClassName, onSort, renderSortIndicator]
   )
 
   const renderCellValue = useCallback(
     (value: any, cell: DataCell, row: any, idx: number) => {
-      if (cell.render) {
-        return cell.render(value, row, idx)
-      }
-
-      if (Array.isArray(value)) {
+      if (cell.render) return cell.render(value, row, idx)
+      if (Array.isArray(value))
         return <span>{value[1] ?? value[0] ?? '-'}</span>
-      }
-
       return <span>{value == null ? '-' : String(value)}</span>
     },
     []
@@ -704,9 +627,10 @@ export default function GenericTable({
 
   useHandleCancelHook(selectedRowIndices.length >= 1, clearSelection)
   useHandleDeleteHook(selectedRowIndices.length >= 1, onDeleteSelected)
-  // ============= JSX RENDER =============
 
   const skeletonCount = isLoading ? itemsPerPage || skeletonRows : 0
+
+  // ============= JSX =============
 
   return (
     <div
@@ -715,25 +639,18 @@ export default function GenericTable({
       {/* Frozen column styles */}
       {hasFrozenColumns && (
         <style>{`
-          .frozen-column-shadow {
-            position: relative;
-          }
           .frozen-column-shadow::after {
             content: '';
             position: absolute;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            width: 3px;
+            top: 0; right: 0; bottom: 0;
+            width: 4px;
             opacity: 0;
-            background: linear-gradient(to right, rgba(0,0,5,0.05), transparent);
+            background: linear-gradient(to right, rgba(0,0,5,0.07), transparent);
             pointer-events: none;
             z-index: 15;
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.3s ease;
           }
-          .frozen-column-shadow.show-shadow::after {
-            opacity: 1;
-          }
+          .frozen-column-shadow.show-shadow::after { opacity: 1; }
           .frozen-serial-column {
             position: sticky !important;
             left: 0 !important;
@@ -752,12 +669,13 @@ export default function GenericTable({
       )}
 
       <div className="body-container flex flex-col gap-0">
-        {/* Header Controls */}
+        {/* ─── HEADER CONTROLS ─── */}
         {isHeaderVisible && (
-          <header className="mb-3 flex w-full flex-row items-center justify-between px-3">
-            <section className="flex w-max flex-row items-center gap-2">
+          <header className="mb-3 flex w-full flex-col gap-2 px-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Left: search + entries */}
+            <section className="flex flex-wrap items-center gap-2">
               <SearchSm
-                containerClassName={`${isMasterTable ? '' : 'min-w-[200px]! '} `}
+                containerClassName="flex-1 min-w-[160px] max-w-[260px]"
                 placeholder="Search"
                 onChange={(e: any) => {
                   setSearchValue(e.target.value)
@@ -772,18 +690,15 @@ export default function GenericTable({
               />
 
               <DropdownSelect
-                className="min-w-[130px]!"
+                className="min-w-[110px]!"
                 allowClear={false}
                 title=""
                 direction="down"
                 options={itemsPerPageOptions.map((item) => ({
                   id: item,
-                  label: `${item} Entries`,
+                  label: `${item} / page`,
                 }))}
-                selected={{
-                  id: itemsPerPage,
-                  label: `${itemsPerPage} Entries`,
-                }}
+                selected={{ id: itemsPerPage, label: `${itemsPerPage} / page` }}
                 onChange={(e: any) => {
                   setItemsPerPage(e.id)
                   setCurrentPage(1)
@@ -791,46 +706,42 @@ export default function GenericTable({
               />
             </section>
 
-            <section className="flex w-full items-center justify-end gap-2">
+            {/* Right: actions + pagination */}
+            <section className="flex flex-wrap items-center justify-end gap-2">
               {newItemLink && (
                 <ButtonSm
-                  className="py-3 text-white"
+                  className="py-2 text-white"
                   state="default"
                   text="New"
                   onClick={() => nav(newItemLink)}
                 />
               )}
 
-              {/* Selection Status */}
               {isSelectable && selectedRowIndices.length > 0 && (
                 <>
-                  <div className="ml-4 flex flex-row items-center gap-2 rounded-md bg-[#f3f3f3] px-3 py-3 text-sm font-medium text-blue-800">
-                    <span className="flex text-sm font-medium text-slate-900">
-                      Selected:{' '}
-                      <span className="flex min-w-4">
-                        {selectedRowIndices.length}{' '}
-                      </span>
+                  <div className="flex flex-row items-center gap-1.5 rounded-md bg-[#f3f3f3] px-2.5 py-2 text-sm font-medium">
+                    <span className="text-slate-900">
+                      Selected: <strong>{selectedRowIndices.length}</strong>
                     </span>
                     <button
                       onClick={clearSelection}
                       className="cursor-pointer border-0 bg-transparent p-0 transition-transform hover:scale-110"
                     >
-                      <X size={16} className="text-slate-900" />
+                      <X size={14} className="text-slate-900" />
                     </button>
                   </div>
-                  <div className="flex cursor-pointer flex-row items-center gap-2 rounded-md bg-red-600 px-3 py-3 text-sm font-medium text-white transition-transform hover:scale-105">
+                  <button
+                    onClick={onDeleteSelected}
+                    className="flex cursor-pointer flex-row items-center gap-1.5 rounded-md border-0 bg-red-600 px-2.5 py-2 text-sm font-medium text-white transition-transform hover:scale-105 active:scale-95"
+                  >
                     Delete All
-                    <Trash2Icon
-                      className="border-0 bg-transparent p-0 text-white"
-                      onClick={() => {
-                        onDeleteSelected()
-                      }}
-                      size={14}
-                    />
-                  </div>
+                    <Trash2Icon size={13} />
+                  </button>
                 </>
               )}
+
               {headerChildren}
+
               <PaginationControls
                 totalPages={totalPages}
                 currentPage={currentPage}
@@ -840,29 +751,35 @@ export default function GenericTable({
           </header>
         )}
 
-        {/* Table */}
+        {/* ─── TABLE ─── */}
         <div
           ref={tableContainerRef}
-          className="tables relative flex min-h-[300px] w-full flex-col overflow-x-auto bg-white md:overflow-x-auto"
+          className="tables relative flex min-h-[300px] w-full flex-col overflow-x-auto bg-white"
         >
-          {/* Header Row */}
-          <header
-            className={`header flex min-w-max flex-row items-center justify-between gap-2 border-y-2 border-y-[#F1F1F1] bg-[#FAFAFA] px-3 shadow-sm ${hasFrozenColumns ? 'has-frozen relative' : 'sticky left-0'}`}
+          {/* ── TABLE HEADER ROW ── */}
+          {/*
+            IMPORTANT: every cell here uses EXACTLY the same class as the body cell below.
+            The header and each body row are independent flex rows — they align only because
+            every cell in both rows gets the same fixed width class from getColumnClassName().
+          */}
+          <div
+            className={`header flex min-w-max flex-row items-stretch border-y-2 border-y-[#F1F1F1] bg-[#FAFAFA] px-3 shadow-sm ${hasFrozenColumns ? 'has-frozen relative' : ''}`}
           >
-            {/* S.No column */}
+            {/* S.No */}
             <div
-              className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column my-4 shrink-0 flex-row items-center justify-between gap-2 bg-transparent! px-1.5`}
+              className={`frozen-serial-column flex shrink-0 items-center gap-2 bg-[#FAFAFA] px-1.5 py-4`}
+              style={{ width: serNoWidth, minWidth: serNoWidth }}
             >
               {isSelectable && (
                 <CheckBox
-                  className="h-6! w-6! origin-top-left scale-[0.70]"
+                  className="h-5! w-5! origin-center scale-[0.80]"
                   label=""
                   checked={isAllCurrentPageSelected()}
                   onChange={toggleAllCurrentPageSelection}
                 />
               )}
-              <p className="text-left text-sm font-medium text-[#1F1F21]">
-                 {t('s.no')}
+              <p className="text-left text-sm font-medium text-[#1F1F21] select-none">
+                {t('s.no')}
               </p>
             </div>
 
@@ -870,23 +787,22 @@ export default function GenericTable({
             {frozenColumns.map((cell, idx) => (
               <div
                 key={(cell.headingTitle || '') + idx}
-                className={`${getColumnClassName(cell)} frozen-data-column bg-[#F8F9FB] py-4 ${
+                className={`${getColumnClassName(cell)} frozen-data-column bg-[#FAFAFA] px-2 py-4 ${
                   idx === frozenColumns.length - 1
-                    ? `frozen-column-shadow ${showFrozenShadow ? 'show-shadow' : ''}`
+                    ? `frozen-column-shadow relative ${showFrozenShadow ? 'show-shadow' : ''}`
                     : ''
                 }`}
-                style={{
-                  left: `${(isSelectable ? 70 : 56) + idx * 104}px`,
-                }}
+                style={{ left: `${serNoWidth + idx * 100}px` }}
                 onClick={() => onSort(cell)}
                 role={cell.sortable === false ? undefined : 'button'}
               >
-                <div className="flex cursor-pointer items-center gap-1 px-1 select-none">
-                  <div className="text-sm font-medium text-[#1F1F21]">
+                <div className="flex cursor-pointer items-center select-none">
+                  <span className="truncate text-sm font-medium text-[#1F1F21]">
                     {cell.headerRender
                       ? cell.headerRender()
                       : (cell.headingTitle ?? 'Column')}
-                  </div>
+                  </span>
+                  {renderSortIndicator(cell, idx)}
                 </div>
               </div>
             ))}
@@ -897,74 +813,69 @@ export default function GenericTable({
             {/* Action header */}
             {hasActions && (
               <div
-                className="flex min-w-max flex-col items-start"
                 ref={headerActionRef}
+                className="flex shrink-0 items-center px-2"
                 style={{
-                  width:
-                    actionWidth !== null
-                      ? `${actionWidth}px`
-                      : `${estimatedActionWidth}px`,
+                  width: estimatedActionWidth,
+                  minWidth: estimatedActionWidth,
                 }}
               >
-                <p className="px-3 text-sm font-medium text-[#1F1F21]">
-                  Action
-                </p>
+                <p className="text-sm font-medium text-[#1F1F21]">Action</p>
               </div>
             )}
-          </header>
+          </div>
 
-          {/* Skeleton Loading */}
+          {/* ── SKELETON ── */}
           {isLoading && (
             <div>
               {Array.from({ length: skeletonCount }).map((_, rIdx) => (
                 <div
                   key={rIdx}
-                  className="flex w-full flex-row items-center justify-between border-b border-[#F1F1F1] px-3 py-2"
+                  className="flex min-w-max flex-row items-center border-b border-[#F1F1F1] px-3 py-0"
                 >
                   <div
-                    className={`flex w-8 min-w-8 items-center justify-start gap-2 py-4 pl-1.5 ${hasFrozenColumns ? 'frozen-serial-column' : ''}`}
+                    className={`flex shrink-0 items-center py-4 pl-1.5 ${hasFrozenColumns ? 'frozen-serial-column' : ''}`}
+                    style={{ width: serNoWidth, minWidth: serNoWidth }}
                   >
-                    <ShimmerBox className="h-4 w-10" />
+                    <ShimmerBox className="h-4 w-8" />
                   </div>
 
                   {frozenColumns.map((cell, cIdx) => (
                     <div
                       key={cIdx}
-                      className={`px-1 py-4 ${getColumnClassName(cell)} ${hasFrozenColumns ? 'frozen-data-column bg-white' : ''}`}
+                      className={`px-2 py-4 ${getColumnClassName(cell)} ${hasFrozenColumns ? 'frozen-data-column bg-white' : ''}`}
                       style={{
                         left: hasFrozenColumns
-                          ? `${(isSelectable ? 70 : 56) + cIdx * 104}px`
+                          ? `${serNoWidth + cIdx * 100}px`
                           : undefined,
                       }}
                     >
-                      <ShimmerBox className="h-4 w-full max-w-28" />
+                      <ShimmerBox className="h-4 w-full max-w-24" />
                     </div>
                   ))}
 
                   {scrollableColumns.map((cell, cIdx) => (
                     <div
                       key={cIdx}
-                      className={`px-1 py-4 ${getColumnClassName(cell)}`}
+                      className={`px-2 py-4 ${getColumnClassName(cell)}`}
                     >
-                      <ShimmerBox className="h-4 w-full max-w-28" />
+                      <ShimmerBox className="h-4 w-full max-w-24" />
                     </div>
                   ))}
 
                   {hasActions && (
                     <div
-                      className="flex min-w-max items-center gap-2 px-1"
+                      className="flex shrink-0 items-center gap-1.5 px-2"
                       style={{
-                        width:
-                          actionWidth !== null
-                            ? `${actionWidth}px`
-                            : `${estimatedActionWidth}px`,
+                        width: estimatedActionWidth,
+                        minWidth: estimatedActionWidth,
                       }}
                     >
                       {onView && !isMasterTable && (
-                        <ShimmerBox className="h-4 w-20" />
+                        <ShimmerBox className="h-7 w-7 rounded" />
                       )}
-                      {onEdit && <ShimmerBox className="h-4 w-20" />}
-                      {onDelete && <ShimmerBox className="h-4 w-20" />}
+                      {onEdit && <ShimmerBox className="h-7 w-7 rounded" />}
+                      {onDelete && <ShimmerBox className="h-7 w-7 rounded" />}
                     </div>
                   )}
                 </div>
@@ -972,7 +883,7 @@ export default function GenericTable({
             </div>
           )}
 
-          {/* No Data */}
+          {/* ── NO DATA ── */}
           {!isLoading && paginated.length === 0 && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -983,17 +894,17 @@ export default function GenericTable({
               <div className="mb-4 rounded-full bg-slate-200 p-4 shadow-sm">
                 <Inbox size={36} className="text-slate-500" />
               </div>
-              <p className="items-center text-center text-lg font-medium text-slate-600">
+              <p className="text-center text-lg font-medium text-slate-600">
                 {messageWhenNoData}
               </p>
               <span className="mt-2 text-center text-sm font-medium text-slate-400">
-                Try adjusting your search or filter to find what you're
-                looking for.
+                Try adjusting your search or filter to find what you're looking
+                for.
               </span>
             </motion.div>
           )}
 
-          {/* Data Rows */}
+          {/* ── DATA ROWS ── */}
           {!isLoading &&
             paginated.map((row, idx) => {
               const globalIndex = (currentPage - 1) * itemsPerPage + idx
@@ -1002,7 +913,6 @@ export default function GenericTable({
 
               return (
                 <React.Fragment key={defaultRowKey(row, idx)}>
-                  {/* Main Row */}
                   <div
                     style={{
                       cursor: isMasterTable ? 'pointer' : 'auto',
@@ -1010,33 +920,31 @@ export default function GenericTable({
                         ? 'inset 3px 0 0 #f97316'
                         : undefined,
                     }}
-                    onClick={(e) => {
-                      if (isMasterTable && onView) {
-                        e.stopPropagation()
-                        onView(row)
-                      }
+                    onClick={() => {
+                      if (isMasterTable && onView) onView(row)
                     }}
-                    className={`group flex min-w-max flex-row items-center justify-between gap-2 border-b border-[#F1F1F1] px-3 text-sm text-[#1F1F21] ${
+                    className={`group flex min-w-max flex-row items-stretch border-b border-[#F1F1F1] px-3 text-sm text-[#1F1F21] transition-colors ${
                       isRowChecked
-                        ? 'bg-orange-100'
+                        ? 'bg-orange-50'
                         : 'bg-white hover:bg-slate-50/70'
                     } ${hasFrozenColumns ? 'has-frozen' : ''}`}
                   >
-                    {/* S.No column */}
+                    {/* S.No */}
                     <div
-                      className={`flex ${isSelectable ? 'w-[70px]' : 'w-[56px]'} frozen-serial-column frozen-column-hover-bg min-h-full! shrink-0 flex-row items-center justify-between gap-2 px-1.5 py-4 ${
-                        isRowChecked ? 'bg-transparent' : 'bg-transparent'
+                      className={`frozen-serial-column frozen-column-hover-bg flex shrink-0 flex-row items-center gap-2 px-1.5 py-3.5 ${
+                        isRowChecked ? 'bg-orange-50' : 'bg-white'
                       }`}
+                      style={{ width: serNoWidth, minWidth: serNoWidth }}
                     >
                       {isSelectable && (
                         <CheckBox
-                          className="mr-1 h-6! w-6! origin-top-left scale-[0.70]"
+                          className="h-5! w-5! origin-center scale-[0.80]"
                           label=""
                           checked={isRowSelected(globalIndex)}
                           onChange={() => toggleRowSelection(globalIndex)}
                         />
                       )}
-                      <p className="w-10 text-left font-medium">
+                      <p className="font-medium tabular-nums">
                         {globalIndex + 1}
                       </p>
                     </div>
@@ -1047,16 +955,14 @@ export default function GenericTable({
                       return (
                         <div
                           key={(cell.headingTitle || '') + cIdx}
-                          className={`px-1 ${getColumnClassName(cell)} frozen-data-column frozen-column-hover-bg py-4 ${
+                          className={`px-2 py-3.5 ${getColumnClassName(cell)} frozen-data-column frozen-column-hover-bg ${
                             cIdx === frozenColumns.length - 1
-                              ? `frozen-column-shadow ${showFrozenShadow ? 'show-shadow' : ''}`
+                              ? `frozen-column-shadow relative ${showFrozenShadow ? 'show-shadow' : ''}`
                               : ''
-                          } ${isRowChecked ? 'bg-orange-100' : 'bg-white'}`}
-                          style={{
-                            left: `${(isSelectable ? 70 : 56) + cIdx * 104}px`,
-                          }}
+                          } ${isRowChecked ? 'bg-orange-50' : 'bg-white'}`}
+                          style={{ left: `${serNoWidth + cIdx * 100}px` }}
                         >
-                          <div className="text-left text-sm leading-tight font-medium break-words whitespace-normal">
+                          <div className="text-left text-sm leading-snug font-medium break-words whitespace-normal">
                             {renderCellValue(value, cell, row, idx)}
                           </div>
                         </div>
@@ -1069,9 +975,9 @@ export default function GenericTable({
                       return (
                         <div
                           key={(cell.headingTitle || '') + cIdx}
-                          className={`px-1 py-4 ${getColumnClassName(cell)}`}
+                          className={`px-2 py-3.5 ${getColumnClassName(cell)}`}
                         >
-                          <div className="text-left text-sm leading-tight font-medium break-words whitespace-normal">
+                          <div className="text-left text-sm leading-snug font-medium break-words whitespace-normal">
                             {renderCellValue(value, cell, row, idx)}
                           </div>
                         </div>
@@ -1081,34 +987,37 @@ export default function GenericTable({
                     {/* Action buttons */}
                     {hasActions && (
                       <div
-                        className="flex min-w-max flex-row items-center gap-2 px-2"
+                        className="flex shrink-0 flex-row items-center gap-1.5 px-2 py-3.5"
+                        style={{
+                          width: estimatedActionWidth,
+                          minWidth: estimatedActionWidth,
+                        }}
                         ref={(el) => {
                           if (el) actionBodyRefs.current.push(el)
                         }}
                       >
                         {onView && !isMasterTable && (
                           <ButtonSm
-                            className="aspect-square bg-white outline-1 outline-white"
+                            className="h-8 w-8 shrink-0 bg-white p-0 outline-1 outline-white"
                             onClick={(e) => {
                               e.stopPropagation()
                               onView(row)
                             }}
-                            iconPosition="right"
                             state="outline"
                           >
-                            <EyeIcon size={14} />
+                            <EyeIcon size={13} />
                           </ButtonSm>
                         )}
                         {onEdit && (
                           <ButtonSm
-                            className="aspect-square bg-white outline-1 outline-white"
+                            className="h-8 w-8 shrink-0 bg-white p-0 outline-1 outline-white"
                             onClick={(e) => {
                               e.stopPropagation()
                               onEdit(row)
                             }}
                             state="outline"
                           >
-                            <Edit2 size={14} />
+                            <Edit2 size={13} />
                           </ButtonSm>
                         )}
                         {customActionButtons && customActionButtons(row)}
@@ -1118,19 +1027,15 @@ export default function GenericTable({
                               e.stopPropagation()
                               onDelete(row)
                             }}
-                            className="aspect-square bg-white shadow-sm outline-1 outline-white hover:bg-red-100 active:bg-red-100"
+                            className="h-8 w-8 shrink-0 bg-white p-0 shadow-sm outline-1 outline-white hover:bg-red-50 active:bg-red-100"
                             state="default"
                           >
-                            <Trash2
-                              className="text-red-500 hover:text-red-800 active:text-red-200"
-                              size={14}
-                            />
+                            <Trash2 className="text-red-500" size={13} />
                           </ButtonSm>
                         )}
-                        {/* Dropdown toggle button */}
                         {isADropDown && dropdownColumn && (
                           <ButtonSm
-                            className="aspect-square items-center justify-center bg-white outline-1 outline-white"
+                            className="h-8 w-8 shrink-0 items-center justify-center bg-white p-0 outline-1 outline-white"
                             title="Show Dropdown"
                             onClick={(e) => {
                               e.stopPropagation()
@@ -1140,11 +1045,11 @@ export default function GenericTable({
                           >
                             {isExpanded ? (
                               <ChevronUp
-                                size={16}
+                                size={14}
                                 className="text-orange-500"
                               />
                             ) : (
-                              <ChevronDown size={16} />
+                              <ChevronDown size={14} />
                             )}
                           </ButtonSm>
                         )}
@@ -1152,7 +1057,7 @@ export default function GenericTable({
                     )}
                   </div>
 
-                  {/* Dropdown Row */}
+                  {/* Dropdown row */}
                   {isADropDown && dropdownColumn && isExpanded && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
@@ -1174,49 +1079,29 @@ export default function GenericTable({
         </div>
       </div>
 
-      {/* Custom Horizontal Scrollbar for Frozen Columns */}
-
-      {/* Scrollbar styling for main table */}
+      {/* Scrollbar styles */}
       <style>{`
-  /* Main table scrollbar - always visible */
-  .tables::-webkit-scrollbar {
-    height: 6px;
-  }
-  .tables::-webkit-scrollbar-track {
-    background: #f8fafc;
-    border-radius: 6px;
-    margin: 0 4px;
-  }
-  .tables::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #9ca3af 0%, #6b7280 100%);
-    border-radius: 6px;
-    border: 2px solid #f8fafc;
-    transition: background 0.2s ease, box-shadow 0.2s ease;
-  }
-  .tables::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #81858e 0%, #525866 100%);
-    box-shadow: 0 0 4px rgba(107, 114, 128, 0.3);
-  }
-  .tables::-webkit-scrollbar-thumb:active {
-    background: linear-gradient(180deg, #6b7280 0%, #3f444d 100%);
-    box-shadow: 0 0 3px rgba(75, 85, 99, 0.4);
-  }
+        .tables::-webkit-scrollbar { height: 6px; }
+        .tables::-webkit-scrollbar-track { background: #f8fafc; border-radius: 6px; margin: 0 4px; }
+        .tables::-webkit-scrollbar-thumb {
+          background: linear-gradient(180deg, #9ca3af 0%, #6b7280 100%);
+          border-radius: 6px;
+          border: 2px solid #f8fafc;
+        }
+        .tables::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(180deg, #6b7280 0%, #4b5563 100%);
+        }
+        .tables { scrollbar-width: thin; scrollbar-color: #9ca3af #f8fafc; }
+      `}</style>
 
-  /* Firefox scrollbar */
-  .tables {
-    scrollbar-width: thin;
-    scrollbar-color: #9ca3af #f8fafc;
-  }
-`}</style>
-
-      {/* Footer Pagination */}
-      <footer className="container mt-3 flex min-w-full flex-row items-center gap-2 self-end px-4 py-2">
-        <div className="h-[10px] w-[10px] rounded-full bg-orange-500" />
-        <div className="text-sm text-zinc-600">
-          Showing {(currentPage - 1) * itemsPerPage + 1} -{' '}
+      {/* Footer */}
+      <footer className="mt-3 flex min-w-full flex-row items-center gap-2 px-4 py-2">
+        <div className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+        <p className="text-sm text-zinc-600">
+          Showing {(currentPage - 1) * itemsPerPage + 1}–
           {Math.min(currentPage * itemsPerPage, sorted.length)} of{' '}
           {sorted.length}
-        </div>
+        </p>
       </footer>
     </div>
   )

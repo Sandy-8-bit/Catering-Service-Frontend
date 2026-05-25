@@ -314,7 +314,7 @@ const RecipeDetailsPage = () => {
   const rawMaterialColumns: DataCell[] = [
     {
       headingTitle: 'Raw Material',
-      className: 'min-w-[240px]',
+      className: 'min-w-[240px] w-[240px] max-w-[240px]',
       render: (_, row: RecipeRow) => {
         const usedIds = new Set(
           editData
@@ -334,7 +334,7 @@ const RecipeDetailsPage = () => {
         ) ?? { id: row.rawMaterialId, label: row.rawMaterialPrimaryName }
 
         return (
-          <div className="relative">
+          <div className="relative w-[240px]">
             <TableDropDown
               title=""
               options={options}
@@ -367,46 +367,45 @@ const RecipeDetailsPage = () => {
     },
     {
       headingTitle: 'Unit Price (₹)',
-      className: 'min-w-[120px] text-right',
+      className: 'min-w-[120px] w-[120px] max-w-[120px]',
       render: (_, row: RecipeRow) => (
-        <span className="text-sm font-semibold text-zinc-800">
+        <span className="block w-[120px] text-sm font-semibold text-zinc-800">
           {row.unitPrice > 0 ? row.unitPrice.toFixed(2) : '—'}
         </span>
       ),
     },
     {
       headingTitle: 'Qty / Unit',
-      className: 'min-w-[140px]',
+      className: 'min-w-[140px] w-[140px] max-w-[140px]',
       render: (_, row: RecipeRow) => (
         <TableInput
+          className="w-[140px] max-w-[140px]"
           title=""
           type="num"
           inputValue={row.qtyPerUnit === 0 ? '' : String(row.qtyPerUnit)}
           isEditMode={isEditMode}
           onChange={(val) =>
-            updateRow(row.localId, {
-              qtyPerUnit: val === '' ? 0 : Number(val),
-            })
+            updateRow(row.localId, { qtyPerUnit: val === '' ? 0 : Number(val) })
           }
         />
       ),
     },
     {
       headingTitle: 'Unit',
-      className: 'min-w-[120px]',
+      className: 'min-w-[100px] w-[100px] max-w-[100px]',
       render: (_, row: RecipeRow) => (
-        <span className="text-sm font-medium text-zinc-700">
+        <span className="block w-[100px] text-sm font-medium text-zinc-700">
           {row.unit || '—'}
         </span>
       ),
     },
     {
       headingTitle: 'Total Cost (₹)',
-      className: 'min-w-[120px] text-right',
+      className: 'min-w-[120px] w-[120px] max-w-[120px]',
       render: (_, row: RecipeRow) => {
         const total = row.unitPrice * row.qtyPerUnit
         return (
-          <span className="text-sm font-semibold text-zinc-800">
+          <span className="block w-[120px] text-sm font-semibold text-zinc-800">
             {total > 0 ? total.toFixed(2) : '—'}
           </span>
         )
@@ -414,31 +413,28 @@ const RecipeDetailsPage = () => {
     },
     {
       headingTitle: 'Notes',
-      className: 'min-w-[200px]',
+      className: 'min-w-[200px] w-[200px] max-w-[200px]',
       render: (_, row: RecipeRow) => (
         <TableInput
+          className="w-[200px] max-w-[200px]"
           title=""
           type="str"
           inputValue={row.notes}
           isEditMode={isEditMode}
-          onChange={(val) =>
-            updateRow(row.localId, {
-              notes: val,
-            })
-          }
+          onChange={(val) => updateRow(row.localId, { notes: val })}
           placeholder="Add notes..."
         />
       ),
     },
     {
       headingTitle: 'Actions',
-      className: 'w-24 text-center',
+      className: 'min-w-[80px] w-[80px] max-w-[80px]',
       render: (_, row: RecipeRow) =>
         isEditMode ? (
           <button
             type="button"
             onClick={() => handleRemoveRow(row.localId)}
-            className="text-sm font-semibold text-rose-500 transition hover:text-rose-600"
+            className="block w-[80px] text-sm font-semibold text-rose-500 transition hover:text-rose-600"
           >
             Remove
           </button>
@@ -449,7 +445,7 @@ const RecipeDetailsPage = () => {
   const subProductColumns: DataCell[] = [
     {
       headingTitle: 'Sub Product',
-      className: 'min-w-[240px]',
+      className: 'min-w-[240px] w-[240px] max-w-[240px]',
       render: (_, row: RecipeRow) => {
         const usedIds = new Set(
           editData
@@ -469,7 +465,7 @@ const RecipeDetailsPage = () => {
         ) ?? { id: row.subProductId, label: row.subProductPrimaryName }
 
         return (
-          <div className="relative">
+          <div className="relative w-[240px]">
             <TableDropDown
               title=""
               options={options}
@@ -499,57 +495,53 @@ const RecipeDetailsPage = () => {
     },
     {
       headingTitle: 'Qty / Unit',
-      className: 'min-w-[140px]',
+      className: 'min-w-[140px] w-[140px] max-w-[140px]',
       render: (_, row: RecipeRow) => (
         <TableInput
+          className="w-[140px] max-w-[140px]"
           title=""
           type="num"
           inputValue={row.qtyPerUnit === 0 ? '' : String(row.qtyPerUnit)}
           isEditMode={isEditMode}
           onChange={(val) =>
-            updateRow(row.localId, {
-              qtyPerUnit: val === '' ? 0 : Number(val),
-            })
+            updateRow(row.localId, { qtyPerUnit: val === '' ? 0 : Number(val) })
           }
         />
       ),
     },
     {
       headingTitle: 'Unit',
-      className: 'min-w-[120px]',
+      className: 'min-w-[140px] w-[140px] max-w-[140px]',
       render: (_, row: RecipeRow) => (
-        <span className="text-sm font-medium text-zinc-700">
+        <span className="block w-[140px] text-sm font-medium text-zinc-700">
           {row.unit || 'portion'} qt
         </span>
       ),
     },
     {
       headingTitle: 'Notes',
-      className: 'min-w-[200px]',
+      className: 'min-w-[200px] w-[200px] max-w-[200px]',
       render: (_, row: RecipeRow) => (
         <TableInput
+          className="w-[200px] max-w-[200px]"
           title=""
           type="str"
           inputValue={row.notes}
           isEditMode={isEditMode}
-          onChange={(val) =>
-            updateRow(row.localId, {
-              notes: val,
-            })
-          }
+          onChange={(val) => updateRow(row.localId, { notes: val })}
           placeholder="Add notes..."
         />
       ),
     },
     {
       headingTitle: 'Actions',
-      className: 'w-24 text-center',
+      className: 'min-w-[80px] w-[80px] max-w-[80px]',
       render: (_, row: RecipeRow) =>
         isEditMode ? (
           <button
             type="button"
             onClick={() => handleRemoveRow(row.localId)}
-            className="text-sm font-semibold text-rose-500 transition hover:text-rose-600"
+            className="block w-[80px] text-sm font-semibold text-rose-500 transition hover:text-rose-600"
           >
             Remove
           </button>
@@ -727,7 +719,7 @@ const RecipeDetailsPage = () => {
                         ({row.qtyPerUnit} {row.unit})
                       </span>
                     </div>
-                    <p className="text-sm text-zinc-700 ml-7">{row.notes}</p>
+                    <p className="ml-7 text-sm text-zinc-700">{row.notes}</p>
                   </div>
                 ))}
               </div>
