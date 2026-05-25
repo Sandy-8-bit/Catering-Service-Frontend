@@ -318,6 +318,7 @@ export interface BillData {
   customerItems?: BillCustomerItem[] | null
   rawMaterials?: BillRawMaterial[] | null
   advanceAmount?: number | null
+  deliveryCharge?: number | null
   totalAmount?: number | null
   customerItemsTotal?: number | null
   totalRawMaterialCost?: number | null
