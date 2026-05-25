@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   useFetchExpenses,
@@ -7,6 +8,7 @@ import {
   useDeleteExpense,
 } from '@/queries/expenseQuery'
 import type { Expense, ExpensePayload, ExpenseCategory } from '@/types/expense'
+import { ArrowLeft } from 'lucide-react'
 
 // Get categories dynamically
 const getCategories = (): ExpenseCategory[] => [
@@ -34,6 +36,7 @@ const categoryIcons: Record<ExpenseCategory, string> = {
 }
 
 export default function ExpensePage() {
+  const navigate = useNavigate()
   const { t } = useTranslation()
   const categories = getCategories()
 
@@ -134,9 +137,16 @@ export default function ExpensePage() {
       {/* Header Section */}
       <div className="flex flex-col gap-4 mb-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">{t('expenses')}</h1>
-            <p className="text-sm text-slate-500">{t('manage_spending')}</p>
+          <div className="flex items-center gap-3">
+            <ArrowLeft
+              size={28}
+              className="cursor-pointer text-slate-600 transition hover:scale-110"
+              onClick={() => navigate(-1)}
+            />
+            <div className="flex flex-col gap-1">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">{t('expenses')}</h1>
+              <p className="text-sm text-slate-500">{t('manage_spending')}</p>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'framer-motion'
 
@@ -21,12 +22,14 @@ import {
   UploadCloud,
   X,
   Trash2,
+  ArrowLeft,
 } from 'lucide-react'
 
 import { DeleteMasterCategoriesDialog } from './DeleteMasterCategoriesDialog'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
 
 export const MasterCategoriesPage = () => {
+  const navigate = useNavigate()
   const { t } = useTranslation()
 
   const createEmptyMasterCategory = (id: number): MasterCategory => ({
@@ -402,7 +405,12 @@ export const MasterCategoriesPage = () => {
 
   return (
     <main className="layout-container flex min-h-[95vh] w-full flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
-      <header className="flex flex-row gap-4 p-4">
+      <header className="flex flex-row gap-4 p-4 items-center">
+        <ArrowLeft
+          size={24}
+          className="cursor-pointer text-zinc-600 transition hover:scale-105"
+          onClick={() => navigate(-1)}
+        />
         <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
           {t('master_categories')}
         </h1>

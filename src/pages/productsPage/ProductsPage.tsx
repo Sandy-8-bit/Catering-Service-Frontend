@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -11,6 +12,7 @@ import {
   AlertCircle,
   Check,
   Loader,
+  ArrowLeft,
 } from 'lucide-react'
 
 import { useFetchCategoryOptions } from '@/queries/categoryQueries'
@@ -39,6 +41,7 @@ interface TransformedProduct extends Product {
 }
 
 export const ProductsPage = () => {
+  const navigate = useNavigate()
   const { t } = useTranslation()
 
   // Hooks
@@ -284,7 +287,12 @@ const isLoading = isProductsLoading || allProducts.length === 0
       <header className="sticky top-0 z-40 border-b border-orange-200/50 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto w-full px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+            <div className="flex items-center gap-3">
+              <ArrowLeft
+                size={28}
+                className="cursor-pointer text-orange-600 transition hover:scale-110"
+                onClick={() => navigate(-1)}
+              />
               <h1 className="text-3xl font-bold text-orange-900">
                 {t('products') || 'Products'}
               </h1>
@@ -591,10 +599,6 @@ function ProductFormModal({
       newErrors.primaryName = t('product_name_required') || 'Product name is required'
     }
 
-    if (!formData.description.trim()) {
-      newErrors.description = t('description_required') || 'Description is required'
-    }
-
     if (formData.price <= 0) {
       newErrors.price = t('price_must_be_greater') || 'Price must be greater than 0'
     }
@@ -708,7 +712,7 @@ function ProductFormModal({
           {/* Description */}
           <div>
             <label className="block text-sm font-semibold text-orange-900 mb-2">
-              {t('description') || 'Description'} *
+              {t('description') || 'Description'} <span className="text-xs text-orange-600">(Optional)</span>
             </label>
             <textarea
               value={formData.description}

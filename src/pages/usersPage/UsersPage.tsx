@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence } from 'framer-motion'
 
@@ -17,12 +18,13 @@ import {
   useFetchUsers,
 } from '@/queries/usersQueries'
 import type { User, UserPayload } from '@/types/user'
-import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X } from 'lucide-react'
+import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X, ArrowLeft } from 'lucide-react'
 import { DeleteUsersDialog } from './DeleteUsersDialog'
 
 type EditableUser = User & { password?: string }
 
 export const UsersPage = () => {
+  const navigate = useNavigate()
   const { t } = useTranslation()
   
   const createEmptyUser = (id: number): EditableUser => ({
@@ -423,7 +425,12 @@ export const UsersPage = () => {
 
   return (
     <main className="layout-container flex min-h-[95vh] w-full flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
-      <header className="flex flex-row gap-4 p-4">
+      <header className="flex flex-row gap-4 p-4 items-center">
+        <ArrowLeft
+          size={24}
+          className="cursor-pointer text-zinc-600 transition hover:scale-105"
+          onClick={() => navigate(-1)}
+        />
         <h1 className="w-max text-start text-xl font-semibold text-zinc-800">
           {t('users')}
         </h1>
