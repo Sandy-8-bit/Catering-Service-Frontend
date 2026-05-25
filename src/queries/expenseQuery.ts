@@ -2,31 +2,49 @@
  * ---------------------------------------
  * Expense Service Hooks - CRUD Operations
  * ---------------------------------------
- *
- * Endpoints:
- * GET    /api/admin/expenses
- * GET    /api/admin/expenses/{id}
- * POST   /api/admin/expenses
- * PUT    /api/admin/expenses/{id}
- * DELETE /api/admin/expenses/{id}
  */
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
+
 import axiosInstance from '@/utils/axios'
 import { authHandler } from '@/utils/authHandler'
 import { handleApiError } from '@/utils/handleApiError'
 import { toast } from 'react-hot-toast'
-import type { Expense, ExpensePayload, ApiResponse } from '@/types/expense'
 
-/**
- * Query Keys
- */
-const EXPENSE_KEY = ['expenses'] as const
-const expenseKey = (id: number | string) => [...EXPENSE_KEY, id] as const
+import type {
+  Expense,
+  ExpensePayload,
+  ApiResponse,
+} from '@/types/expense'
 
-/**
- * 🔍 Fetch all expenses
- */
+/* -------------------------------------------------------------------------- */
+/*                                  QUERY KEYS                                */
+/* -------------------------------------------------------------------------- */
+
+export const expenseKeys = {
+  all: ['expenses'] as const,
+
+  lists: () => [...expenseKeys.all, 'list'] as const,
+
+  list: (params?: {
+    startDate?: string
+    endDate?: string
+  }) => [...expenseKeys.lists(), params] as const,
+
+  details: () => [...expenseKeys.all, 'detail'] as const,
+
+  detail: (id: number | string) =>
+    [...expenseKeys.details(), id] as const,
+}
+
+/* -------------------------------------------------------------------------- */
+/*                             FETCH ALL EXPENSES                             */
+/* -------------------------------------------------------------------------- */
+
 export const useFetchExpenses = (params?: {
   startDate?: string
   endDate?: string
@@ -41,33 +59,47 @@ export const useFetchExpenses = (params?: {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+
           params: {
-            ...(params?.startDate && { startDate: params.startDate }),
-            ...(params?.endDate && { endDate: params.endDate }),
+            ...(params?.startDate && {
+              startDate: params.startDate,
+            }),
+
+            ...(params?.endDate && {
+              endDate: params.endDate,
+            }),
           },
         }
       )
 
       return res.data?.data ?? []
     } catch (error: unknown) {
-      handleApiError(error, 'Expenses')
+      handleApiError(error, 'Fetch Expenses')
       return []
     }
   }
 
   return useQuery({
-    queryKey: [EXPENSE_KEY, params], // 🔥 important for refetch
+    queryKey: expenseKeys.list(params),
+
     queryFn: fetchExpenses,
+
     staleTime: 1000 * 60 * 5,
+
+    refetchOnWindowFocus: true,
   })
 }
-/**
- * 🔍 Fetch expense by ID
- */
+
+/* -------------------------------------------------------------------------- */
+/*                           FETCH EXPENSE BY ID                              */
+/* -------------------------------------------------------------------------- */
+
 export const useFetchExpenseById = (id?: number) => {
   const fetchExpense = async (): Promise<Expense> => {
     try {
-      if (!id) throw new Error('Expense ID required')
+      if (!id) {
+        throw new Error('Expense ID required')
+      }
 
       const token = authHandler()
 
@@ -82,25 +114,30 @@ export const useFetchExpenseById = (id?: number) => {
 
       return res.data.data
     } catch (error: unknown) {
-      handleApiError(error, 'Expense')
+      handleApiError(error, 'Fetch Expense')
       throw error
     }
   }
 
   return useQuery({
-    queryKey: expenseKey(id ?? 'unknown'),
+    queryKey: expenseKeys.detail(id ?? 'unknown'),
+
     queryFn: fetchExpense,
+
     enabled: !!id,
   })
 }
 
-/**
- * ➕ Create expense
- */
+/* -------------------------------------------------------------------------- */
+/*                               CREATE EXPENSE                               */
+/* -------------------------------------------------------------------------- */
+
 export const useCreateExpense = () => {
   const queryClient = useQueryClient()
 
-  const createExpense = async (payload: ExpensePayload): Promise<Expense> => {
+  const createExpense = async (
+    payload: ExpensePayload
+  ): Promise<Expense> => {
     try {
       const token = authHandler()
 
@@ -123,16 +160,25 @@ export const useCreateExpense = () => {
 
   return useMutation({
     mutationFn: createExpense,
-    onSuccess: () => {
+
+    onSuccess: async () => {
       toast.success('Expense created successfully')
-      queryClient.invalidateQueries({ queryKey: EXPENSE_KEY })
+
+      await queryClient.invalidateQueries({
+        queryKey: expenseKeys.lists(),
+      })
+
+      await queryClient.refetchQueries({
+        queryKey: expenseKeys.lists(),
+      })
     },
   })
 }
 
-/**
- * ✏️ Update expense
- */
+/* -------------------------------------------------------------------------- */
+/*                               UPDATE EXPENSE                               */
+/* -------------------------------------------------------------------------- */
+
 export const useUpdateExpense = () => {
   const queryClient = useQueryClient()
 
@@ -165,20 +211,36 @@ export const useUpdateExpense = () => {
 
   return useMutation({
     mutationFn: updateExpense,
-    onSuccess: (_data, variables) => {
+
+    onSuccess: async (_data, variables) => {
       toast.success('Expense updated successfully')
 
-      queryClient.invalidateQueries({ queryKey: EXPENSE_KEY })
-      queryClient.invalidateQueries({
-        queryKey: expenseKey(variables.id),
+      /* Refetch all expense lists */
+      await queryClient.invalidateQueries({
+        queryKey: expenseKeys.lists(),
+      })
+
+      /* Refetch single expense */
+      await queryClient.invalidateQueries({
+        queryKey: expenseKeys.detail(variables.id),
+      })
+
+      /* Force refetch */
+      await queryClient.refetchQueries({
+        queryKey: expenseKeys.lists(),
+      })
+
+      await queryClient.refetchQueries({
+        queryKey: expenseKeys.detail(variables.id),
       })
     },
   })
 }
 
-/**
- * ❌ Delete expense
- */
+/* -------------------------------------------------------------------------- */
+/*                               DELETE EXPENSE                               */
+/* -------------------------------------------------------------------------- */
+
 export const useDeleteExpense = () => {
   const queryClient = useQueryClient()
 
@@ -186,13 +248,16 @@ export const useDeleteExpense = () => {
     try {
       const token = authHandler()
 
-      await axiosInstance.delete(`/api/admin/expenses/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      await axiosInstance.delete(
+        `/api/admin/expenses/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
 
-      return true
+      return id
     } catch (error: unknown) {
       handleApiError(error, 'Delete Expense')
       throw error
@@ -201,9 +266,24 @@ export const useDeleteExpense = () => {
 
   return useMutation({
     mutationFn: deleteExpense,
-    onSuccess: () => {
+
+    onSuccess: async (deletedId) => {
       toast.success('Expense deleted successfully')
-      queryClient.invalidateQueries({ queryKey: EXPENSE_KEY })
+
+      /* Remove deleted expense cache */
+      queryClient.removeQueries({
+        queryKey: expenseKeys.detail(deletedId),
+      })
+
+      /* Invalidate all lists */
+      await queryClient.invalidateQueries({
+        queryKey: expenseKeys.lists(),
+      })
+
+      /* Force refetch */
+      await queryClient.refetchQueries({
+        queryKey: expenseKeys.lists(),
+      })
     },
   })
 }

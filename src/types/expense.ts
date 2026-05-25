@@ -2,8 +2,12 @@ export type ExpenseCategory =
   | 'RENT'
   | 'SUPPLIES'
   | 'SALARY'
+  |'MAINTENANCE'
   | 'UTILITIES'
-  | 'OTHER'
+  |"TRANSPORTATION"
+  |'STAFF'
+  |'INSURANCE'
+  | 'MISCELLANEOUS'
 
 export interface Expense {
   id: number
