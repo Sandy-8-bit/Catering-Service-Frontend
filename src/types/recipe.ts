@@ -81,3 +81,22 @@ export interface OrderMaterialCalculationRow {
   qtyPerUnit: number | null
   totalQuantity: number
 }
+
+export interface OrderMaterialDetail {
+  rawMaterialId: number
+  rawMaterialPrimaryName: string
+  rawMaterialSecondaryName?: string
+  unit: string
+  qtyPerUnit: number
+  pricePerUnit: number
+  totalQuantity: number
+  notes: string | null
+}
+
+export interface OrderMaterialProductItem {
+  productId: number
+  productPrimaryName: string
+  orderedQuantity: number
+  rawMaterials: OrderMaterialDetail[]
+  subProducts: OrderMaterialDetail[]
+}

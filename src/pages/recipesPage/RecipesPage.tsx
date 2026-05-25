@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { ArrowLeft } from 'lucide-react'
 
 import GenericTable, { type DataCell } from '@/components/common/GenericTable'
 import { appRoutes } from '@/routes/appRoutes'
@@ -82,11 +83,18 @@ const RecipesPage = () => {
   return (
     <main className="layout-container flex min-h-[95vh] flex-col rounded-[12px] border-2 border-[#F1F1F1] bg-white">
       <header className="flex flex-wrap items-center justify-between gap-4 p-4">
-        <div>
-          <h1 className="text-xl font-semibold text-zinc-800">
-            {t('recipes')}
-          </h1>
-          <p className="text-sm text-zinc-500">{t('review_products')}</p>
+        <div className="flex items-center gap-3">
+          <ArrowLeft
+            size={24}
+            className="cursor-pointer text-zinc-600 transition hover:scale-105"
+            onClick={() => navigate(-1)}
+          />
+          <div>
+            <h1 className="text-xl font-semibold text-zinc-800">
+              {t('recipes')}
+            </h1>
+            <p className="text-sm text-zinc-500">{t('review_products')}</p>
+          </div>
         </div>
       </header>
 

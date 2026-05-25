@@ -9,7 +9,10 @@ import DialogBox from '@/components/common/DialogBox'
 import ProductMenuSelector from '@/components/orders/ProductMenuSelector'
 import { useCalculateOrderMaterials } from '@/queries/recipeQueries'
 import type { OrderItem } from '@/types/order'
-import type { OrderMaterialCalculationRow } from '@/types/recipe'
+import type {
+  OrderMaterialProductItem,
+  OrderMaterialDetail,
+} from '@/types/recipe'
 
 // ─── PDF ─────────────────────────────────────────────────────────────────────
 
@@ -60,13 +63,22 @@ const rowText = (
 }
 
 const buildPdf = (
-  rows: OrderMaterialCalculationRow[],
+  items: OrderMaterialProductItem[],
   sourceItems: OrderItem[]
 ): jsPDF => {
   const rowH = 6
   const headerH = 50
   const sourceH = sourceItems.length * rowH + 20
-  const tableH = rows.length * rowH + 20
+
+  // Calculate table height including items and materials
+  let tableH = 0
+  items.forEach((item) => {
+    tableH += 8 // Product header
+    tableH += ((item.rawMaterials?.length ?? 0) + (item.subProducts?.length ?? 0)) * rowH
+    tableH += 4 // spacing between items
+  })
+  tableH += 20
+
   const footerH = 20
   const totalHeight = headerH + sourceH + tableH + footerH
 
@@ -92,7 +104,12 @@ const buildPdf = (
   y += 5
 
   sourceItems.forEach((item) => {
-    rowText(doc, item.productPrimaryName || 'Product', `×${item.quantity}`, y)
+    rowText(
+      doc,
+      item.productPrimaryName || 'Product',
+      `×${item.quantity}`,
+      y
+    )
     y += rowH
   })
 
@@ -100,32 +117,67 @@ const buildPdf = (
   dashedLine(doc, y)
   y += 6
 
-  // Table header
+  // Materials by product
   doc.setFontSize(7)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(100, 100, 100)
-  doc.text('MATERIAL', M, y)
-  doc.text('UNIT', M + CW * 0.55, y)
-  doc.text('QTY', M + CW, y, { align: 'right' })
-  y += 4
-  dashedLine(doc, y)
+  doc.text('MATERIALS REQUIRED', M, y)
   y += 5
 
-  rows.forEach((row) => {
-    doc.setFontSize(8)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(30, 30, 30)
-    doc.text(row.rawMaterialPrimaryName, M, y)
-    doc.text(row.unit, M + CW * 0.55, y)
+  items.forEach((item) => {
+    doc.setFontSize(7)
     doc.setFont('helvetica', 'bold')
-    doc.text(row.totalQuantity.toFixed(2), M + CW, y, { align: 'right' })
+    doc.setTextColor(60, 60, 60)
+    doc.text(item.productPrimaryName, M, y)
     y += rowH
+
+    // Raw materials
+    item.rawMaterials.forEach((material) => {
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(30, 30, 30)
+      doc.text(material.rawMaterialPrimaryName, M + 2, y)
+      doc.text(material.unit, M + CW * 0.55, y)
+      doc.setFont('helvetica', 'bold')
+      doc.text(material.totalQuantity.toFixed(2), M + CW, y, {
+        align: 'right',
+      })
+      if (material.notes) {
+        y += rowH
+        doc.setFontSize(6)
+        doc.setTextColor(120, 120, 120)
+        doc.text(`Note: ${material.notes}`, M + 2, y)
+      }
+      y += rowH
+    })
+
+    // Sub products
+    item.subProducts.forEach((subProduct) => {
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor(30, 30, 30)
+      doc.text(`[${subProduct.rawMaterialPrimaryName}]`, M + 2, y)
+      doc.text(subProduct.unit, M + CW * 0.55, y)
+      doc.setFont('helvetica', 'bold')
+      doc.text(subProduct.totalQuantity.toFixed(2), M + CW, y, {
+        align: 'right',
+      })
+      if (subProduct.notes) {
+        y += rowH
+        doc.setFontSize(6)
+        doc.setTextColor(120, 120, 120)
+        doc.text(`Note: ${subProduct.notes}`, M + 2, y)
+      }
+      y += rowH
+    })
+
+    y += 2
   })
 
   y += 2
   solidLine(doc, y)
   y += 6
-  centeredText(doc, `${rows.length} materials required`, y, 7)
+  centeredText(doc, `${items.length} product${items.length !== 1 ? 's' : ''} calculated`, y, 7)
 
   return doc
 }
@@ -135,9 +187,7 @@ const buildPdf = (
 const CalculateRawMaterialsPage = () => {
   const navigate = useNavigate()
   const [selectedItems, setSelectedItems] = useState<OrderItem[]>([])
-  const [result, setResult] = useState<OrderMaterialCalculationRow[] | null>(
-    null
-  )
+  const [result, setResult] = useState<OrderMaterialProductItem[] | null>(null)
   const [showResult, setShowResult] = useState(false)
 
   const { mutateAsync: calculateMaterials, isPending } =
@@ -171,6 +221,24 @@ const CalculateRawMaterialsPage = () => {
     } catch {
       toast.error('Failed to generate PDF')
     }
+  }
+
+  const getTotalMaterials = () => {
+    if (!result) return 0
+    return result.reduce(
+      (sum, item) => sum + (item.rawMaterials?.length ?? 0) + (item.subProducts?.length ?? 0),
+      0
+    )
+  }
+
+  const getMaterialsWithNotes = () => {
+    if (!result) return 0
+    return result.reduce((sum, item) => {
+      const withNotes =
+        (item.rawMaterials?.filter((m) => m.notes).length ?? 0) +
+        (item.subProducts?.filter((m) => m.notes).length ?? 0)
+      return sum + withNotes
+    }, 0)
   }
 
   return (
@@ -217,7 +285,7 @@ const CalculateRawMaterialsPage = () => {
       </section>
 
       {showResult && result && (
-        <DialogBox setToggleDialogueBox={setShowResult} width="500px">
+        <DialogBox setToggleDialogueBox={setShowResult} width="600px">
           <div className="flex flex-col gap-5">
             {/* Dialog header */}
             <div className="flex items-start justify-between gap-3">
@@ -226,9 +294,10 @@ const CalculateRawMaterialsPage = () => {
                   Raw Materials Required
                 </h3>
                 <p className="mt-0.5 text-sm text-zinc-500">
-                  {result.length} material{result.length !== 1 ? 's' : ''} •{' '}
-                  {selectedItems.length} product
-                  {selectedItems.length !== 1 ? 's' : ''}
+                  {getTotalMaterials()} material{getTotalMaterials() !== 1 ? 's' : ''} •{' '}
+                  {result.length} product
+                  {result.length !== 1 ? 's' : ''} •{' '}
+                  {getMaterialsWithNotes()} with notes
                 </p>
               </div>
               <ButtonSm state="outline" onClick={handleDownload}>
@@ -257,40 +326,138 @@ const CalculateRawMaterialsPage = () => {
               </div>
             </div>
 
-            {/* Results table */}
-            <div className="max-h-[340px] overflow-y-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="sticky top-0 bg-white">
-                  <tr className="border-b border-zinc-200 text-xs tracking-wider text-zinc-400 uppercase">
-                    <th className="py-2 pr-4 font-medium">Material</th>
-                    <th className="py-2 pr-4 font-medium">Unit</th>
-                    <th className="py-2 text-right font-medium">Total Qty</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.map((row) => (
-                    <tr
-                      key={row.rawMaterialId}
-                      className="border-b border-zinc-100 last:border-0"
-                    >
-                      <td className="py-2.5 pr-4">
-                        <p className="font-medium text-zinc-800">
-                          {row.rawMaterialPrimaryName}
+            {/* Results by product */}
+            <div className="max-h-[400px] space-y-4 overflow-y-auto">
+              {result.map((item) => (
+                <div
+                  key={item.productId}
+                  className="rounded-lg border border-zinc-200 p-4"
+                >
+                  {/* Product header */}
+                  <div className="mb-3 flex items-center justify-between border-b border-zinc-100 pb-2">
+                    <h4 className="font-semibold text-zinc-900">
+                      {item.productPrimaryName}
+                    </h4>
+                    <span className="text-xs font-medium text-zinc-500">
+                      Qty: {item.orderedQuantity}
+                    </span>
+                  </div>
+
+                  {/* Raw Materials */}
+                  {(item.rawMaterials?.length ?? 0) > 0 && (
+                    <div className="mb-3 space-y-2">
+                      <p className="text-xs font-medium tracking-wider text-orange-600 uppercase">
+                        Raw Materials
+                      </p>
+                      {(item.rawMaterials ?? []).map((material, idx) => (
+                        <div key={`raw-${item.productId}-${idx}`} className="space-y-0.5 text-sm">
+                          <div className="flex items-center justify-between text-zinc-700">
+                            <span>{material.rawMaterialPrimaryName}</span>
+                            <span className="font-semibold text-zinc-900">
+                              {material.totalQuantity.toFixed(2)} {material.unit}
+                            </span>
+                          </div>
+                          {material.rawMaterialSecondaryName && (
+                            <p className="text-xs text-zinc-400">
+                              {material.rawMaterialSecondaryName}
+                            </p>
+                          )}
+                          {material.notes && (
+                            <p className="text-xs italic text-amber-600">
+                              💡 {material.notes}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Sub Products */}
+                  {(item.subProducts?.length ?? 0) > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium tracking-wider text-blue-600 uppercase">
+                        Sub Products
+                      </p>
+                      {(item.subProducts ?? []).map((subProduct, idx) => (
+                        <div key={`sub-${item.productId}-${idx}`} className="space-y-0.5 text-sm">
+                          <div className="flex items-center justify-between text-zinc-700">
+                            <span>[{subProduct.rawMaterialPrimaryName}]</span>
+                            <span className="font-semibold text-zinc-900">
+                              {subProduct.totalQuantity.toFixed(2)}{' '}
+                              {subProduct.unit}
+                            </span>
+                          </div>
+                          {subProduct.notes && (
+                            <p className="text-xs italic text-amber-600">
+                              💡 {subProduct.notes}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Overall Summary */}
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+              <p className="mb-3 text-xs font-medium tracking-wider text-emerald-700 uppercase">
+                Overall Summary
+              </p>
+              <div className="space-y-2 text-sm">
+                {(() => {
+                  const allMaterials: OrderMaterialDetail[] = []
+                  result.forEach((item) => {
+                    allMaterials.push(...item.rawMaterials)
+                    allMaterials.push(...item.subProducts)
+                  })
+
+                  // Group by material and sum quantities
+                  const grouped = new Map<
+                    number,
+                    {
+                      name: string
+                      unit: string
+                      total: number
+                      notes: string[]
+                    }
+                  >()
+
+                  allMaterials.forEach((material) => {
+                    const key = material.rawMaterialId
+                    if (!grouped.has(key)) {
+                      grouped.set(key, {
+                        name: material.rawMaterialPrimaryName,
+                        unit: material.unit,
+                        total: 0,
+                        notes: [],
+                      })
+                    }
+                    const entry = grouped.get(key)!
+                    entry.total += material.totalQuantity
+                    if (material.notes && !entry.notes.includes(material.notes)) {
+                      entry.notes.push(material.notes)
+                    }
+                  })
+
+                  return Array.from(grouped.values()).map((entry, idx) => (
+                    <div key={idx}>
+                      <div className="flex items-center justify-between font-medium text-zinc-800">
+                        <span>{entry.name}</span>
+                        <span>
+                          {entry.total.toFixed(2)} {entry.unit}
+                        </span>
+                      </div>
+                      {entry.notes.length > 0 && (
+                        <p className="text-xs text-amber-700">
+                          📌 {entry.notes.join(', ')}
                         </p>
-                        {row.rawMaterialSecondaryName && (
-                          <p className="text-xs text-zinc-400">
-                            {row.rawMaterialSecondaryName}
-                          </p>
-                        )}
-                      </td>
-                      <td className="py-2.5 pr-4 text-zinc-500">{row.unit}</td>
-                      <td className="py-2.5 text-right font-semibold text-zinc-900">
-                        {row.totalQuantity.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      )}
+                    </div>
+                  ))
+                })()}
+              </div>
             </div>
           </div>
         </DialogBox>

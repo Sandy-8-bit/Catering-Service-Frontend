@@ -7,7 +7,7 @@
 import { apiRoutes } from '@/routes/apiRoutes'
 import type {
   CalculateRawMaterialsRequest,
-  CalculateRawMaterialsResponse,
+  CalculateRawMaterialsProductItem,
 } from '@/types/calculateRawMaterials'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
@@ -20,12 +20,12 @@ import { useMutation } from '@tanstack/react-query'
 export const useCalculateRawMaterials = () => {
   const calculateMaterials = async (
     items: CalculateRawMaterialsRequest[]
-  ): Promise<CalculateRawMaterialsResponse[]> => {
+  ): Promise<CalculateRawMaterialsProductItem[]> => {
     try {
       const token = authHandler()
 
       const res = await axiosInstance.post(
-        `${apiRoutes.recipes}/calculate-order-materials`,
+        `${apiRoutes.recipes}/calculate-materials`,
         items,
         {
           headers: {
@@ -34,7 +34,7 @@ export const useCalculateRawMaterials = () => {
         }
       )
 
-      return (res.data?.data ?? []) as CalculateRawMaterialsResponse[]
+      return (res.data?.data ?? []) as CalculateRawMaterialsProductItem[]
     } catch (error: unknown) {
       handleApiError(error, 'Calculate Raw Materials')
       throw error

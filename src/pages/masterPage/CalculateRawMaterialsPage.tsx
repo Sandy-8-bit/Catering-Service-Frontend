@@ -25,7 +25,7 @@ import { useFetchProducts } from '@/queries/productQueries'
 import { useCalculateRawMaterials } from '@/queries/calculateRawMaterialsQueries'
 import type {
   CalculateRawMaterialsRequest,
-  CalculateRawMaterialsResponse,
+  CalculateRawMaterialsProductItem,
 } from '@/types/calculateRawMaterials'
 
 // ─── Font Registration ────────────────────────────────────────────────────────
@@ -231,7 +231,7 @@ const pdfStyles = StyleSheet.create({
 // ─── PDF Document Component ───────────────────────────────────────────────────
 
 interface RawMaterialsPdfDocProps {
-  materials: CalculateRawMaterialsResponse[]
+  materials: CalculateRawMaterialsProductItem[]
   selectedProducts: {
     primaryName: string
     secondaryName?: string
@@ -252,6 +252,12 @@ const RawMaterialsPdfDoc = ({
     month: 'short',
     year: 'numeric',
   })
+
+  // Calculate total materials count
+  const totalMaterialsCount = materials.reduce(
+    (sum, item) => sum + (item.rawMaterials?.length ?? 0) + (item.subProducts?.length ?? 0),
+    0
+  )
 
   return (
     <Document>
@@ -285,7 +291,7 @@ const RawMaterialsPdfDoc = ({
           </View>
           <View style={pdfStyles.summaryCard}>
             <Text style={pdfStyles.summaryCardLabel}>Raw Materials</Text>
-            <Text style={pdfStyles.summaryCardValue}>{materials.length}</Text>
+            <Text style={pdfStyles.summaryCardValue}>{totalMaterialsCount}</Text>
           </View>
         </View>
 
@@ -309,48 +315,153 @@ const RawMaterialsPdfDoc = ({
 
         <View style={pdfStyles.dashedDivider} />
 
-        {/* ── Raw Materials Table ── */}
+        {/* ── Materials by Product ── */}
         <Text style={[pdfStyles.sectionTitle, { marginBottom: 4 }]}>
           Required Raw Materials
         </Text>
 
-        {/* Table Header */}
-        <View style={pdfStyles.tableHeaderRow}>
-          <View style={pdfStyles.colMaterial}>
-            <Text style={pdfStyles.tableHeaderCell}>Material</Text>
-          </View>
-          <View style={pdfStyles.colQty}>
-            <Text style={[pdfStyles.tableHeaderCell, { textAlign: 'right' }]}>
-              Qty
-            </Text>
-          </View>
-          <View style={pdfStyles.colUnit}>
-            <Text style={[pdfStyles.tableHeaderCell, { textAlign: 'right' }]}>
-              Unit
-            </Text>
-          </View>
-        </View>
-
-        {/* Table Rows */}
-        {materials.map((m) => (
-          <View key={m.rawMaterialId} style={pdfStyles.tableRow}>
-            <View style={pdfStyles.colMaterial}>
-              {/* Tamil font only on name fields */}
-              <Text style={pdfStyles.materialPrimaryTamil}>
-                {m.rawMaterialPrimaryName ?? '—'}
+        {materials.map((product, productIdx) => (
+          <View key={productIdx} style={{ marginBottom: 8 }}>
+            {/* Product Header */}
+            <View style={{ marginBottom: 4 }}>
+              <Text style={[pdfStyles.materialPrimaryTamil, { fontSize: 8 }]}>
+                {product.productPrimaryName}
               </Text>
-              {m.rawMaterialSecondaryName ? (
-                <Text style={pdfStyles.materialSecondaryTamil}>
-                  {m.rawMaterialSecondaryName}
-                </Text>
-              ) : null}
+              <Text style={{ fontSize: 6.5, color: '#888888' }}>
+                Qty: {product.orderedQuantity}
+              </Text>
             </View>
-            <View style={pdfStyles.colQty}>
-              <Text style={pdfStyles.qtyValue}>{m.totalQuantity ?? '—'}</Text>
-            </View>
-            <View style={pdfStyles.colUnit}>
-              <Text style={pdfStyles.unitValue}>{m.unit ?? '—'}</Text>
-            </View>
+
+            {/* Raw Materials Table */}
+            {(product.rawMaterials?.length ?? 0) > 0 && (
+              <View style={{ marginBottom: 4 }}>
+                <View style={pdfStyles.tableHeaderRow}>
+                  <View style={pdfStyles.colMaterial}>
+                    <Text
+                      style={[
+                        pdfStyles.tableHeaderCell,
+                        { color: '#ea580c', fontSize: 6.5 },
+                      ]}
+                    >
+                      Raw Material
+                    </Text>
+                  </View>
+                  <View style={pdfStyles.colQty}>
+                    <Text
+                      style={[
+                        pdfStyles.tableHeaderCell,
+                        { textAlign: 'right', fontSize: 6.5 },
+                      ]}
+                    >
+                      Qty
+                    </Text>
+                  </View>
+                  <View style={pdfStyles.colUnit}>
+                    <Text
+                      style={[
+                        pdfStyles.tableHeaderCell,
+                        { textAlign: 'right', fontSize: 6.5 },
+                      ]}
+                    >
+                      Unit
+                    </Text>
+                  </View>
+                </View>
+
+                {(product.rawMaterials ?? []).map((material, idx) => (
+                  <View key={idx} style={pdfStyles.tableRow}>
+                    <View style={pdfStyles.colMaterial}>
+                      <Text style={pdfStyles.materialPrimaryTamil}>
+                        {material.rawMaterialPrimaryName ?? '—'}
+                      </Text>
+                      {material.rawMaterialSecondaryName ? (
+                        <Text style={pdfStyles.materialSecondaryTamil}>
+                          {material.rawMaterialSecondaryName}
+                        </Text>
+                      ) : null}
+                      {material.notes && (
+                        <Text style={{ fontSize: 6, color: '#d97706' }}>
+                          📌 {material.notes}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={pdfStyles.colQty}>
+                      <Text style={pdfStyles.qtyValue}>
+                        {material.totalQuantity ?? '—'}
+                      </Text>
+                    </View>
+                    <View style={pdfStyles.colUnit}>
+                      <Text style={pdfStyles.unitValue}>
+                        {material.unit ?? '—'}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* Sub Products Table */}
+            {(product.subProducts?.length ?? 0) > 0 && (
+              <View style={{ marginBottom: 4 }}>
+                <View style={pdfStyles.tableHeaderRow}>
+                  <View style={pdfStyles.colMaterial}>
+                    <Text
+                      style={[
+                        pdfStyles.tableHeaderCell,
+                        { color: '#2563eb', fontSize: 6.5 },
+                      ]}
+                    >
+                      Sub Product
+                    </Text>
+                  </View>
+                  <View style={pdfStyles.colQty}>
+                    <Text
+                      style={[
+                        pdfStyles.tableHeaderCell,
+                        { textAlign: 'right', fontSize: 6.5 },
+                      ]}
+                    >
+                      Qty
+                    </Text>
+                  </View>
+                  <View style={pdfStyles.colUnit}>
+                    <Text
+                      style={[
+                        pdfStyles.tableHeaderCell,
+                        { textAlign: 'right', fontSize: 6.5 },
+                      ]}
+                    >
+                      Unit
+                    </Text>
+                  </View>
+                </View>
+
+                {(product.subProducts ?? []).map((subProduct, idx) => (
+                  <View key={idx} style={pdfStyles.tableRow}>
+                    <View style={pdfStyles.colMaterial}>
+                      <Text style={pdfStyles.materialPrimaryTamil}>
+                        [{subProduct.rawMaterialPrimaryName ?? '—'}]
+                      </Text>
+                      {subProduct.notes && (
+                        <Text style={{ fontSize: 6, color: '#d97706' }}>
+                          📌 {subProduct.notes}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={pdfStyles.colQty}>
+                      <Text style={pdfStyles.qtyValue}>
+                        {subProduct.totalQuantity ?? '—'}
+                      </Text>
+                    </View>
+                    <View style={pdfStyles.colUnit}>
+                      <Text style={pdfStyles.unitValue}>
+                        {subProduct.unit ?? '—'}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         ))}
 
@@ -385,29 +496,6 @@ const SummaryCard = ({
   </div>
 )
 
-const RawMaterialResultCard = ({
-  material,
-}: {
-  material: CalculateRawMaterialsResponse
-}) => (
-  <article className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200/50 bg-white p-4 transition-all hover:shadow-sm">
-    <div className="min-w-0 flex-1">
-      <h4 className="truncate text-sm font-semibold text-zinc-900">
-        {material.rawMaterialPrimaryName}
-      </h4>
-      <p className="mt-0.5 truncate text-xs text-zinc-500">
-        {material.rawMaterialSecondaryName}
-      </p>
-    </div>
-    <div className="shrink-0 text-right">
-      <p className="text-lg font-bold text-orange-600">
-        {material.totalQuantity}
-      </p>
-      <p className="text-xs font-medium text-zinc-500">{material.unit}</p>
-    </div>
-  </article>
-)
-
 const detailSectionTitleClass =
   'text-xs font-bold uppercase tracking-[0.2em] text-orange-500'
 
@@ -420,7 +508,7 @@ export const CalculateRawMaterialsPage = () => {
     Record<number, number>
   >({})
   const [calculationResults, setCalculationResults] = useState<
-    CalculateRawMaterialsResponse[]
+    CalculateRawMaterialsProductItem[]
   >([])
   const [hasCalculated, setHasCalculated] = useState(false)
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
@@ -815,7 +903,14 @@ export const CalculateRawMaterialsPage = () => {
                 />
                 <SummaryCard
                   label={t('raw_materials_required')}
-                  value={calculationResults.length}
+                  value={(() => {
+                    const count = calculationResults.reduce(
+                      (sum, item) =>
+                        sum + (item.rawMaterials?.length ?? 0) + (item.subProducts?.length ?? 0),
+                      0
+                    )
+                    return count
+                  })()}
                 />
               </div>
 
@@ -855,12 +950,83 @@ export const CalculateRawMaterialsPage = () => {
                 )}
 
                 {calculationResults.length > 0 ? (
-                  <div className="space-y-3">
-                    {calculationResults.map((material) => (
-                      <RawMaterialResultCard
-                        key={material.rawMaterialId}
-                        material={material}
-                      />
+                  <div className="flex flex-col gap-4 overflow-y-auto">
+                    {calculationResults.map((item) => (
+                      <div
+                        key={item.productId}
+                        className="rounded-lg border border-zinc-200 p-4"
+                      >
+                        {/* Product header */}
+                        <div className="mb-3 flex items-center justify-between border-b border-zinc-100 pb-2">
+                          <h4 className="font-semibold text-zinc-900">
+                            {item.productPrimaryName}
+                          </h4>
+                          <span className="text-xs font-medium text-zinc-500">
+                            Qty: {item.orderedQuantity}
+                          </span>
+                        </div>
+
+                        {/* Raw Materials */}
+                        {(item.rawMaterials?.length ?? 0) > 0 && (
+                          <div className="mb-3 space-y-2">
+                            <p className="text-xs font-medium tracking-wider text-orange-600 uppercase">
+                              Raw Materials
+                            </p>
+                            {(item.rawMaterials ?? []).map((material, idx) => (
+                              <div
+                                key={`raw-${item.productId}-${idx}`}
+                                className="space-y-0.5 text-sm"
+                              >
+                                <div className="flex items-center justify-between text-zinc-700">
+                                  <span>{material.rawMaterialPrimaryName}</span>
+                                  <span className="font-semibold text-zinc-900">
+                                    {material.totalQuantity.toFixed(2)}{' '}
+                                    {material.unit}
+                                  </span>
+                                </div>
+                                {material.rawMaterialSecondaryName && (
+                                  <p className="text-xs text-zinc-400">
+                                    {material.rawMaterialSecondaryName}
+                                  </p>
+                                )}
+                                {material.notes && (
+                                  <p className="text-xs italic text-amber-600">
+                                    💡 {material.notes}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Sub Products */}
+                        {(item.subProducts?.length ?? 0) > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-xs font-medium tracking-wider text-blue-600 uppercase">
+                              Sub Products
+                            </p>
+                            {(item.subProducts ?? []).map((subProduct, idx) => (
+                              <div
+                                key={`sub-${item.productId}-${idx}`}
+                                className="space-y-0.5 text-sm"
+                              >
+                                <div className="flex items-center justify-between text-zinc-700">
+                                  <span>[{subProduct.rawMaterialPrimaryName}]</span>
+                                  <span className="font-semibold text-zinc-900">
+                                    {subProduct.totalQuantity.toFixed(2)}{' '}
+                                    {subProduct.unit}
+                                  </span>
+                                </div>
+                                {subProduct.notes && (
+                                  <p className="text-xs italic text-amber-600">
+                                    💡 {subProduct.notes}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 ) : (

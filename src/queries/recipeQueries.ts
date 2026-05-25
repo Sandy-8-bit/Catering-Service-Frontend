@@ -17,7 +17,7 @@ import type {
   RecipeBulkUpdatePayload,
   RecipeCalculationRow,
   OrderMaterialCalculationItem,
-  OrderMaterialCalculationRow,
+  OrderMaterialProductItem,
 } from '@/types/recipe'
 import { authHandler } from '@/utils/authHandler'
 import axiosInstance from '@/utils/axios'
@@ -187,7 +187,7 @@ export const useCalculateRecipeRequirement = () => {
 export const useCalculateOrderMaterials = () => {
   const calculate = async (
     items: OrderMaterialCalculationItem[]
-  ): Promise<OrderMaterialCalculationRow[]> => {
+  ): Promise<OrderMaterialProductItem[]> => {
     try {
       const token = authHandler()
 
@@ -199,7 +199,7 @@ export const useCalculateOrderMaterials = () => {
         }
       )
 
-      return (res.data?.data ?? []) as OrderMaterialCalculationRow[]
+      return (res.data?.data ?? []) as OrderMaterialProductItem[]
     } catch (error) {
       handleApiError(error, 'Order materials calculation')
       throw error
