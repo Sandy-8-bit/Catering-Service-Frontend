@@ -252,8 +252,6 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
     navigate(fallbackPath, { replace: true })
   }
 
-  const balanceAmount = order ? order.orderTotalAmount - (order.amountReceived || 0) : 0
-
   // ── Guards ──────────────────────────────────────────────────────────────────
 
   if (isLoading)
