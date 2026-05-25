@@ -8,7 +8,15 @@ import {
   Download,
   Loader2,
 } from 'lucide-react'
-import jsPDF from 'jspdf'
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+  pdf,
+} from '@react-pdf/renderer'
 import { toast } from 'react-hot-toast'
 
 import ButtonSm from '@/components/common/Buttons'
@@ -20,9 +28,348 @@ import type {
   CalculateRawMaterialsResponse,
 } from '@/types/calculateRawMaterials'
 
-/**
- * Summary Card Component - Clean layout for displaying key information
- */
+// ─── Font Registration ────────────────────────────────────────────────────────
+
+Font.register({
+  family: 'NotoSansTamil',
+  fonts: [
+    { src: '/fonts/NotoSansTamil-Regular.ttf', fontWeight: 'normal' },
+    { src: '/fonts/NotoSansTamil-Bold.ttf', fontWeight: 'bold' },
+  ],
+})
+
+// ─── PDF Styles ───────────────────────────────────────────────────────────────
+
+const pdfStyles = StyleSheet.create({
+  page: {
+    // A5: 148mm × 210mm — react-pdf uses pt (1mm ≈ 2.8346pt)
+    paddingTop: 32,
+    paddingBottom: 32,
+    paddingHorizontal: 36,
+    backgroundColor: '#ffffff',
+    fontFamily: 'Helvetica',
+    fontSize: 9,
+    color: '#1e1e1e',
+  },
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  businessName: {
+    fontSize: 14,
+    fontFamily: 'Helvetica-Bold',
+    letterSpacing: 0.5,
+    color: '#111111',
+    textAlign: 'center',
+  },
+  billSubtitle: {
+    fontSize: 8.5,
+    color: '#777777',
+    marginTop: 3,
+    textAlign: 'center',
+  },
+  dateText: {
+    fontSize: 8,
+    color: '#999999',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+
+  // ── Dividers ──────────────────────────────────────────────────────────────
+  solidDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#282828',
+    marginVertical: 8,
+  },
+  dashedDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#cccccc',
+    borderBottomStyle: 'dashed',
+    marginVertical: 6,
+  },
+
+  // ── Summary Cards Row ─────────────────────────────────────────────────────
+  summaryRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  summaryCard: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#e4e4e7',
+    borderRadius: 6,
+    padding: 8,
+    backgroundColor: '#fafafa',
+  },
+  summaryCardLabel: {
+    fontSize: 6.5,
+    fontFamily: 'Helvetica-Bold',
+    color: '#a0a0a0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: 3,
+  },
+  summaryCardValue: {
+    fontSize: 11,
+    fontFamily: 'Helvetica-Bold',
+    color: '#111111',
+  },
+
+  // ── Products Used Section ─────────────────────────────────────────────────
+  sectionTitle: {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    color: '#ea580c',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 6,
+  },
+  chipWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+    marginBottom: 14,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: '#e4e4e7',
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: '#ffffff',
+  },
+  // Tamil font applied only to product/material name text nodes
+  chipTextTamil: {
+    fontFamily: 'NotoSansTamil',
+    fontSize: 8,
+    color: '#3f3f46',
+  },
+  chipQty: {
+    fontSize: 8,
+    color: '#ea580c',
+    fontFamily: 'Helvetica-Bold',
+  },
+
+  // ── Table ─────────────────────────────────────────────────────────────────
+  tableHeaderRow: {
+    flexDirection: 'row',
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#d4d4d8',
+  },
+  tableHeaderCell: {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    color: '#71717a',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f4f4f5',
+    alignItems: 'flex-start',
+  },
+  colMaterial: {
+    flex: 1,
+  },
+  colQty: {
+    width: 52,
+    textAlign: 'right',
+  },
+  colUnit: {
+    width: 38,
+    textAlign: 'right',
+  },
+  // Tamil font — only the name text inside each row
+  materialPrimaryTamil: {
+    fontFamily: 'NotoSansTamil',
+    fontSize: 9,
+    color: '#111111',
+    fontWeight: 'bold',
+  },
+  materialSecondaryTamil: {
+    fontFamily: 'NotoSansTamil',
+    fontSize: 7.5,
+    color: '#71717a',
+    marginTop: 1,
+  },
+  qtyValue: {
+    fontSize: 10,
+    fontFamily: 'Helvetica-Bold',
+    color: '#ea580c',
+    textAlign: 'right',
+  },
+  unitValue: {
+    fontSize: 8,
+    color: '#71717a',
+    textAlign: 'right',
+    fontFamily: 'Helvetica',
+  },
+
+  // ── Footer ────────────────────────────────────────────────────────────────
+  footer: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  footerThankYou: {
+    fontSize: 9,
+    fontFamily: 'Helvetica-Bold',
+    color: '#555555',
+    marginBottom: 3,
+  },
+  footerNote: {
+    fontSize: 7,
+    color: '#aaaaaa',
+  },
+})
+
+// ─── PDF Document Component ───────────────────────────────────────────────────
+
+interface RawMaterialsPdfDocProps {
+  materials: CalculateRawMaterialsResponse[]
+  selectedProducts: {
+    primaryName: string
+    secondaryName?: string
+    qty: number
+  }[]
+  totalProducts: number
+  totalQty: number
+}
+
+const RawMaterialsPdfDoc = ({
+  materials,
+  selectedProducts,
+  totalProducts,
+  totalQty,
+}: RawMaterialsPdfDocProps) => {
+  const dateLabel = new Date().toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+
+  return (
+    <Document>
+      {/*
+       * A5 in points: 419.53 × 595.28
+       * react-pdf accepts named sizes — 'A5' is built-in
+       */}
+      <Page size="A5" style={pdfStyles.page}>
+        {/* ── Business Header ── */}
+        <View style={pdfStyles.headerSection}>
+          <Text style={pdfStyles.businessName}>
+            VENKATESHWARA MESS &amp; CATERING
+          </Text>
+          <Text style={pdfStyles.billSubtitle}>Raw Materials Bill</Text>
+          <Text style={pdfStyles.dateText}>{dateLabel}</Text>
+        </View>
+
+        <View style={pdfStyles.solidDivider} />
+
+        {/* ── Summary Cards ── */}
+        <View style={pdfStyles.summaryRow}>
+          <View style={pdfStyles.summaryCard}>
+            <Text style={pdfStyles.summaryCardLabel}>Products Used</Text>
+            <Text style={pdfStyles.summaryCardValue}>{totalProducts}</Text>
+          </View>
+          <View style={pdfStyles.summaryCard}>
+            <Text style={pdfStyles.summaryCardLabel}>Total Qty</Text>
+            <Text style={pdfStyles.summaryCardValue}>
+              {totalQty.toFixed(2)}
+            </Text>
+          </View>
+          <View style={pdfStyles.summaryCard}>
+            <Text style={pdfStyles.summaryCardLabel}>Raw Materials</Text>
+            <Text style={pdfStyles.summaryCardValue}>{materials.length}</Text>
+          </View>
+        </View>
+
+        {/* ── Products Used Chips ── */}
+        {selectedProducts.length > 0 && (
+          <>
+            <Text style={pdfStyles.sectionTitle}>Products Used</Text>
+            <View style={pdfStyles.chipWrap}>
+              {selectedProducts.map((p, i) => (
+                <View key={i} style={pdfStyles.chip}>
+                  {/* Tamil font only on the product name */}
+                  <Text style={pdfStyles.chipTextTamil}>
+                    {p.primaryName}{' '}
+                    <Text style={pdfStyles.chipQty}>({p.qty.toFixed(2)})</Text>
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        <View style={pdfStyles.dashedDivider} />
+
+        {/* ── Raw Materials Table ── */}
+        <Text style={[pdfStyles.sectionTitle, { marginBottom: 4 }]}>
+          Required Raw Materials
+        </Text>
+
+        {/* Table Header */}
+        <View style={pdfStyles.tableHeaderRow}>
+          <View style={pdfStyles.colMaterial}>
+            <Text style={pdfStyles.tableHeaderCell}>Material</Text>
+          </View>
+          <View style={pdfStyles.colQty}>
+            <Text style={[pdfStyles.tableHeaderCell, { textAlign: 'right' }]}>
+              Qty
+            </Text>
+          </View>
+          <View style={pdfStyles.colUnit}>
+            <Text style={[pdfStyles.tableHeaderCell, { textAlign: 'right' }]}>
+              Unit
+            </Text>
+          </View>
+        </View>
+
+        {/* Table Rows */}
+        {materials.map((m) => (
+          <View key={m.rawMaterialId} style={pdfStyles.tableRow}>
+            <View style={pdfStyles.colMaterial}>
+              {/* Tamil font only on name fields */}
+              <Text style={pdfStyles.materialPrimaryTamil}>
+                {m.rawMaterialPrimaryName ?? '—'}
+              </Text>
+              {m.rawMaterialSecondaryName ? (
+                <Text style={pdfStyles.materialSecondaryTamil}>
+                  {m.rawMaterialSecondaryName}
+                </Text>
+              ) : null}
+            </View>
+            <View style={pdfStyles.colQty}>
+              <Text style={pdfStyles.qtyValue}>{m.totalQuantity ?? '—'}</Text>
+            </View>
+            <View style={pdfStyles.colUnit}>
+              <Text style={pdfStyles.unitValue}>{m.unit ?? '—'}</Text>
+            </View>
+          </View>
+        ))}
+
+        <View style={pdfStyles.solidDivider} />
+
+        {/* ── Footer ── */}
+        <View style={pdfStyles.footer}>
+          <Text style={pdfStyles.footerThankYou}>Thank you!</Text>
+          <Text style={pdfStyles.footerNote}>
+            Computer-generated — no signature needed
+          </Text>
+        </View>
+      </Page>
+    </Document>
+  )
+}
+
+// ─── UI Sub-Components ────────────────────────────────────────────────────────
+
 const SummaryCard = ({
   label,
   value,
@@ -38,9 +385,6 @@ const SummaryCard = ({
   </div>
 )
 
-/**
- * Raw Material Result Card - Bill-like display
- */
 const RawMaterialResultCard = ({
   material,
 }: {
@@ -67,136 +411,11 @@ const RawMaterialResultCard = ({
 const detailSectionTitleClass =
   'text-xs font-bold uppercase tracking-[0.2em] text-orange-500'
 
-/**
- * PDF Builder - Thermal receipt style for raw materials bill
- */
-const buildRawMaterialsPdf = (
-  materials: CalculateRawMaterialsResponse[]
-): jsPDF => {
-  const RECEIPT_W = 80 // mm — standard 80mm thermal roll
-  const M = 5 // left/right margin
-  const CW = RECEIPT_W - M * 2 // usable content width
-
-  const dashedLine = (doc: jsPDF, y: number) => {
-    doc.setDrawColor(180, 180, 180)
-    doc.setLineWidth(0.2)
-    doc.setLineDashPattern([1, 1], 0)
-    doc.line(M, y, M + CW, y)
-    doc.setLineDashPattern([], 0)
-  }
-
-  const solidLine = (doc: jsPDF, y: number) => {
-    doc.setDrawColor(40, 40, 40)
-    doc.setLineWidth(0.3)
-    doc.line(M, y, M + CW, y)
-  }
-
-  const centeredText = (
-    doc: jsPDF,
-    text: string,
-    y: number,
-    size: number,
-    bold = false,
-    color: [number, number, number] = [30, 30, 30]
-  ) => {
-    doc.setFontSize(size)
-    doc.setFont('courier', bold ? 'bold' : 'normal')
-    doc.setTextColor(...color)
-    doc.text(text, RECEIPT_W / 2, y, { align: 'center' })
-  }
-
-  // Estimate page height dynamically
-  const rowH = 6
-  const estimatedH =
-    40 + // header block
-    (materials.length > 0 ? 12 + materials.length * rowH : 0) +
-    15 // footer
-  const pageH = Math.max(estimatedH, 100)
-
-  const doc = new jsPDF({ unit: 'mm', format: [RECEIPT_W, pageH] })
-
-  let y = 8
-
-  // ── Business header ──────────────────────────────────────────────────────
-  doc.setFont('courier', 'bold')
-  centeredText(doc, 'VENKATESHWARA MESS & CATTERING', y, 11, true)
-  y += 6
-  doc.setFont('courier', 'normal')
-  centeredText(doc, 'Raw Materials Bill', y, 8, false, [100, 100, 100])
-  y += 5
-
-  solidLine(doc, y)
-  y += 5
-
-  // Date
-  const now = new Date().toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
-  centeredText(doc, now, y, 8, false, [120, 120, 120])
-  y += 6
-
-  dashedLine(doc, y)
-  y += 5
-
-  // ── Raw materials ───────────────────────────────────────────────────────
-  if (materials.length > 0) {
-    doc.setFontSize(7.5)
-    doc.setFont('courier', 'bold')
-    doc.setTextColor(80, 80, 80)
-    doc.text('RAW MATERIALS REQUIRED', M, y)
-    y += 4
-
-    // Column headers
-    doc.setFontSize(7)
-    doc.setFont('courier', 'bold')
-    doc.setTextColor(120, 120, 120)
-    doc.text('MATERIAL', M, y)
-    doc.text('QTY', M + CW * 0.7, y, { align: 'right' })
-    doc.text('UNIT', M + CW, y, { align: 'right' })
-    y += 3
-    dashedLine(doc, y)
-    y += 4
-
-    materials.forEach((material) => {
-      const name = material.rawMaterialPrimaryName ?? '—'
-      const qty = material.totalQuantity ?? '—'
-      const unit = material.unit ?? '—'
-
-      doc.setFontSize(8)
-      doc.setFont('courier', 'normal')
-      doc.setTextColor(30, 30, 30)
-      const nameLines = doc.splitTextToSize(name, CW * 0.65) as string[]
-      doc.text(nameLines, M, y)
-      doc.setFont('courier', 'bold')
-      doc.text(String(qty), M + CW * 0.7, y, { align: 'right' })
-      doc.text(unit, M + CW, y, { align: 'right' })
-      y += nameLines.length > 1 ? nameLines.length * 4.5 : rowH
-    })
-  }
-
-  // ── Footer ───────────────────────────────────────────────────────────────
-  solidLine(doc, y)
-  y += 5
-  centeredText(doc, 'Thank you!', y, 8, true, [60, 60, 60])
-  y += 5
-  centeredText(
-    doc,
-    'Computer-generated — no signature needed',
-    y,
-    6.5,
-    false,
-    [160, 160, 160]
-  )
-
-  return doc
-}
+// ─── Main Page ────────────────────────────────────────────────────────────────
 
 export const CalculateRawMaterialsPage = () => {
   const { t } = useTranslation()
 
-  // State management - store quantities as a map for easier lookup
   const [productQuantities, setProductQuantities] = useState<
     Record<number, number>
   >({})
@@ -206,7 +425,6 @@ export const CalculateRawMaterialsPage = () => {
   const [hasCalculated, setHasCalculated] = useState(false)
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
 
-  // API Calls
   const { data: allProducts = [], isLoading: isProductsLoading } =
     useFetchProducts()
   const {
@@ -217,7 +435,6 @@ export const CalculateRawMaterialsPage = () => {
 
   const isRecipeProducts = allProducts.filter((p) => p.isRecipe)
 
-  // Calculate request payload - only products with quantity > 0
   const calculatePayload = useMemo(
     (): CalculateRawMaterialsRequest[] =>
       Object.entries(productQuantities)
@@ -243,9 +460,6 @@ export const CalculateRawMaterialsPage = () => {
     [productQuantities]
   )
 
-  /**
-   * Update quantity for a product
-   */
   const handleQuantityChange = useCallback(
     (productId: number, quantity: number) => {
       setProductQuantities((prev) => ({
@@ -256,9 +470,6 @@ export const CalculateRawMaterialsPage = () => {
     []
   )
 
-  /**
-   * Handle calculation submit
-   */
   const handleCalculate = useCallback(() => {
     if (calculatePayload.length === 0) return
 
@@ -274,17 +485,11 @@ export const CalculateRawMaterialsPage = () => {
     })
   }, [calculatePayload, calculateMaterials])
 
-  /**
-   * Reset calculation
-   */
   const handleResetCalculation = useCallback(() => {
     setHasCalculated(false)
     setCalculationResults([])
   }, [])
 
-  /**
-   * Clear all selections
-   */
   const handleClearAll = useCallback(() => {
     setProductQuantities({})
     setCalculationResults([])
@@ -292,21 +497,45 @@ export const CalculateRawMaterialsPage = () => {
   }, [])
 
   /**
-   * Handle PDF download
+   * Generate the PDF using @react-pdf/renderer and trigger browser download.
+   * pdf() returns a blob asynchronously — no direct DOM manipulation needed.
    */
   const handleDownloadPdf = useCallback(async () => {
     try {
       setIsDownloadingPDF(true)
 
-      // Generate PDF
-      const doc = buildRawMaterialsPdf(calculationResults)
+      // Build the list of selected products to embed in the PDF
+      const selectedProducts = allProducts
+        .filter((p) => (productQuantities[p.id] || 0) > 0)
+        .map((p) => ({
+          primaryName: p.primaryName,
+          secondaryName: p.secondaryName,
+          qty: productQuantities[p.id] || 0,
+        }))
 
-      // Download
+      // Render the React PDF document to a Blob
+      const blob = await pdf(
+        <RawMaterialsPdfDoc
+          materials={calculationResults}
+          selectedProducts={selectedProducts}
+          totalProducts={totalSelectedProducts}
+          totalQty={totalSelectedQuantity}
+        />
+      ).toBlob()
+
+      // Create an object URL and trigger download
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
       const timestamp = new Date()
         .toISOString()
         .replace(/[:.]/g, '-')
         .slice(0, -5)
-      doc.save(`raw-materials-${timestamp}.pdf`)
+      anchor.href = url
+      anchor.download = `raw-materials-${timestamp}.pdf`
+      anchor.click()
+
+      // Clean up the object URL after download is triggered
+      URL.revokeObjectURL(url)
 
       toast.success(
         t('bill_downloaded_success', { billType: t('raw_materials_bill') })
@@ -319,7 +548,14 @@ export const CalculateRawMaterialsPage = () => {
     } finally {
       setIsDownloadingPDF(false)
     }
-  }, [calculationResults, t])
+  }, [
+    allProducts,
+    calculationResults,
+    productQuantities,
+    t,
+    totalSelectedProducts,
+    totalSelectedQuantity,
+  ])
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col overflow-hidden rounded-[12px] border border-zinc-200 bg-zinc-50 shadow-sm">
@@ -373,7 +609,6 @@ export const CalculateRawMaterialsPage = () => {
       {/* Main Content */}
       <section className="flex flex-1 flex-col gap-0 overflow-hidden lg:flex-row">
         {!hasCalculated ? (
-          // Product Selection Panel
           <>
             {/* Left Panel - Products Grid/List */}
             <div className="flex w-full flex-col gap-4 border-b border-zinc-200 bg-white p-4 lg:w-2/3 lg:overflow-y-auto lg:border-r lg:border-b-0">
@@ -431,7 +666,6 @@ export const CalculateRawMaterialsPage = () => {
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-center gap-2">
-                              {/* Minus Button */}
                               <button
                                 onClick={() =>
                                   handleQuantityChange(
@@ -448,7 +682,6 @@ export const CalculateRawMaterialsPage = () => {
                                 <Minus className="h-3.5 w-3.5 text-zinc-600" />
                               </button>
 
-                              {/* Quantity Input */}
                               <input
                                 type="number"
                                 step="0.1"
@@ -468,7 +701,6 @@ export const CalculateRawMaterialsPage = () => {
                                 className="w-14 rounded border border-zinc-300 px-1.5 py-1 text-center text-xs font-semibold text-zinc-900 focus:border-orange-500 focus:outline-none"
                               />
 
-                              {/* Plus Button */}
                               <button
                                 onClick={() =>
                                   handleQuantityChange(
@@ -560,7 +792,7 @@ export const CalculateRawMaterialsPage = () => {
             </div>
           </>
         ) : (
-          // Results Panel - Bill Layout
+          // Results Panel
           <div className="w-full flex-1 overflow-y-auto bg-white p-4 lg:p-6">
             <div className="max-w-4xl">
               <div className="mb-8 flex flex-col items-start gap-1">
@@ -572,7 +804,6 @@ export const CalculateRawMaterialsPage = () => {
                 </p>
               </div>
 
-              {/* Results Summary Header */}
               <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <SummaryCard
                   label={t('products_used')}
@@ -588,7 +819,6 @@ export const CalculateRawMaterialsPage = () => {
                 />
               </div>
 
-              {/* Selected Products Info */}
               {totalSelectedProducts > 0 && (
                 <div className="mb-8 rounded-lg border border-zinc-200 bg-zinc-50 p-4">
                   <h4 className="mb-3 text-sm font-semibold text-zinc-900">
@@ -610,7 +840,6 @@ export const CalculateRawMaterialsPage = () => {
                 </div>
               )}
 
-              {/* Raw Materials List */}
               <div className="flex flex-col gap-3">
                 <div className="mb-2 flex items-center gap-2">
                   <span className="h-4 w-0.5 rounded-full bg-orange-500" />

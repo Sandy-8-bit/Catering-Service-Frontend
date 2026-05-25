@@ -568,6 +568,7 @@ interface RowEntry {
   productName: string
   qty: number | null
   totalPlates: number | null
+  plateTotal?: number | null
   isMenuItem: boolean
   qtyDisplay: string
   rate: string
@@ -628,6 +629,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
       productName: item.productName ?? '—',
       qty,
       totalPlates,
+      plateTotal,
       isMenuItem,
       qtyDisplay,
       rate: item.unitPrice != null ? String(item.unitPrice) : '—',
@@ -663,8 +665,8 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
 
             {/* Contact */}
             <View style={s.contactSection}>
-              <Text style={s.contactLine}>99946 20966</Text>
               <Text style={s.contactLine}>82207 77007</Text>
+              <Text style={s.contactLine}>99946 20966</Text>
               <Text style={s.contactMuted}>Google Pay</Text>
               <Text style={s.contactLine}>96777 20966</Text>
             </View>
@@ -705,13 +707,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
 
               {/* Cell / Advance — inline */}
               <View style={s.infoRowInline}>
-                <View style={[s.infoGroup, { flex: 0.6 }]}>
-                  <Text style={s.infoLabel2}>Customer No</Text>
-                  <Text style={s.infoColon}>:</Text>
-                  <Text style={s.infoValue}>
-                    {customer.customerId ?? '......'}
-                  </Text>
-                </View>
+                {/* Customer No removed as requested */}
                 <View style={s.infoGroup}>
                   <Text style={s.infoLabel}>Cell No</Text>
                   <Text style={s.infoColon}>:</Text>
@@ -752,7 +748,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             <View style={s.tableHead}>
               <Text style={[s.th, s.colSno]}>S.No</Text>
               <Text style={[s.thLeft, s.colParticulars]}>Particulars</Text>
-              <Text style={[s.th, s.colQty]}>QTY | Total QTY</Text>
+              <Text style={[s.th, s.colQty]}>Total QTY</Text>
               <Text style={[s.th, s.colRate]}>PRICE/UNIT</Text>
               {/* Amount split header */}
               <View
@@ -787,7 +783,13 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                 >
                   {row.particulars}
                 </Text>
-                <Text style={s.tdQty}>{row.qtyDisplay}</Text>
+                <Text style={s.tdQty}>
+                  {row.plateTotal != null
+                    ? String(row.plateTotal)
+                    : row.qty != null
+                      ? String(row.qty)
+                      : '—'}
+                </Text>
                 <Text style={s.tdRate}>
                   {type !== 'STAFF' ? row.rate : '—'}
                 </Text>
@@ -855,11 +857,9 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                 </>
               )}
             </View>
-            <View style={s.signoffRight}>
-              <Text style={s.signoffFor}>
-                For VENKATESHWARA{'\n'}MESS & CATERING
-              </Text>
-            </View>
+              <View style={s.signoffRight}>
+                <Text style={s.signoffFor}>DeliveryCharges : ₹200</Text>
+              </View>
           </View>
         </View>
       </Page>
