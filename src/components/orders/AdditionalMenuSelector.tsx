@@ -486,7 +486,7 @@ const AdditionalMenuSelector = ({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate text-xs font-semibold text-zinc-900 sm:text-sm">
+                        <p className=" text-xs font-semibold text-zinc-900 sm:text-sm">
                           {product.primaryName}
                         </p>
                         <p className="text-[10px] text-zinc-500 sm:text-xs">
