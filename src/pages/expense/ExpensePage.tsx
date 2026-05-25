@@ -85,9 +85,9 @@ export default function ExpensePage() {
 
   const handleSubmit = () => {
     setFormError('')
-    if (!form.description.trim()) return setFormError('Description is required')
-    if (!form.amount || form.amount <= 0) return setFormError('Amount must be greater than 0')
-    if (!form.expenseDate) return setFormError('Date is required')
+    if (!form.description.trim()) return setFormError(t('description_required'))
+    if (!form.amount || form.amount <= 0) return setFormError(t('amount_greater_than_zero'))
+    if (!form.expenseDate) return setFormError(t('date_required'))
 
     if (editing) {
       updateExpense.mutate({ id: editing.id, payload: form })
@@ -135,7 +135,7 @@ export default function ExpensePage() {
           {/* Date filter row */}
           <div className="flex items-center gap-2">
             <div className="flex-1 flex flex-col gap-0.5">
-              <label className="text-xs text-slate-400 font-medium">From</label>
+              <label className="text-xs text-slate-400 font-medium">{t('date_from')}</label>
               <input
                 type="date"
                 className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
@@ -144,7 +144,7 @@ export default function ExpensePage() {
               />
             </div>
             <div className="flex-1 flex flex-col gap-0.5">
-              <label className="text-xs text-slate-400 font-medium">To</label>
+              <label className="text-xs text-slate-400 font-medium">{t('date_to')}</label>
               <input
                 type="date"
                 className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent"
@@ -297,7 +297,7 @@ export default function ExpensePage() {
                 </div>
                 <div>
                   <h3 className="text-base font-semibold text-slate-900">{t('confirm_delete_expense')}</h3>
-                  <p className="text-sm text-slate-500">This action cannot be undone.</p>
+                  <p className="text-sm text-slate-500">{t('action_cannot_be_undone')}</p>
                 </div>
               </div>
               <div className="flex justify-end gap-2">
@@ -334,7 +334,7 @@ export default function ExpensePage() {
                 <h2 className="text-base font-bold text-slate-900">
                   {editing ? t('edit_expense') : t('add_new_expense')}
                 </h2>
-                <p className="text-xs text-slate-400">Fill in the details below</p>
+                <p className="text-xs text-slate-400">{t('fill_expense_details')}</p>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -361,7 +361,7 @@ export default function ExpensePage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Office rent, Supplies purchase"
+                  placeholder={t('expense_description_placeholder')}
                   className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all"
                   value={form.description}
                   onChange={(e) => { setForm({ ...form, description: e.target.value }); setFormError('') }}
@@ -377,7 +377,7 @@ export default function ExpensePage() {
                   <span className="absolute left-3 text-slate-400 text-sm font-semibold">₹</span>
                   <input
                     type="number"
-                    placeholder="0"
+                    placeholder={t('expense_amount_placeholder')}
                     className="w-full pl-7 pr-3 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition-all"
                     value={form.amount || ''}
                     onChange={(e) => { setForm({ ...form, amount: Number(e.target.value) || 0 }); setFormError('') }}
