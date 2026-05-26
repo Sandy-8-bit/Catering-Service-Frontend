@@ -495,33 +495,34 @@ export const OrdersPage = () => {
           item?.itemPrimaryName ||
           item?.itemSecondaryName ||
           t('additional_item_with_id', { id: item?.id }),
-        (item, order) => item.quantity * (order.totalPlates || 1)
+        // Do NOT multiply additional items by total plates — use item quantity only
+        (item) => item.quantity
       ),
     [sourceOrders, t]
   )
-const additionalMenuItemsSummary = useMemo(
-  () =>
-    buildQuantitySummary(
-      sourceOrders,
-      (order) => order.additionalMenuItems ?? [],
-      (item) =>
-        getAdditionalMenuItemDisplayName(item) ||
-        t('additional_item_with_id', { id: item?.productId }),
-      (item) => item.quantity // ✅ no multiplication
-    ),
-  [sourceOrders, t]
-)
+  const additionalMenuItemsSummary = useMemo(
+    () =>
+      buildQuantitySummary(
+        sourceOrders,
+        (order) => order.additionalMenuItems ?? [],
+        (item) =>
+          getAdditionalMenuItemDisplayName(item) ||
+          t('additional_item_with_id', { id: item?.productId }),
+        (item) => item.quantity // ✅ no multiplication
+      ),
+    [sourceOrders, t]
+  )
 
-const requiredSubProductsSummary = useMemo(
-  () =>
-    buildQuantitySummary(
-      sourceOrders,
-      (order) => order.requiredSubProducts ?? [],
-      (item) => item?.subProductName || '',
-      (item, order) => (item.requiredQuantity || 0) * (order.totalPlates || 1)
-    ),
-  [sourceOrders]
-)
+  const requiredSubProductsSummary = useMemo(
+    () =>
+      buildQuantitySummary(
+        sourceOrders,
+        (order) => order.requiredSubProducts ?? [],
+        (item) => item?.subProductName || '',
+        (item, order) => (item.requiredQuantity || 0) * (order.totalPlates || 1)
+      ),
+    [sourceOrders]
+  )
 
   const infoMessage =
     !isLoading && ordersForDate.length === 0 ? t('no_orders_scheduled') : null
@@ -950,46 +951,46 @@ const requiredSubProductsSummary = useMemo(
                 {selectedOrder ? (
                   selectedOrder.additionalMenuItems &&
                   selectedOrder.additionalMenuItems.length > 0 ? (
-       <BillTable
-  data={selectedOrder.additionalMenuItems.map((item) => ({
-    ...item,
-    quantity: item.quantity,
-    totalPrice: item.totalPrice ?? 0,
-  }))}
-  columns={[
-    {
-      key: 'productPrimaryName',
-      label: t('primary_name'),
-      width: '30%',
-    },
-    {
-      key: 'productSecondaryName',
-      label: t('secondary_name'),
-      width: '25%',
-    },
-    {
-      key: 'quantity',
-      label: t('quantity'),
-      width: '15%',
-      align: 'center',
-      render: (value) => (
-        <span className="font-semibold">{value}</span>
-      ),
-    },
-    {
-      key: 'totalPrice',
-      label: t('total_price'),
-      width: '30%',
-      align: 'right',
-      render: (value) => (
-        <span className="font-semibold">
-          ₹{value?.toLocaleString?.() ?? 0}
-        </span>
-      ),
-    },
-  ]}
-  messageWhenNoData={t('no_items_planned')}
-/>
+                    <BillTable
+                      data={selectedOrder.additionalMenuItems.map((item) => ({
+                        ...item,
+                        quantity: item.quantity,
+                        totalPrice: item.totalPrice ?? 0,
+                      }))}
+                      columns={[
+                        {
+                          key: 'productPrimaryName',
+                          label: t('primary_name'),
+                          width: '30%',
+                        },
+                        {
+                          key: 'productSecondaryName',
+                          label: t('secondary_name'),
+                          width: '25%',
+                        },
+                        {
+                          key: 'quantity',
+                          label: t('quantity'),
+                          width: '15%',
+                          align: 'center',
+                          render: (value) => (
+                            <span className="font-semibold">{value}</span>
+                          ),
+                        },
+                        {
+                          key: 'totalPrice',
+                          label: t('total_price'),
+                          width: '30%',
+                          align: 'right',
+                          render: (value) => (
+                            <span className="font-semibold">
+                              ₹{value?.toLocaleString?.() ?? 0}
+                            </span>
+                          ),
+                        },
+                      ]}
+                      messageWhenNoData={t('no_items_planned')}
+                    />
                   ) : (
                     <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
                       <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
@@ -1045,10 +1046,8 @@ const requiredSubProductsSummary = useMemo(
                     <BillTable
                       data={selectedOrder.additionalItems.map((item) => ({
                         ...item,
-                        quantity:
-                          item.quantity * (selectedOrder.totalPlates || 1),
-                        totalPrice:
-                          item.lineTotal * (selectedOrder.totalPlates || 1),
+                        quantity: item.quantity,
+                        totalPrice: item.lineTotal ?? 0,
                       }))}
                       columns={[
                         {
