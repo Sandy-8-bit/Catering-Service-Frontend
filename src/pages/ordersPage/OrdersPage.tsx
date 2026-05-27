@@ -163,7 +163,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
             }
           />
           <DetailCell
-            label={t('headcount')}
+            label={""}
             value={
               order.totalPlates ? (
                 <span>

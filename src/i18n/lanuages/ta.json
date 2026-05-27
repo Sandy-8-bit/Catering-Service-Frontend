@@ -132,9 +132,9 @@
   "delete_order": "ஆர்டரை நீக்கவும்",
   "order_details": "ஆர்டர் விவரங்கள்",
   "order_id": "ஆர்டர் ID",
-  "customer": "கிரேதா",
-  "customer_name": "கிரேதாவின் பெயர்",
-  "customer_phone": "கிரேதாவின் தொலைபேசி",
+  "customer": "பெயர்",
+  "customer_name": " பெயர்",
+  "customer_phone": " தொலைபேசி",
   "event": "நிகழ்வு",
   "event_type": "நிகழ்வின் வகை",
   "event_date": "நிகழ்வு தேதி",
@@ -229,7 +229,7 @@
 
   "no_additional_items": "கூடுதல் உருப்படிகள் கிடைக்கவில்லை.",
 
-  "headcount": "தலைக்षணம்",
+  "headcount": "மொத்த எண்ணிக்கை",
   "payment": "பணம் செலுத்தல்",
   "advance": "முன்பணம்",
   "balance": "சமநிலை",

@@ -199,7 +199,7 @@ export const useDeleteOrder = () => {
         }
       )
 
-      if (res.status !== 204) {
+      if (res.status !== 200) {
         throw new Error(res.data?.message || 'Failed to delete order')
       }
 
