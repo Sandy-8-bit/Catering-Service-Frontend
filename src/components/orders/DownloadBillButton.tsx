@@ -257,6 +257,7 @@ const s = StyleSheet.create({
   // ── Customer Section ──────────────────────────────────────────────────────
   customerSection: {
     flexDirection: 'row',
+     fontFamily: LATIN_B,
     borderBottom: `0.5pt solid ${C.border}`,
   },
   customerLeft: {
@@ -264,6 +265,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     gap: 6,
+     fontFamily: LATIN_B,
     borderRight: `0.5pt solid ${C.border}`,
   },
   infoRow: {
@@ -293,6 +295,14 @@ const s = StyleSheet.create({
   },
   infoValue: {
     fontFamily: LATIN,
+    fontSize: 7.5,
+    color: C.text,
+    flex: 1,
+    borderBottom: `0.4pt dotted ${C.border}`,
+    paddingBottom: 1,
+  },
+  infoValueTamil: {
+    fontFamily: TAMIL,
     fontSize: 7.5,
     color: C.text,
     flex: 1,
@@ -381,6 +391,7 @@ const s = StyleSheet.create({
   // Table header
   tableHead: {
     flexDirection: 'row',
+    fontFamily: LATIN_B,
     backgroundColor: C.headerBg,
     borderBottom: `0.8pt solid ${C.borderDark}`,
     borderTop: `0.5pt solid ${C.border}`,
@@ -693,7 +704,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               <View style={s.infoRow}>
                 <Text style={s.infoLabel}>To</Text>
                 <Text style={s.infoColon}>:</Text>
-                <Text style={s.infoValue}>
+                <Text style={s.infoValueTamil}>
                   {dot(meta.to ?? customer.customerName)}
                 </Text>
               </View>
@@ -702,7 +713,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               <View style={s.infoRow}>
                 <Text style={s.infoLabel}>Address</Text>
                 <Text style={s.infoColon}>:</Text>
-                <Text style={s.infoValue}>
+                <Text style={s.infoValueTamil}>
                   {dot(meta.ms ?? customer.customerAddress)}
                 </Text>
               </View>
