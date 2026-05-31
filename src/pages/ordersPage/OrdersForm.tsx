@@ -770,6 +770,7 @@ export const OrdersForm = () => {
                     <div className="max-h-[1200px] flex-1 overflow-y-auto border-t border-amber-200 pt-4">
                       <ProductMenuSelector
                         selectedItems={editData.items}
+                        totalPlates={editData.totalPlates || 1}
                         onChange={(items) =>
                           setEditData((prev) => ({
                             ...prev,
