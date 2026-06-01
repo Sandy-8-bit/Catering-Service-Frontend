@@ -144,27 +144,27 @@ const s = StyleSheet.create({
   headerBand: {
     flexDirection: 'row',
     backgroundColor: C.navy,
-    minHeight: 44,
+    minHeight: 38,
     alignItems: 'stretch',
   },
   logoSection: {
-    width: 60,
+    width: 50,
     alignItems: 'center',
     justifyContent: 'center',
     borderRight: `0.5pt solid rgba(255,255,255,0.2)`,
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   logoCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     border: `1.5pt solid rgba(255,255,255,0.5)`,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoInitial: {
     fontFamily: LATIN_B,
-    fontSize: 13,
+    fontSize: 11,
     color: C.white,
   },
   businessSection: {
@@ -172,7 +172,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
-    gap: 2,
+    gap: 0,
   },
   businessTagline: {
     fontFamily: LATIN,
@@ -180,26 +180,29 @@ const s = StyleSheet.create({
     color: 'rgba(255,255,255,0.55)',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
+    display: 'none',
   },
   businessName: {
     fontFamily: LATIN_B,
-    fontSize: 14,
+    fontSize: 13,
     color: C.white,
     letterSpacing: 0.5,
   },
   businessSub: {
-    fontFamily: LATIN,
-    fontSize: 8,
-    color: 'rgba(255,255,255,0.7)',
+    fontFamily: LATIN_B,
+    fontSize: 7.5,
+    color: 'rgba(255,255,255,0.8)',
     letterSpacing: 0.3,
+    fontWeight: 'bold',
   },
   contactSection: {
-    width: 100,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    width: 0,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
     justifyContent: 'center',
     gap: 4,
     borderLeft: `0.5pt solid rgba(255,255,255,0.2)`,
+    display: 'none',
   },
   contactLine: {
     fontFamily: LATIN,
@@ -375,11 +378,12 @@ const s = StyleSheet.create({
     color: C.light,
   },
   dateValue: {
-    fontFamily: LATIN,
+    fontFamily: LATIN_B,
     fontSize: 7.5,
-    color: C.text,
+    color: C.navy,
     borderBottom: `0.4pt dotted ${C.border}`,
     paddingBottom: 1,
+    fontWeight: 'bold',
   },
 
   // ── Table ─────────────────────────────────────────────────────────────────
@@ -402,7 +406,7 @@ const s = StyleSheet.create({
   // Column widths
   colSno: { width: 20 },
   colParticulars: { flex: 1 },
-  colQty: { width: 58 },
+  colQty: { width: 44 },
   colRate: { width: 44 },
   colRs: { width: 44 },
 
@@ -457,7 +461,7 @@ const s = StyleSheet.create({
     borderLeft: `0.25pt solid ${C.divider}`,
   },
   tdQty: {
-    width: 42,
+    width: 44,
     textAlign: 'center',
     fontFamily: LATIN,
     fontSize: 7,
@@ -528,7 +532,7 @@ const s = StyleSheet.create({
   },
   footerTotalValue: {
     fontFamily: LATIN_B,
-    fontSize: 13,
+    fontSize: 12,
     color: C.navy,
   },
 
@@ -557,11 +561,12 @@ const s = StyleSheet.create({
     color: C.blueLight,
   },
   signoffRight: {
-    width: 110,
+    width: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 6,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    display: 'none',
   },
   signoffFor: {
     fontFamily: LATIN_B,
@@ -569,6 +574,7 @@ const s = StyleSheet.create({
     color: C.navy,
     textAlign: 'center',
     letterSpacing: 0.2,
+    display: 'none',
   },
 })
 
@@ -578,8 +584,6 @@ interface RowEntry {
   particulars: string
   productName: string
   qty: number | null
-  totalPlates: number | null
-  plateTotal?: number | null
   isMenuItem: boolean
   qtyDisplay: string
   rate: string
@@ -598,15 +602,27 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   const rawMaterials: BillRawMaterial[] = data.rawMaterials ?? []
   const customer = (data.customer ?? {}) as BillCustomerInfo
 
-  const resolvedDate = meta.date ?? customer.eventDate ?? undefined
+  const getDateWithDay = (dateStr?: string): string => {
+    if (!dateStr) return ''
+    try {
+      const date = new Date(dateStr)
+      const dd = String(date.getDate()).padStart(2, '0')
+      const mm = String(date.getMonth() + 1).padStart(2, '0')
+      const yyyy = date.getFullYear()
+      return `${dd}${mm}${yyyy}`
+    } catch {
+      return dateStr
+    }
+  }
+  
+  const resolvedDate = getDateWithDay(meta.date ?? customer.eventDate ?? undefined)
   const resolvedTime = meta.time ?? customer.eventTime?.slice(0, 5) ?? undefined // "07:00:00" → "07:00"
   const resolvedAdvance =
     meta.advance ??
     (data.advanceAmount != null
       ? `Rs. ${fmtMoney(data.advanceAmount)}`
       : undefined)
-  const resolvedDeliveryCharge =
-    data.deliveryCharge != null ? fmtMoney(data.deliveryCharge) : '--'
+  const resolvedDeliveryCharge = data.deliveryCharge != null ? fmtMoney(data.deliveryCharge) : '0.00'
   const summary = data as BillSummary
   const billTitle = resolveBillTitle(type)
 
@@ -616,37 +632,20 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
       ? summary.customerItemsTotal
       : customerItems.reduce((acc, item) => acc + (item.lineTotal ?? 0), 0))
 
-  // Build rows from customerItems with new format: qty | qty×plates
+  // Build rows from customerItems
   const rows: RowEntry[] = customerItems.map((item, i) => {
     const qty = item.quantity ?? null
-    const totalPlates = customer.totalPlates ?? null
     const isMenuItem = item.isMenuItem === true
-    const plateTotal =
-      isMenuItem && qty != null && totalPlates != null
-        ? qty * totalPlates
-        : null
-    const qtyDisplay =
-      qty != null
-        ? isMenuItem && plateTotal != null
-          ? `${qty} | ${plateTotal}`
-          : String(qty)
-        : '—'
-    // Multiply total cost by plates if menu item
-    const totalCost =
-      isMenuItem && item.lineTotal != null && totalPlates != null
-        ? item.lineTotal * totalPlates
-        : (item.lineTotal ?? null)
+    const qtyDisplay = qty != null ? String(qty) : '—'
     return {
       sno: i + 1,
       particulars: item.productName ?? '—',
       productName: item.productName ?? '—',
       qty,
-      totalPlates,
-      plateTotal,
       isMenuItem,
       qtyDisplay,
       rate: item.unitPrice != null ? String(item.unitPrice) : '—',
-      total: totalCost != null ? fmtMoney(totalCost) : '—',
+      total: (item.lineTotal ?? null) != null ? fmtMoney(item.lineTotal) : '—',
     }
   })
 
@@ -671,17 +670,8 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
 
             {/* Business name */}
             <View style={s.businessSection}>
-              <Text style={s.businessTagline}>Catering Services</Text>
               <Text style={s.businessName}>VENKATESHWARA</Text>
               <Text style={s.businessSub}>MESS & CATERING</Text>
-            </View>
-
-            {/* Contact */}
-            <View style={s.contactSection}>
-              <Text style={s.contactLine}>82207 77007</Text>
-              <Text style={s.contactLine}>99946 20966</Text>
-              <Text style={s.contactMuted}>Google Pay</Text>
-              <Text style={s.contactLine}>96777 20966</Text>
             </View>
           </View>
 
@@ -761,7 +751,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             <View style={s.tableHead}>
               <Text style={[s.th, s.colSno]}>S.No</Text>
               <Text style={[s.thLeft, s.colParticulars]}>Particulars</Text>
-              <Text style={[s.th, s.colQty]}>Total QTY</Text>
+              <Text style={[s.th, s.colQty]}>QTY</Text>
               <Text style={[s.th, s.colRate]}>PRICE/UNIT</Text>
               {/* Amount split header */}
               <View
@@ -797,11 +787,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                   {row.particulars}
                 </Text>
                 <Text style={s.tdQty}>
-                  {row.plateTotal != null
-                    ? String(row.plateTotal)
-                    : row.qty != null
-                      ? String(row.qty)
-                      : '—'}
+                  {row.qty != null ? String(row.qty) : '—'}
                 </Text>
                 <Text style={s.tdRate}>
                   {type !== 'STAFF' ? row.rate : '—'}
@@ -830,16 +816,36 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               <RawMaterialsTable rawMaterials={rawMaterials} type={type} />
             )}
 
-          {/* ── Footer: Total Amount ───────────────────────────────── */}
-          <View style={s.footerBar}>
-            <View style={s.footerNoteCol} />
-            <View style={s.footerTotalCol}>
-              <View style={s.footerTotalChip}>
-                <Text style={s.footerTotalChipText}>TOTAL AMOUNT</Text>
+          {/* ── Footer: Total Amount & Cash to Collect ───────────────────────────────── */}
+          {type === 'CUSTOMER' && (
+            <View style={s.footerBar}>
+              <View style={s.footerNoteCol} />
+              <View style={{width: 110, alignItems: 'center', justifyContent: 'center', paddingVertical: 6, paddingHorizontal: 5, flexDirection: 'column', gap: 3}}>
+                <View style={{alignItems: 'center', gap: 1}}>
+                  <Text style={{fontFamily: LATIN_B, fontSize: 6, color: C.light, letterSpacing: 0.4}}>TOTAL AMOUNT</Text>
+                  <Text style={{fontFamily: LATIN_B, fontSize: 10, color: C.navy}}>Rs. {fmtMoney(totalValue)}</Text>
+                </View>
+                <Text style={{fontFamily: LATIN, fontSize: 6, color: C.muted, textAlign: 'center'}}>Advance Amount: Rs. {fmtMoney(data.advanceAmount ?? 0)}</Text>
+                <View style={{alignItems: 'center', gap: 2, paddingTop: 1}}>
+                  <View style={{backgroundColor: C.navy, paddingHorizontal: 4, paddingVertical: 1.5, borderRadius: 1}}>
+                    <Text style={{fontFamily: LATIN_B, fontSize: 5.5, color: C.white, letterSpacing: 0.3}}>CASH TO COLLECT</Text>
+                  </View>
+                  <Text style={{fontFamily: LATIN_B, fontSize: 10, color: C.navy}}>Rs. {fmtMoney(Math.max(0, (totalValue ?? 0) - (data.advanceAmount ?? 0)))}</Text>
+                </View>
               </View>
-              <Text style={s.footerTotalValue}>Rs. {fmtMoney(totalValue)}</Text>
             </View>
-          </View>
+          )}
+          {type !== 'CUSTOMER' && (
+            <View style={s.footerBar}>
+              <View style={s.footerNoteCol} />
+              <View style={s.footerTotalCol}>
+                <View style={s.footerTotalChip}>
+                  <Text style={s.footerTotalChipText}>TOTAL AMOUNT</Text>
+                </View>
+                <Text style={s.footerTotalValue}>Rs. {fmtMoney(totalValue)}</Text>
+              </View>
+            </View>
+          )}
 
           {/* ── Signoff Bar ───────────────────────────────────────────────── */}
           <View style={s.signoffBar}>
@@ -860,9 +866,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               ) : (
                 <>
                   <Text style={s.signoffStat}>
-                    Total Plates: {customer.totalPlates ?? '--'}
-                    {'     '}
-                    Items: {customerItems.length}
+                    Items: {customerItems.length} | Delivery: Rs. {resolvedDeliveryCharge}
                   </Text>
                   {type === 'STAFF' && (
                     <Text style={s.signoffStatBold}>Internal Copy</Text>
@@ -871,9 +875,6 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               )}
             </View>
               <View style={s.signoffRight}>
-                <Text style={s.signoffFor}>
-                  Delivery Charges: Rs. {resolvedDeliveryCharge}
-                </Text>
               </View>
           </View>
         </View>

@@ -163,6 +163,28 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
             }
           />
 
+
+           <DetailCell
+            label={""}
+            value={
+              order.totalPlates ? (
+                <span>
+                  {order.totalPlates}{' '}
+                  <span className="text-sm font-normal text-zinc-400">
+                    {t('guests')}
+                  </span>
+                </span>
+              ) : (
+                <span className="text-zinc-400">
+                  {t('not_specified') || 'N/A'}
+                </span>
+              )
+            }
+          />
+          <DetailCell
+            label={t('advance')}
+            value={`₹${(order.advanceAmount || 0).toLocaleString()}`}
+          />
           <DetailCell
             label={t('payment')}
             value={
@@ -175,10 +197,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
               )
             }
           />
-          <DetailCell
-            label={t('advance')}
-            value={`₹${(order.advanceAmount || 0).toLocaleString()}`}
-          />
+
           <DetailCell
             label={t('balance')}
             value={`₹${(order.balanceAmount || 0).toLocaleString()}`}

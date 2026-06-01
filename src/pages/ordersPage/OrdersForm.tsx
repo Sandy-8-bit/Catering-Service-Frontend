@@ -31,7 +31,6 @@ import { useFetchUsers } from '@/queries/usersQueries'
 import { useFetchProducts } from '@/queries/productQueries'
 import {
   calculateMenuItemsSubtotal,
-  calculateOneLeafPrice,
   calculateAdditionalMenuItemsSubtotal,
   calculateAdditionalItemsSubtotal,
   calculateSubtotalBeforeDelivery,
@@ -776,6 +775,7 @@ export const OrdersForm = () => {
                             items,
                           }))
                         }
+                        totalPlates={editData.totalPlates || 1}
                       />
                     </div>
                   )}
@@ -913,16 +913,9 @@ export const OrdersForm = () => {
                   calculateAdditionalMenuItemsSubtotal(editData, products)
                 const additionalItemsSubtotal =
                   calculateAdditionalItemsSubtotal(editData)
-                const oneLeafPrice = calculateOneLeafPrice(editData)
 
                 return (
                   <div className="flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 sm:gap-3 sm:p-5">
-                    <div className="flex justify-between gap-3 text-xs text-amber-700 sm:text-sm">
-                      <span>{t('one_leaf_price')}:</span>
-                      <span className="font-regular text-amber-900">
-                        ₹{Math.round(oneLeafPrice).toLocaleString()}
-                      </span>
-                    </div>
                     <div className="flex justify-between gap-3 text-xs text-amber-700 sm:text-sm">
                       <span>{t('total_leaf_items_subtotal')}:</span>
                       <span className="font-regular text-amber-900">

@@ -10,6 +10,7 @@ import ButtonSm from '../common/Buttons'
 interface ProductMenuSelectorProps {
   selectedItems: OrderItem[]
   onChange: (items: OrderItem[]) => void
+  totalPlates?: number
 }
 
 interface MasterCategoryGroup {
@@ -118,6 +119,7 @@ const getOrderItemProductId = (item: OrderItem): number | undefined => {
 const ProductMenuSelector = ({
   selectedItems,
   onChange,
+  totalPlates = 1,
 }: ProductMenuSelectorProps) => {
   const { t } = useTranslation()
   const safeItems = useMemo(() => selectedItems ?? [], [selectedItems])
@@ -280,7 +282,9 @@ const ProductMenuSelector = ({
       return
     }
 
-    updateItems([...safeItems, buildOrderItem(product)])
+    const newItem = buildOrderItem(product)
+    newItem.quantity = totalPlates > 0 ? totalPlates : 1
+    updateItems([...safeItems, newItem])
   }
 
   const handleQuantityChange = (productId: number, delta: number) => {
