@@ -270,7 +270,7 @@ export const CategoriesPage = () => {
     {
       headingTitle: t('category_primary'),
       accessVar: 'primaryName',
-      className: 'max-w-32',
+      className: 'max-w-50',
       render: (value, row) => {
         const isDraft = isDraftRow(row)
 
@@ -305,7 +305,7 @@ export const CategoriesPage = () => {
     {
       headingTitle: t('category_secondary'),
       accessVar: 'secondaryName',
-      className: 'w-42',
+      className: 'w-62',
       render: (value, row) => (
         <TableInput
           isEditMode={canEditRow(row.id)}
@@ -369,7 +369,7 @@ export const CategoriesPage = () => {
     {
       headingTitle: 'Actions',
       accessVar: 'action',
-      className: 'w-20',
+      className: 'w-40',
       render: (_, row) => {
         const isDraft = isDraftRow(row)
         return !isDraft ? (
