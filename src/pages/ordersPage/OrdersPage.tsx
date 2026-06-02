@@ -1128,7 +1128,7 @@ export const OrdersPage = () => {
                       data={selectedOrder.requiredSubProducts.map((item) => ({
                         subProductName: item.subProductName,
                         quantity: (item.requiredQuantity || 0),
-                        unit: item.unit,
+                        unit: 'KG',
                       }))}
                       columns={[
                         {
@@ -1183,7 +1183,7 @@ export const OrdersPage = () => {
                         width: '30%',
                         align: 'right',
                         render: (value) => (
-                          <span className="font-semibold">{value}</span>
+                          <span className="font-semibold">{value} KG</span>
                         ),
                       },
                     ]}

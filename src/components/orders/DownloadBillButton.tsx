@@ -195,6 +195,12 @@ const s = StyleSheet.create({
     letterSpacing: 0.3,
     fontWeight: 'bold',
   },
+  businessAddress: {
+    fontFamily: LATIN,
+    fontSize: 6,
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.2,
+  },
   contactSection: {
     width: 0,
     paddingVertical: 0,
@@ -213,6 +219,19 @@ const s = StyleSheet.create({
     fontFamily: LATIN,
     fontSize: 6,
     color: 'rgba(255,255,255,0.5)',
+  },
+  topRightContact: {
+    width: 100,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    gap: 1,
+    borderLeft: `0.5pt solid rgba(255,255,255,0.2)`,
+  },
+  topRightLine: {
+    fontFamily: LATIN,
+    fontSize: 6,
+    color: 'rgba(255,255,255,0.85)',
   },
 
   // ── Bill Type + Address Strip ─────────────────────────────────────────────
@@ -606,17 +625,32 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
     if (!dateStr) return ''
     try {
       const date = new Date(dateStr)
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      const dayName = days[date.getDay()]
       const dd = String(date.getDate()).padStart(2, '0')
       const mm = String(date.getMonth() + 1).padStart(2, '0')
       const yyyy = date.getFullYear()
-      return `${dd}${mm}${yyyy}`
+      return `${dayName}, ${dd}-${mm}-${yyyy}`
     } catch {
       return dateStr
     }
   }
+
+  const getTime12Hour = (timeStr?: string): string => {
+    if (!timeStr) return ''
+    try {
+      const [hours, minutes] = timeStr.slice(0, 5).split(':')
+      const h = parseInt(hours, 10)
+      const ampm = h >= 12 ? 'PM' : 'AM'
+      const displayHours = h % 12 || 12
+      return `${displayHours}:${minutes} ${ampm}`
+    } catch {
+      return timeStr
+    }
+  }
   
   const resolvedDate = getDateWithDay(meta.date ?? customer.eventDate ?? undefined)
-  const resolvedTime = meta.time ?? customer.eventTime?.slice(0, 5) ?? undefined // "07:00:00" → "07:00"
+  const resolvedTime = getTime12Hour(meta.time ?? customer.eventTime ?? undefined)
   const resolvedAdvance =
     meta.advance ??
     (data.advanceAmount != null
@@ -668,23 +702,29 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               />
             </View>
 
-            {/* Business name */}
+            {/* Business name & Address */}
             <View style={s.businessSection}>
               <Text style={s.businessName}>VENKATESHWARA</Text>
               <Text style={s.businessSub}>MESS & CATERING</Text>
+              <Text style={s.businessAddress}>Pattanam Road, Vellalore, Coimbatore – 641 111</Text>
+            </View>
+
+            {/* Top Right Contact */}
+            <View style={s.topRightContact}>
+              <Text style={s.topRightLine}>82307 77007</Text>
+              <Text style={s.topRightLine}>99949 20660</Text>
+              <Text style={{fontFamily: LATIN_B, fontSize: 5.5, color: 'rgba(255,255,255,0.6)', marginTop: 1}}>Delivery On</Text>
+              <Text style={s.topRightLine}>9977 20660</Text>
             </View>
           </View>
 
-          {/* ── Meta Strip: Bill type + No + Address ────────────────────── */}
+          {/* ── Meta Strip: Bill type + No ────────────────────── */}
           <View style={s.metaStrip}>
             <View style={s.billTypePill}>
               <Text style={s.billTypePillText}>{billTitle}</Text>
             </View>
             <Text style={s.billNoLabel}>No.</Text>
             <Text style={s.billNoValue}>{data.orderId ?? '—'}</Text>
-            <Text style={s.addressText}>
-              Pattanam Road, Vellalore, Coimbatore – 641 111
-            </Text>
           </View>
 
           {/* ── Customer Info ─────────────────────────────────────────────── */}
@@ -825,7 +865,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                   <Text style={{fontFamily: LATIN_B, fontSize: 6, color: C.light, letterSpacing: 0.4}}>TOTAL AMOUNT</Text>
                   <Text style={{fontFamily: LATIN_B, fontSize: 10, color: C.navy}}>Rs. {fmtMoney(totalValue)}</Text>
                 </View>
-                <Text style={{fontFamily: LATIN, fontSize: 6, color: C.muted, textAlign: 'center'}}>Advance Amount: Rs. {fmtMoney(data.advanceAmount ?? 0)}</Text>
+                <Text style={{fontFamily: LATIN_B, fontSize: 6, color: C.navy, textAlign: 'center', fontWeight: 'bold'}}>Advance Amount: Rs. {fmtMoney(data.advanceAmount ?? 0)}</Text>
                 <View style={{alignItems: 'center', gap: 2, paddingTop: 1}}>
                   <View style={{backgroundColor: C.navy, paddingHorizontal: 4, paddingVertical: 1.5, borderRadius: 1}}>
                     <Text style={{fontFamily: LATIN_B, fontSize: 5.5, color: C.white, letterSpacing: 0.3}}>CASH TO COLLECT</Text>
