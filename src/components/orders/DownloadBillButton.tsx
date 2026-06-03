@@ -22,9 +22,6 @@ import {
 } from '@/queries/ordersQueries'
 
 // ─── Font Registration ────────────────────────────────────────────────────────
-// Place NotoSansTamil-Regular.ttf in /public/fonts/
-// @react-pdf/renderer embeds the TTF into the PDF — Tamil glyphs render correctly.
-
 Font.register({
   family: 'NotoSansTamil',
   fonts: [
@@ -71,9 +68,17 @@ interface BillSummary {
   profit?: number | null
 }
 
+// ADD: SubProduct type
+interface BillSubProduct {
+  subProductName?: string
+  requiredQuantity?: number | null
+  unit?: string | null
+}
+
 type BillDataWithId = BillData & {
   orderId?: number
-  advanceAmount?: number | null // ADD
+  advanceAmount?: number | null
+  subProducts?: BillSubProduct[] | null // ADD
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -114,10 +119,6 @@ const C = {
 } as const
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-// All measurements in pt. A5 = 419.53 × 595.28 pt
-// Latin text: Helvetica (built-in, no TTF needed)
-// Tamil text: NotoSansTamil (TTF embedded)
-
 const LATIN = 'Helvetica'
 const LATIN_B = 'Helvetica-Bold'
 const TAMIL = 'NotoSansTamil'
@@ -144,27 +145,27 @@ const s = StyleSheet.create({
   headerBand: {
     flexDirection: 'row',
     backgroundColor: C.navy,
-    minHeight: 44,
+    minHeight: 38,
     alignItems: 'stretch',
   },
   logoSection: {
-    width: 60,
+    width: 50,
     alignItems: 'center',
     justifyContent: 'center',
     borderRight: `0.5pt solid rgba(255,255,255,0.2)`,
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   logoCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     border: `1.5pt solid rgba(255,255,255,0.5)`,
     alignItems: 'center',
     justifyContent: 'center',
   },
   logoInitial: {
     fontFamily: LATIN_B,
-    fontSize: 13,
+    fontSize: 11,
     color: C.white,
   },
   businessSection: {
@@ -172,7 +173,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
-    gap: 2,
+    gap: 0,
   },
   businessTagline: {
     fontFamily: LATIN,
@@ -180,26 +181,35 @@ const s = StyleSheet.create({
     color: 'rgba(255,255,255,0.55)',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
+    display: 'none',
   },
   businessName: {
     fontFamily: LATIN_B,
-    fontSize: 14,
+    fontSize: 13,
     color: C.white,
     letterSpacing: 0.5,
   },
   businessSub: {
-    fontFamily: LATIN,
-    fontSize: 8,
-    color: 'rgba(255,255,255,0.7)',
+    fontFamily: LATIN_B,
+    fontSize: 7.5,
+    color: 'rgba(255,255,255,0.8)',
     letterSpacing: 0.3,
+    fontWeight: 'bold',
+  },
+  businessAddress: {
+    fontFamily: LATIN,
+    fontSize: 6,
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.2,
   },
   contactSection: {
-    width: 100,
-    paddingVertical: 8,
-    paddingHorizontal: 8,
+    width: 0,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
     justifyContent: 'center',
     gap: 4,
     borderLeft: `0.5pt solid rgba(255,255,255,0.2)`,
+    display: 'none',
   },
   contactLine: {
     fontFamily: LATIN,
@@ -210,6 +220,28 @@ const s = StyleSheet.create({
     fontFamily: LATIN,
     fontSize: 6,
     color: 'rgba(255,255,255,0.5)',
+  },
+  // CHANGE 1 & 2: Increased font size for phone numbers, pure white; "GPay Number" label
+  topRightContact: {
+    width: 100,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    gap: 1,
+    borderLeft: `0.5pt solid rgba(255,255,255,0.2)`,
+  },
+  // CHANGE 1: Larger, pure white phone numbers
+  topRightLine: {
+    fontFamily: LATIN_B,
+    fontSize: 8.5,
+    color: '#FFFFFF',
+  },
+  // CHANGE 2: "GPay Number" label style (replaces "Delivery On")
+  topRightGpayLabel: {
+    fontFamily: LATIN_B,
+    fontSize: 5.5,
+    color: 'rgba(255,255,255,0.65)',
+    marginTop: 2,
   },
 
   // ── Bill Type + Address Strip ─────────────────────────────────────────────
@@ -257,7 +289,7 @@ const s = StyleSheet.create({
   // ── Customer Section ──────────────────────────────────────────────────────
   customerSection: {
     flexDirection: 'row',
-     fontFamily: LATIN_B,
+    fontFamily: LATIN_B,
     borderBottom: `0.5pt solid ${C.border}`,
   },
   customerLeft: {
@@ -265,7 +297,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     gap: 6,
-     fontFamily: LATIN_B,
+    fontFamily: LATIN_B,
     borderRight: `0.5pt solid ${C.border}`,
   },
   infoRow: {
@@ -375,11 +407,12 @@ const s = StyleSheet.create({
     color: C.light,
   },
   dateValue: {
-    fontFamily: LATIN,
+    fontFamily: LATIN_B,
     fontSize: 7.5,
-    color: C.text,
+    color: C.navy,
     borderBottom: `0.4pt dotted ${C.border}`,
     paddingBottom: 1,
+    fontWeight: 'bold',
   },
 
   // ── Table ─────────────────────────────────────────────────────────────────
@@ -402,7 +435,7 @@ const s = StyleSheet.create({
   // Column widths
   colSno: { width: 20 },
   colParticulars: { flex: 1 },
-  colQty: { width: 58 },
+  colQty: { width: 44 },
   colRate: { width: 44 },
   colRs: { width: 44 },
 
@@ -444,20 +477,18 @@ const s = StyleSheet.create({
     color: C.light,
     paddingVertical: 2,
   },
-
-  // ← KEY FIX: explicit fontFamily: TAMIL on product name column
   tdParticulars: {
     flex: 1,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    fontFamily: TAMIL, // explicit Tamil font — do not change to LATIN
-    fontWeight: 'bold', // NotoSansTamil Bold weight
+    fontFamily: TAMIL,
+    fontWeight: 'bold',
     fontSize: 7.5,
     color: C.text,
     borderLeft: `0.25pt solid ${C.divider}`,
   },
   tdQty: {
-    width: 42,
+    width: 44,
     textAlign: 'center',
     fontFamily: LATIN,
     fontSize: 7,
@@ -498,10 +529,8 @@ const s = StyleSheet.create({
     gap: 3,
     borderRight: `0.5pt solid ${C.border}`,
   },
-
-  // ← KEY FIX: explicit fontFamily: TAMIL on footer Tamil notes
   footerNote: {
-    fontFamily: TAMIL, // explicit Tamil font — do not change to LATIN
+    fontFamily: TAMIL,
     fontWeight: 'normal',
     fontSize: 7,
     color: C.muted,
@@ -528,7 +557,7 @@ const s = StyleSheet.create({
   },
   footerTotalValue: {
     fontFamily: LATIN_B,
-    fontSize: 13,
+    fontSize: 12,
     color: C.navy,
   },
 
@@ -557,11 +586,12 @@ const s = StyleSheet.create({
     color: C.blueLight,
   },
   signoffRight: {
-    width: 110,
+    width: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 6,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    display: 'none',
   },
   signoffFor: {
     fontFamily: LATIN_B,
@@ -569,6 +599,7 @@ const s = StyleSheet.create({
     color: C.navy,
     textAlign: 'center',
     letterSpacing: 0.2,
+    display: 'none',
   },
 })
 
@@ -578,8 +609,6 @@ interface RowEntry {
   particulars: string
   productName: string
   qty: number | null
-  totalPlates: number | null
-  plateTotal?: number | null
   isMenuItem: boolean
   qtyDisplay: string
   rate: string
@@ -596,17 +625,50 @@ interface BillDocProps {
 const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   const customerItems: BillCustomerItem[] = data.customerItems ?? []
   const rawMaterials: BillRawMaterial[] = data.rawMaterials ?? []
+  const subProducts: BillSubProduct[] = data.subProducts ?? []
   const customer = (data.customer ?? {}) as BillCustomerInfo
 
-  const resolvedDate = meta.date ?? customer.eventDate ?? undefined
-  const resolvedTime = meta.time ?? customer.eventTime?.slice(0, 5) ?? undefined // "07:00:00" → "07:00"
+  const getDateWithDay = (dateStr?: string): string => {
+    if (!dateStr) return ''
+    try {
+      const date = new Date(dateStr)
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      const dayName = days[date.getDay()]
+      const dd = String(date.getDate()).padStart(2, '0')
+      const mm = String(date.getMonth() + 1).padStart(2, '0')
+      const yyyy = date.getFullYear()
+      return `${dayName}, ${dd}-${mm}-${yyyy}`
+    } catch {
+      return dateStr
+    }
+  }
+
+  const getTime12Hour = (timeStr?: string): string => {
+    if (!timeStr) return ''
+    try {
+      const [hours, minutes] = timeStr.slice(0, 5).split(':')
+      const h = parseInt(hours, 10)
+      const ampm = h >= 12 ? 'PM' : 'AM'
+      const displayHours = h % 12 || 12
+      return `${displayHours}:${minutes} ${ampm}`
+    } catch {
+      return timeStr
+    }
+  }
+
+  const resolvedDate = getDateWithDay(
+    meta.date ?? customer.eventDate ?? undefined
+  )
+  const resolvedTime = getTime12Hour(
+    meta.time ?? customer.eventTime ?? undefined
+  )
   const resolvedAdvance =
     meta.advance ??
     (data.advanceAmount != null
       ? `Rs. ${fmtMoney(data.advanceAmount)}`
       : undefined)
   const resolvedDeliveryCharge =
-    data.deliveryCharge != null ? fmtMoney(data.deliveryCharge) : '--'
+    data.deliveryCharge != null ? fmtMoney(data.deliveryCharge) : '0.00'
   const summary = data as BillSummary
   const billTitle = resolveBillTitle(type)
 
@@ -616,44 +678,38 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
       ? summary.customerItemsTotal
       : customerItems.reduce((acc, item) => acc + (item.lineTotal ?? 0), 0))
 
-  // Build rows from customerItems with new format: qty | qty×plates
+  // Build rows from customerItems
   const rows: RowEntry[] = customerItems.map((item, i) => {
     const qty = item.quantity ?? null
-    const totalPlates = customer.totalPlates ?? null
     const isMenuItem = item.isMenuItem === true
-    const plateTotal =
-      isMenuItem && qty != null && totalPlates != null
-        ? qty * totalPlates
-        : null
-    const qtyDisplay =
-      qty != null
-        ? isMenuItem && plateTotal != null
-          ? `${qty} | ${plateTotal}`
-          : String(qty)
-        : '—'
-    // Multiply total cost by plates if menu item
-    const totalCost =
-      isMenuItem && item.lineTotal != null && totalPlates != null
-        ? item.lineTotal * totalPlates
-        : (item.lineTotal ?? null)
+    const qtyDisplay = qty != null ? String(qty) : '—'
     return {
       sno: i + 1,
       particulars: item.productName ?? '—',
       productName: item.productName ?? '—',
       qty,
-      totalPlates,
-      plateTotal,
       isMenuItem,
       qtyDisplay,
       rate: item.unitPrice != null ? String(item.unitPrice) : '—',
-      total: totalCost != null ? fmtMoney(totalCost) : '—',
+      total: (item.lineTotal ?? null) != null ? fmtMoney(item.lineTotal) : '—',
     }
   })
 
-  // Minimum 14 visible rows so the table looks full
+  // Minimum 14 visible rows
   const MIN_ROWS = 14
   const emptyCount = Math.max(0, MIN_ROWS - rows.length)
   const emptyRows = Array.from({ length: emptyCount })
+
+  // CHANGE 3: Shared style values for the three totals columns
+  const totalColShared = {
+    flex: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 8 as const,
+    paddingHorizontal: 5 as const,
+    flexDirection: 'column' as const,
+    gap: 3 as const,
+  }
 
   return (
     <Document>
@@ -669,32 +725,32 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               />
             </View>
 
-            {/* Business name */}
+            {/* Business name & Address */}
             <View style={s.businessSection}>
-              <Text style={s.businessTagline}>Catering Services</Text>
               <Text style={s.businessName}>VENKATESHWARA</Text>
               <Text style={s.businessSub}>MESS & CATERING</Text>
+              <Text style={s.businessAddress}>
+                Pattanam Road, Vellalore, Coimbatore – 641 111
+              </Text>
             </View>
 
-            {/* Contact */}
-            <View style={s.contactSection}>
-              <Text style={s.contactLine}>82207 77007</Text>
-              <Text style={s.contactLine}>99946 20966</Text>
-              <Text style={s.contactMuted}>Google Pay</Text>
-              <Text style={s.contactLine}>96777 20966</Text>
+            {/* CHANGE 1 & 2: Top Right Contact — bigger/white phones, "GPay Number" label */}
+            <View style={s.topRightContact}>
+              <Text style={s.topRightLine}>82307 77007</Text>
+              <Text style={s.topRightLine}>99949 20660</Text>
+              {/* CHANGE 2: "GPay Number" replaces "Delivery On" */}
+              <Text style={s.topRightGpayLabel}>GPay Number</Text>
+              <Text style={s.topRightLine}>9977 20660</Text>
             </View>
           </View>
 
-          {/* ── Meta Strip: Bill type + No + Address ────────────────────── */}
+          {/* ── Meta Strip: Bill type + No ────────────────────── */}
           <View style={s.metaStrip}>
             <View style={s.billTypePill}>
               <Text style={s.billTypePillText}>{billTitle}</Text>
             </View>
             <Text style={s.billNoLabel}>No.</Text>
             <Text style={s.billNoValue}>{data.orderId ?? '—'}</Text>
-            <Text style={s.addressText}>
-              Pattanam Road, Vellalore, Coimbatore – 641 111
-            </Text>
           </View>
 
           {/* ── Customer Info ─────────────────────────────────────────────── */}
@@ -709,7 +765,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                 </Text>
               </View>
 
-              {/* M/s */}
+              {/* Address */}
               <View style={s.infoRow}>
                 <Text style={s.infoLabel}>Address</Text>
                 <Text style={s.infoColon}>:</Text>
@@ -720,7 +776,6 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
 
               {/* Cell / Advance — inline */}
               <View style={s.infoRowInline}>
-                {/* Customer No removed as requested */}
                 <View style={s.infoGroup}>
                   <Text style={s.infoLabel}>Cell No</Text>
                   <Text style={s.infoColon}>:</Text>
@@ -761,9 +816,8 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             <View style={s.tableHead}>
               <Text style={[s.th, s.colSno]}>S.No</Text>
               <Text style={[s.thLeft, s.colParticulars]}>Particulars</Text>
-              <Text style={[s.th, s.colQty]}>Total QTY</Text>
+              <Text style={[s.th, s.colQty]}>QTY</Text>
               <Text style={[s.th, s.colRate]}>PRICE/UNIT</Text>
-              {/* Amount split header */}
               <View
                 style={[
                   s.colRs,
@@ -787,7 +841,6 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             {rows.map((row, i) => (
               <View key={i} style={i % 2 === 0 ? s.tableRow : s.tableRowAlt}>
                 <Text style={s.tdSno}>{row.sno}</Text>
-                {/* Product name — always NotoSansTamil, fontFamily set inline to guarantee it */}
                 <Text
                   style={[
                     s.tdParticulars,
@@ -797,11 +850,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                   {row.particulars}
                 </Text>
                 <Text style={s.tdQty}>
-                  {row.plateTotal != null
-                    ? String(row.plateTotal)
-                    : row.qty != null
-                      ? String(row.qty)
-                      : '—'}
+                  {row.qty != null ? String(row.qty) : '—'}
                 </Text>
                 <Text style={s.tdRate}>
                   {type !== 'STAFF' ? row.rate : '—'}
@@ -825,25 +874,108 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             ))}
           </View>
 
+          {/* Raw Materials: STAFF + OWNER only */}
           {rawMaterials.length > 0 &&
             (type === 'STAFF' || type === 'OWNER') && (
               <RawMaterialsTable rawMaterials={rawMaterials} type={type} />
             )}
 
-          {/* ── Footer: Total Amount ───────────────────────────────── */}
-          <View style={s.footerBar}>
-            <View style={s.footerNoteCol} />
-            <View style={s.footerTotalCol}>
-              <View style={s.footerTotalChip}>
-                <Text style={s.footerTotalChipText}>TOTAL AMOUNT</Text>
+          {/* CHANGE 5: Sub-Products section — STAFF bill only */}
+          {type === 'STAFF' && subProducts.length > 0 && (
+            <SubProductsTable subProducts={subProducts} />
+          )}
+
+          {/* ── Footer: CHANGE 3 — 3 equal columns, same style ───────────── */}
+          {type === 'CUSTOMER' && (
+            <View style={s.footerBar}>
+              {/* Left spacer */}
+              <View
+                style={[
+                  s.footerNoteCol,
+                  { borderRight: `0.5pt solid ${C.border}` },
+                ]}
+              />
+
+              {/* DELIVERY CHARGE col */}
+              <View
+                style={[
+                  totalColShared,
+                  { borderRight: `0.5pt solid ${C.border}` },
+                ]}
+              >
+                <View style={s.footerTotalChip}>
+                  <Text style={s.footerTotalChipText}>DELIVERY Amount</Text>
+                </View>
+                <Text style={s.footerTotalValue}>
+                  Rs. {resolvedDeliveryCharge}
+                </Text>
               </View>
-              <Text style={s.footerTotalValue}>Rs. {fmtMoney(totalValue)}</Text>
+
+              {/* TOTAL AMOUNT col */}
+              <View
+                style={[
+                  totalColShared,
+                  { borderRight: `0.5pt solid ${C.border}` },
+                ]}
+              >
+                <View style={s.footerTotalChip}>
+                  <Text style={s.footerTotalChipText}>TOTAL AMOUNT</Text>
+                </View>
+                <Text style={s.footerTotalValue}>
+                  Rs. {fmtMoney(totalValue)}
+                </Text>
+              </View>
+
+              {/* ADVANCE AMOUNT col */}
+              <View
+                style={[
+                  totalColShared,
+                  { borderRight: `0.5pt solid ${C.border}` },
+                ]}
+              >
+                <View style={s.footerTotalChip}>
+                  <Text style={s.footerTotalChipText}>ADVANCE AMT</Text>
+                </View>
+                <Text style={s.footerTotalValue}>
+                  Rs. {fmtMoney(data.advanceAmount ?? 0)}
+                </Text>
+              </View>
+
+              {/* CASH TO COLLECT col */}
+              <View style={totalColShared}>
+                <View style={[s.footerTotalChip, { backgroundColor: C.navy }]}>
+                  <Text style={[s.footerTotalChipText, { color: C.white }]}>
+                    CASH TO COLLECT
+                  </Text>
+                </View>
+                <Text style={[s.footerTotalValue, { color: C.navy }]}>
+                  Rs.{' '}
+                  {fmtMoney(
+                    Math.max(0, (totalValue ?? 0) - (data.advanceAmount ?? 0))
+                  )}
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
+
+          {/* Non-CUSTOMER footer — unchanged */}
+          {type !== 'CUSTOMER' && (
+            <View style={s.footerBar}>
+              <View style={s.footerNoteCol} />
+              <View style={s.footerTotalCol}>
+                <View style={s.footerTotalChip}>
+                  <Text style={s.footerTotalChipText}>TOTAL AMOUNT</Text>
+                </View>
+                <Text style={s.footerTotalValue}>
+                  Rs. {fmtMoney(totalValue)}
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* ── Signoff Bar ───────────────────────────────────────────────── */}
           <View style={s.signoffBar}>
-            <View style={s.signoffLeft}>
+            <View style={[s.signoffLeft, { borderRight: 'none' }]}>
               {type === 'OWNER' ? (
                 <>
                   <Text style={s.signoffStat}>
@@ -858,23 +990,23 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                   </Text>
                 </>
               ) : (
-                <>
-                  <Text style={s.signoffStat}>
-                    Total Plates: {customer.totalPlates ?? '--'}
-                    {'     '}
-                    Items: {customerItems.length}
-                  </Text>
-                  {type === 'STAFF' && (
-                    <Text style={s.signoffStatBold}>Internal Copy</Text>
-                  )}
-                </>
+                // CHANGE 4: "Items: N | Delivery: Rs. X" right-aligned
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'flex-end',
+                    flex: 1,
+                  }}
+                >
+                  {/* <Text style={[s.signoffStat, { textAlign: 'right' }]}>
+                    Items: {customerItems.length} | Delivery: Rs.{' '}
+                    {resolvedDeliveryCharge}
+                    {type === 'STAFF' ? '   Internal Copy' : ''}
+                  </Text> */}
+                </View>
               )}
             </View>
-              <View style={s.signoffRight}>
-                <Text style={s.signoffFor}>
-                  Delivery Charges: Rs. {resolvedDeliveryCharge}
-                </Text>
-              </View>
+            <View style={s.signoffRight} />
           </View>
         </View>
       </Page>
@@ -882,6 +1014,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   )
 }
 
+// ─── Raw Materials Table ──────────────────────────────────────────────────────
 const RawMaterialsTable: React.FC<{
   rawMaterials: BillRawMaterial[]
   type: BillType
@@ -890,12 +1023,10 @@ const RawMaterialsTable: React.FC<{
 
   return (
     <View style={s.rmSection}>
-      {/* Section title bar */}
       <View style={s.rmSectionHeader}>
         <Text style={s.rmSectionTitle}>RAW MATERIALS</Text>
       </View>
 
-      {/* Table head */}
       <View style={s.rmTableHead}>
         <Text style={[s.th, s.colSno]}>S.No</Text>
         <Text style={[s.thLeft, { flex: 1 }]}>Material</Text>
@@ -922,7 +1053,6 @@ const RawMaterialsTable: React.FC<{
         )}
       </View>
 
-      {/* Rows */}
       {rawMaterials.map((mat, i) => (
         <View key={i} style={i % 2 === 0 ? s.rmRow : s.rmRowAlt}>
           <Text style={s.tdSno}>{i + 1}</Text>
@@ -956,6 +1086,47 @@ const RawMaterialsTable: React.FC<{
     </View>
   )
 }
+
+// ─── CHANGE 5: Sub-Products Table (STAFF bill only) ───────────────────────────
+const SubProductsTable: React.FC<{ subProducts: BillSubProduct[] }> = ({
+  subProducts,
+}) => {
+  return (
+    <View style={s.rmSection}>
+      {/* Section title bar — same style as Raw Materials but distinct color */}
+      <View style={[s.rmSectionHeader, { backgroundColor: '#2D4A8C' }]}>
+        <Text style={s.rmSectionTitle}>SUB-PRODUCTS</Text>
+      </View>
+
+      {/* Table head — name + qty only (no pricing for staff) */}
+      <View style={s.rmTableHead}>
+        <Text style={[s.th, s.colSno]}>S.No</Text>
+        <Text style={[s.thLeft, { flex: 1 }]}>Sub-Product</Text>
+        <Text style={[s.th, { width: 80 }]}>QTY / UNIT</Text>
+      </View>
+
+      {subProducts.map((sp, i) => (
+        <View key={i} style={i % 2 === 0 ? s.rmRow : s.rmRowAlt}>
+          <Text style={s.tdSno}>{i + 1}</Text>
+          <Text
+            style={[
+              s.tdParticulars,
+              { flex: 1, fontFamily: TAMIL, fontWeight: 'bold' },
+            ]}
+          >
+            {sp.subProductName ?? '—'}
+          </Text>
+          <Text style={[s.tdQty, { width: 80 }]}>
+            {sp.requiredQuantity != null
+              ? `${sp.requiredQuantity} ${sp.unit ?? ''}`.trim()
+              : '—'}
+          </Text>
+        </View>
+      ))}
+    </View>
+  )
+}
+
 // ─── Download Button Component ────────────────────────────────────────────────
 interface DownloadBillButtonProps {
   orderId: number
@@ -993,7 +1164,6 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
   })
   const [loadingType, setLoadingType] = useState<BillType | null>(null)
 
-  // Recalculate dropdown position whenever it opens
   useEffect(() => {
     if (isOpen && buttonRef.current) {
       const r = buttonRef.current.getBoundingClientRect()
@@ -1097,11 +1267,7 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
           <>
             {/* Click-away overlay */}
             <div
-              style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 40,
-              }}
+              style={{ position: 'fixed', inset: 0, zIndex: 40 }}
               onClick={() => setIsOpen(false)}
             />
 
@@ -1216,7 +1382,6 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
                 ))}
               </ul>
 
-              {/* CSS keyframes for spinner */}
               <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
             </div>
           </>,

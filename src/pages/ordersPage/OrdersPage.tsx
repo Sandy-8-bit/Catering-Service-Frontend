@@ -162,7 +162,9 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
               )
             }
           />
-          <DetailCell
+
+
+           <DetailCell
             label={""}
             value={
               order.totalPlates ? (
@@ -180,6 +182,10 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
             }
           />
           <DetailCell
+            label={t('advance')}
+            value={`₹${(order.advanceAmount || 0).toLocaleString()}`}
+          />
+          <DetailCell
             label={t('payment')}
             value={
               order.paymentType ? (
@@ -191,10 +197,7 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
               )
             }
           />
-          <DetailCell
-            label={t('advance')}
-            value={`₹${(order.advanceAmount || 0).toLocaleString()}`}
-          />
+
           <DetailCell
             label={t('balance')}
             value={`₹${(order.balanceAmount || 0).toLocaleString()}`}
@@ -467,24 +470,12 @@ export const OrdersPage = () => {
         sourceOrders,
         (order) => order.items,
         (item) => getProductDisplayName(item),
-        (item, order) => item.quantity * (order.totalPlates || 1)
+        (item) => item.quantity
       ),
     [sourceOrders]
   )
 
-  // const menuItemsSubtotal = useMemo(() => {
-  //   if (selectedOrder) {
-  //     const unitPriceSum =
-  //       selectedOrder.items?.reduce((sum, item) => {
-  //         const unitPrice =
-  //           item.unitPrice ||
-  //           (item.quantity > 0 ? item.totalPrice / item.quantity : 0)
-  //         return sum + unitPrice
-  //       }, 0) || 0
-  //     return Math.round((selectedOrder.totalPlates || 1) * unitPriceSum)
-  //   }
-  //   return 0
-  // }, [selectedOrder])
+
 
   const additionalItemsSummary = useMemo(
     () =>
@@ -519,7 +510,7 @@ export const OrdersPage = () => {
         sourceOrders,
         (order) => order.requiredSubProducts ?? [],
         (item) => item?.subProductName || '',
-        (item, order) => (item.requiredQuantity || 0) * (order.totalPlates || 1)
+        (item) => (item.requiredQuantity || 0)
       ),
     [sourceOrders]
   )
@@ -853,10 +844,8 @@ export const OrdersPage = () => {
                       <BillTable
                         data={selectedOrder.items.map((item) => ({
                           ...item,
-                          quantity:
-                            item.quantity * (selectedOrder.totalPlates || 1),
-                          totalPrice:
-                            item.totalPrice * (selectedOrder.totalPlates || 1),
+                          quantity: item.quantity,
+                          totalPrice: item.totalPrice,
                         }))}
                         columns={[
                           {
@@ -1138,10 +1127,8 @@ export const OrdersPage = () => {
                     <BillTable
                       data={selectedOrder.requiredSubProducts.map((item) => ({
                         subProductName: item.subProductName,
-                        quantity:
-                          (item.requiredQuantity || 0) *
-                          (selectedOrder.totalPlates || 1),
-                        unit: item.unit,
+                        quantity: (item.requiredQuantity || 0),
+                        unit: 'KG',
                       }))}
                       columns={[
                         {
@@ -1196,7 +1183,7 @@ export const OrdersPage = () => {
                         width: '30%',
                         align: 'right',
                         render: (value) => (
-                          <span className="font-semibold">{value}</span>
+                          <span className="font-semibold">{value} KG</span>
                         ),
                       },
                     ]}

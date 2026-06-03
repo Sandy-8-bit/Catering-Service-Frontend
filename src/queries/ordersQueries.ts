@@ -141,13 +141,21 @@ export const useCreateOrder = () => {
 
   return useMutation({
     mutationFn: createOrder,
-    onSuccess: (data) => {
-      toast.success('Order created successfully')
-      queryClient.invalidateQueries({ queryKey: ORDERS_KEY })
-      if (data?.id) {
-        queryClient.invalidateQueries({ queryKey: orderKey(data.id) })
-      }
-    },
+onSuccess: (data) => {
+  toast.success('Order created successfully')
+
+  // Refresh all order list queries
+  queryClient.invalidateQueries({
+    queryKey: ORDERS_KEY,
+  })
+
+  // Refresh specific order details if needed
+  if (data?.id) {
+    queryClient.invalidateQueries({
+      queryKey: orderKey(data.id),
+    })
+  }
+}
   })
 }
 
@@ -275,10 +283,13 @@ export const useUploadVoiceOrder = () => {
 
   return useMutation({
     mutationFn: uploadVoiceOrder,
-    onSuccess: () => {
-      toast.success('Voice order uploaded successfully!')
-      queryClient.invalidateQueries({ queryKey: ORDERS_KEY })
-    },
+onSuccess: () => {
+  toast.success('Voice order uploaded successfully!')
+
+  queryClient.refetchQueries({
+    queryKey: ORDERS_KEY,
+  })
+}
   })
 }
 
@@ -389,7 +400,7 @@ export const useFetchOrderAudio = (audioId?: number | null) => {
     queryKey: ['orderAudio', audioId],
     queryFn: fetchAudio,
     enabled: !!audioId,
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    staleTime: 1000 * 60 * 60, 
     retry: 1,
   })
 }

@@ -455,7 +455,7 @@ const RawMaterialsPdfDoc = ({
                     </View>
                     <View style={pdfStyles.colUnit}>
                       <Text style={pdfStyles.unitValue}>
-                        {subProduct.unit ?? '—'}
+                        {"KG"}
                       </Text>
                     </View>
                   </View>
@@ -1014,7 +1014,7 @@ export const CalculateRawMaterialsPage = () => {
                                   <span>[{subProduct.rawMaterialPrimaryName}]</span>
                                   <span className="font-semibold text-zinc-900">
                                     {subProduct.totalQuantity.toFixed(2)}{' '}
-                                    {subProduct.unit}
+                                    {"KG"}
                                   </span>
                                 </div>
                                 {subProduct.notes && (

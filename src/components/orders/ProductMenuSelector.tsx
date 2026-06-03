@@ -123,6 +123,7 @@ const ProductMenuSelector = ({
   selectedItems,
   totalPlates,
   onChange,
+  totalPlates = 1,
 }: ProductMenuSelectorProps) => {
   const { t } = useTranslation()
   const safeItems = useMemo(() => selectedItems ?? [], [selectedItems])
@@ -278,7 +279,11 @@ const ProductMenuSelector = ({
       updateItems(
         safeItems.map((item) =>
           getOrderItemProductId(item) === productId
-            ? { ...item, quantity: item.quantity + 1 }
+            ? {
+                ...item,
+                quantity: item.quantity + 1,
+                totalPrice: (item.quantity + 1) * item.unitPrice,
+              }
             : item
         )
       )
@@ -300,7 +305,11 @@ const ProductMenuSelector = ({
 
       const nextQuantity = item.quantity + delta
       if (nextQuantity > 0) {
-        acc.push({ ...item, quantity: nextQuantity })
+        acc.push({
+          ...item,
+          quantity: nextQuantity,
+          totalPrice: nextQuantity * item.unitPrice,
+        })
       }
       return acc
     }, [])
@@ -322,7 +331,11 @@ const ProductMenuSelector = ({
     const nextItems = safeItems.map((item) => {
       if (getOrderItemProductId(item) !== productId) return item
 
-      return { ...item, quantity: parsedQuantity }
+      return {
+        ...item,
+        quantity: parsedQuantity,
+        totalPrice: parsedQuantity * item.unitPrice,
+      }
     })
 
     updateItems(nextItems)
@@ -355,7 +368,11 @@ const ProductMenuSelector = ({
       const nextItems = safeItems.map((item) => {
         if (getOrderItemProductId(item) !== productId) return item
 
-        return { ...item, quantity: parsedQuantity }
+        return {
+          ...item,
+          quantity: parsedQuantity,
+          totalPrice: parsedQuantity * item.unitPrice,
+        }
       })
 
       updateItems(nextItems)
@@ -565,52 +582,73 @@ const ProductMenuSelector = ({
                     </div>
 
                     {isSelected ? (
-                      <div className="flex items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-2">
-                        <button
-                          type="button"
-                          aria-label={t('decrease_quantity')}
-                          onClick={() =>
-                            product.id && handleQuantityChange(product.id, -1)
-                          }
-                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-red-500 text-white transition hover:bg-red-600 active:scale-95"
-                        >
-                          <Minus size={14} strokeWidth={2.5} />
-                        </button>
-                        <input
-                          type="number"
-                          min={1}
-                          step={1}
-                          inputMode="numeric"
-                          value={
-                            quantityDrafts[product.id] ??
-                            String(selectedLine?.quantity ?? 1)
-                          }
-                          onChange={(event) =>
-                            product.id &&
-                            handleQuantityInputChange(
-                              product.id,
-                              event.target.value
-                            )
-                          }
-                          onBlur={() =>
-                            handleQuantityInputBlur(
-                              product.id,
-                              selectedLine?.quantity ?? 1
-                            )
-                          }
-                          className="h-9 w-14 rounded-lg border-2 border-zinc-200 bg-white text-center text-sm font-bold text-zinc-900 transition outline-none focus:border-zinc-900 focus:shadow-md"
-                        />
-                        <button
-                          type="button"
-                          aria-label={t('increase_quantity')}
-                          onClick={() =>
-                            product.id && handleQuantityChange(product.id, 1)
-                          }
-                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-green-500 text-white transition hover:bg-green-600 active:scale-95"
-                        >
-                          <Plus size={14} strokeWidth={2.5} />
-                        </button>
-                      </div>
+                      <>
+                        <div className="flex items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-2">
+                          <button
+                            type="button"
+                            aria-label={t('decrease_quantity')}
+                            onClick={() =>
+                              product.id && handleQuantityChange(product.id, -1)
+                            }
+                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-red-500 text-white transition hover:bg-red-600 active:scale-95"
+                          >
+                            <Minus size={14} strokeWidth={2.5} />
+                          </button>
+                          <input
+                            type="number"
+                            min={1}
+                            step={1}
+                            inputMode="numeric"
+                            value={
+                              quantityDrafts[product.id] ??
+                              String(selectedLine?.quantity ?? 1)
+                            }
+                            onChange={(event) =>
+                              product.id &&
+                              handleQuantityInputChange(
+                                product.id,
+                                event.target.value
+                              )
+                            }
+                            onBlur={() =>
+                              handleQuantityInputBlur(
+                                product.id,
+                                selectedLine?.quantity ?? 1
+                              )
+                            }
+                            className="h-9 w-14 rounded-lg border-2 border-zinc-200 bg-white text-center text-sm font-bold text-zinc-900 transition outline-none focus:border-zinc-900 focus:shadow-md"
+                          />
+                          <button
+                            type="button"
+                            aria-label={t('increase_quantity')}
+                            onClick={() =>
+                              product.id && handleQuantityChange(product.id, 1)
+                            }
+                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-green-500 text-white transition hover:bg-green-600 active:scale-95"
+                          >
+                            <Plus size={14} strokeWidth={2.5} />
+                          </button>
+                        </div>
+
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-medium text-amber-700">
+                              {t('price_per_plate') || 'Price per plate'}
+                            </span>
+                            <span className="text-sm font-semibold text-amber-900">
+                              {formatCurrency(selectedLine?.unitPrice ?? product.price ?? 0)}
+                            </span>
+                          </div>
+                          <div className="border-t border-amber-200 pt-2 flex justify-between items-center">
+                            <span className="text-xs font-medium text-amber-700">
+                              {t('total_price') || 'Total price'}
+                            </span>
+                            <span className="text-sm font-bold text-amber-900">
+                              {formatCurrency(selectedLine?.totalPrice ?? product.price ?? 0)}
+                            </span>
+                          </div>
+                        </div>
+                      </>
                     ) : (
                       <ButtonSm
                         type="button"

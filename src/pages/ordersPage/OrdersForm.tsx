@@ -31,7 +31,6 @@ import { useFetchUsers } from '@/queries/usersQueries'
 import { useFetchProducts } from '@/queries/productQueries'
 import {
   calculateMenuItemsSubtotal,
-  calculateOneLeafPrice,
   calculateAdditionalMenuItemsSubtotal,
   calculateAdditionalItemsSubtotal,
   calculateSubtotalBeforeDelivery,
@@ -325,6 +324,7 @@ export const OrdersForm = () => {
       onSuccess: () => {
         clearFormData() // Clear saved data on successful submission
         navigate(appRoutes.orders.path)
+        window.location.reload() // Refresh orders list after creating new order
       },
     })
   }
@@ -334,6 +334,7 @@ export const OrdersForm = () => {
       onSuccess: () => {
         clearFormData() // Clear saved data on successful submission
         navigate(appRoutes.orders.path)
+        window.location.reload() // Refresh orders list after creating new order
       },
     })
   }
@@ -443,9 +444,20 @@ export const OrdersForm = () => {
     clearFormData()
   }
 
+  const formatTime12Hour = (time: string) => {
+  const [hours, minutes] = time.split(':')
+  const hour = Number(hours)
+
+  const ampm = hour >= 12 ? 'PM' : 'AM'
+  const displayHour = hour % 12 || 12
+
+  return `${displayHour}${minutes !== '00' ? `:${minutes}` : ''} ${ampm}`
+}
+
+
   const TIME_PRESETS = [
     { label: t('tiffin'), value: '07:00:00' },
-    { label: t('lunch'), value: '11:00:00' },
+    { label: t('lunch'), value: '12:00:00' },
     { label: t('dinner'), value: '19:00:00' },
   ]
 
@@ -625,7 +637,12 @@ export const OrdersForm = () => {
                           : 'border-amber-200 bg-white text-amber-700 hover:border-amber-300'
                       }`}
                     >
-                      {preset.label}
+                      <div className="flex flex-col">
+  <span>{preset.label}</span>
+  <span className="text-[10px] opacity-70">
+    {formatTime12Hour(preset.value)}
+  </span>
+</div>
                     </button>
                   ))}
                 </div>
@@ -777,6 +794,7 @@ export const OrdersForm = () => {
                             items,
                           }))
                         }
+                        totalPlates={editData.totalPlates || 1}
                       />
                     </div>
                   )}
@@ -914,16 +932,20 @@ export const OrdersForm = () => {
                   calculateAdditionalMenuItemsSubtotal(editData, products)
                 const additionalItemsSubtotal =
                   calculateAdditionalItemsSubtotal(editData)
-                const oneLeafPrice = calculateOneLeafPrice(editData)
 
                 return (
                   <div className="flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 sm:gap-3 sm:p-5">
-                    <div className="flex justify-between gap-3 text-xs text-amber-700 sm:text-sm">
-                      <span>{t('one_leaf_price')}:</span>
-                      <span className="font-regular text-amber-900">
-                        ₹{Math.round(oneLeafPrice).toLocaleString()}
-                      </span>
-                    </div>
+                    {editData.totalPlates && editData.totalPlates > 0 && (
+                      <div className="flex justify-between gap-3 text-xs text-amber-700 sm:text-sm pb-2 border-b border-amber-200">
+                        <span>{t('price_per_plate') || 'Price per plate'}:</span>
+                        <span className="font-semibold text-amber-900">
+                          ₹{(menuItemsSubtotal / editData.totalPlates).toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between gap-3 text-xs text-amber-700 sm:text-sm">
                       <span>{t('total_leaf_items_subtotal')}:</span>
                       <span className="font-regular text-amber-900">
@@ -991,7 +1013,7 @@ export const OrdersForm = () => {
               })()}
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-4">
-                <div className="flex flex-col gap-2">
+                {/* <div className="flex flex-col gap-2">
                   <Input
                     title={t('price_reduced_per_plate')}
                     prefixText="₹"
@@ -1011,7 +1033,6 @@ export const OrdersForm = () => {
                     }}
                   />
 
-                  {/* Plus / Minus Toggle */}
                   <div className="flex gap-2">
                     <button
                       type="button"
@@ -1037,7 +1058,7 @@ export const OrdersForm = () => {
                       −
                     </button>
                   </div>
-                </div>
+                </div> */}
 
                 <Input
                   title={t('discount_percentage')}

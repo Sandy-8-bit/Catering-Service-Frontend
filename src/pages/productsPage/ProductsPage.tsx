@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
+import { useMemo, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -63,7 +63,6 @@ export const ProductsPage = () => {
     type: null,
     product: null,
   })
-  const [allProducts, setAllProducts] = useState<TransformedProduct[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<TransformedProduct | null>(
@@ -126,26 +125,6 @@ export const ProductsPage = () => {
     }
   }, [])
 
-  useEffect(() => {
-    try {
-      const list = Array.isArray(productsData)
-        ? productsData
-        : (productsData ?? [])
-
-      // 🔥 IMPORTANT FIX
-      if (!list || list.length === 0) {
-        console.log('Skipping empty response')
-        return
-      }
-
-      const transformed = list.map(transformProduct)
-      setAllProducts(transformed)
-      console.log('Products loaded:', transformed.length)
-    } catch (error) {
-      console.error('Error transforming products:', error)
-    }
-  }, [productsData, transformProduct])
-
   // Show notification
   const showNotification = useCallback(
     (type: 'success' | 'error', message: string) => {
@@ -154,6 +133,12 @@ export const ProductsPage = () => {
       return () => clearTimeout(timer)
     },
     []
+  )
+
+  const allProducts = useMemo(
+    () =>
+      Array.isArray(productsData) ? productsData.map(transformProduct) : [],
+    [productsData, transformProduct]
   )
 
   // Filter products
@@ -218,7 +203,6 @@ export const ProductsPage = () => {
         await deleteProduct(deleteConfirm)
       }
 
-      setAllProducts((prev) => prev.filter((p) => p.id !== deleteConfirm.id))
       setDeleteConfirm(null)
       showNotification(
         'success',
@@ -267,16 +251,16 @@ export const ProductsPage = () => {
             'success',
             `${formProduct.primaryName} created successfully`
           )
+          document.location.reload()
         } else if (formState.type === 'edit') {
           // Edit existing product
           await editProduct([formProduct])
-          setAllProducts((prev) =>
-            prev.map((p) => (p.id === formProduct.id ? formProduct : p))
-          )
+
           showNotification(
             'success',
             `${formProduct.primaryName} updated successfully`
           )
+          document.location.reload()
         }
 
         setFormState({ type: null, product: null })

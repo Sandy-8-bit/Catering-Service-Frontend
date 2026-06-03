@@ -35,6 +35,16 @@ const statusClass: Record<string, string> = {
   PENDING: 'bg-zinc-100 text-zinc-600',
 }
 
+/** Safely format a number to 2 decimal places; returns '0.00' for null/undefined/NaN */
+const formatAmount = (value: number | null | undefined): string => {
+  const num = Number(value)
+  return isNaN(num) ? '0.00' : num.toFixed(2)
+}
+
+/** Returns a fallback string when value is null/undefined/empty */
+const orFallback = (value: string | null | undefined, fallback = '—'): string =>
+  value ?? fallback
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const DriverOrderPage = () => {
@@ -45,10 +55,11 @@ const DriverOrderPage = () => {
   const { data, isLoading, isError } = useFetchDriverOrderDelivery({
     orderId: parsedOrderId,
   })
-const order: DriverOrderDetail | undefined = Array.isArray(data)
-  ? data?.[0]
-  : (data as any)?.data ?? (data as any)
-  
+
+  const order: DriverOrderDetail | undefined = Array.isArray(data)
+    ? data?.[0]
+    : (data as any)?.data ?? (data as any)
+
   const [vessels, setVessels] = useState<
     { id?: number; name: string; quantityGiven: number }[]
   >([])
@@ -82,6 +93,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
   const isPending = order?.orderStatus === 'PENDING'
   const isOutForDelivery = order?.orderStatus === 'OUT_FOR_DELIVERY'
   const orderplaced = order?.orderStatus === 'ORDER_PLACED'
+
   const statusLabel: Record<string, string> = {
     ORDER_PLACED: t('driver_status_order_placed'),
     OUT_FOR_DELIVERY: t('driver_status_out_for_delivery'),
@@ -91,12 +103,11 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
   }
 
   useEffect(() => {
-    if (order?.vessels) {
+    if (order?.vessels && order.vessels.length > 0) {
       setVessels(order.vessels)
       setVesselReturns(
         order.vessels.map((v) => ({ id: v.id, quantityReturned: 0 }))
       )
-     
     }
   }, [order])
 
@@ -107,9 +118,13 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
       setError(t('driver_select_return_pickup_date'))
       return
     }
+    if (!order?.id) {
+      setError(t('driver_failed_mark_delivery'))
+      return
+    }
     setIsDeliveryLoading(true)
     updateReturnDate(
-      { deliveryId: order!.id, returnPickupDate },
+      { deliveryId: order.id, returnPickupDate },
       {
         onSuccess: () => {
           setSuccess(t('driver_order_marked_delivered'))
@@ -118,8 +133,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
         },
         onError: (err: any) => {
           setError(
-            err?.response?.data?.message ||
-              t('driver_failed_mark_delivery')
+            err?.response?.data?.message ?? t('driver_failed_mark_delivery')
           )
           setIsDeliveryLoading(false)
         },
@@ -165,11 +179,15 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
       setError(t('driver_add_at_least_one_vessel'))
       return
     }
+    if (!order?.orderId) {
+      setError('Order ID is missing.')
+      return
+    }
     setIsStartingOrder(true)
     updateVessels(
       {
-        driverId: order!.driverId ?? null,
-        orderId: order!.orderId,
+        driverId: order.driverId ?? null,
+        orderId: order.orderId,
         vessels: pendingVessels,
       },
       {
@@ -178,22 +196,17 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
           setPendingVessels([])
           setIsStartingOrder(false)
           if (data?.data && Array.isArray(data.data)) {
-            setVessels(data.data[0]?.vessels || [])
+            setVessels(data.data[0]?.vessels ?? [])
           }
         },
- onError: (err: any) => {
-  console.log('START ORDER ERROR', err)
-  console.log('RESPONSE', err?.response)
-  console.log('DATA', err?.response?.data)
-
-  setError(
-    err?.response?.data?.message ||
-    err?.message ||
-    'Failed to start order'
-  )
-
-  setIsStartingOrder(false)
-}
+        onError: (err: any) => {
+          setError(
+            err?.response?.data?.message ??
+              err?.message ??
+              'Failed to start order'
+          )
+          setIsStartingOrder(false)
+        },
       }
     )
   }
@@ -201,10 +214,14 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
   const handleCloseOrder = async () => {
     setError('')
     setSuccess('')
+    if (!order?.orderId) {
+      setError('Order ID is missing.')
+      return
+    }
     setIsCloseOrderLoading(true)
     completeReturn(
       {
-        deliveryId: order!.orderId,
+        deliveryId: order.orderId,
         vessels: vesselReturns,
         amountCollected,
         paymentMode,
@@ -212,17 +229,18 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
       {
         onSuccess: () => {
           setSuccess(t('driver_order_closed_success'))
-          setVesselReturns(
-            order!.vessels.map((v) => ({ id: v.id, quantityReturned: 0 }))
-          )
+          if (order.vessels?.length) {
+            setVesselReturns(
+              order.vessels.map((v) => ({ id: v.id, quantityReturned: 0 }))
+            )
+          }
           setAmountCollected(0)
           setPaymentMode('CASH')
           setIsCloseOrderLoading(false)
         },
         onError: (err: any) => {
           setError(
-            err?.response?.data?.message ||
-              t('driver_failed_close_order')
+            err?.response?.data?.message ?? t('driver_failed_close_order')
           )
           setIsCloseOrderLoading(false)
         },
@@ -251,6 +269,11 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
 
     navigate(fallbackPath, { replace: true })
   }
+
+  // Derived payment values — all null-safe
+  const totalAmount = Number(order?.orderTotalAmount) || 0
+  const amountReceived = Number(order?.amountReceived) || 0
+  const balanceAmount = totalAmount - amountReceived
 
   // ── Guards ──────────────────────────────────────────────────────────────────
 
@@ -325,21 +348,25 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
             <Phone className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
             <div>
               <p className="text-sm font-semibold text-zinc-900">
-                {order.customerName}
+                {orFallback(order.customerName)}
               </p>
-              <a
-                href={`tel:${order.customerPhone}`}
-                className="text-sm font-medium text-orange-600"
-              >
-                {order.customerPhone}
-              </a>
+              {order.customerPhone ? (
+                <a
+                  href={`tel:${order.customerPhone}`}
+                  className="text-sm font-medium text-orange-600"
+                >
+                  {order.customerPhone}
+                </a>
+              ) : (
+                <p className="text-sm text-zinc-400">—</p>
+              )}
             </div>
           </div>
           <div className="flex items-start gap-3">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zinc-400" />
             <div>
               <p className="text-sm leading-relaxed text-zinc-700">
-                {order.customerAddress}
+                {orFallback(order.customerAddress)}
               </p>
               {order.locationUrl && (
                 <a
@@ -348,7 +375,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
                   rel="noopener noreferrer"
                   className="mt-1 inline-block text-xs font-medium text-orange-600"
                 >
-                  {t('open_in_maps')} 
+                  {t('open_in_maps')}
                 </a>
               )}
             </div>
@@ -366,7 +393,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
               <div>
                 <p className="text-[11px] text-zinc-400">{t('driver_type')}</p>
                 <p className="text-sm font-semibold text-zinc-900">
-                  {order.eventType}
+                  {orFallback(order.eventType)}
                 </p>
               </div>
             </div>
@@ -375,7 +402,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
               <div>
                 <p className="text-[11px] text-zinc-400">{t('total_people')}</p>
                 <p className="text-sm font-semibold text-zinc-900">
-                  {order.totalPeople}
+                  {order.totalPeople ?? '—'}
                 </p>
               </div>
             </div>
@@ -384,11 +411,13 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
               <div>
                 <p className="text-[11px] text-zinc-400">{t('event_date')}</p>
                 <p className="text-sm font-semibold text-zinc-900">
-                  {new Date(order.eventDate).toLocaleDateString('en-IN', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                  })}
+                  {order.eventDate
+                    ? new Date(order.eventDate).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })
+                    : '—'}
                 </p>
               </div>
             </div>
@@ -397,14 +426,12 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
               <div>
                 <p className="text-[11px] text-zinc-400">{t('event_time')}</p>
                 <p className="text-sm font-semibold text-zinc-900">
-                  {order.eventTime.slice(0, 5)}
+                  {order.eventTime ? order.eventTime.slice(0, 5) : '—'}
                 </p>
               </div>
             </div>
           </div>
         </div>
-
-
 
         {/* ── Vessels ── */}
         <div className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3.5">
@@ -421,7 +448,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
             )}
           </div>
 
-          {/* Saved */}
+          {/* Saved vessels */}
           {vessels.length > 0 && (
             <div className="flex flex-col gap-2">
               {vessels.map((v, i) => (
@@ -443,7 +470,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
             </div>
           )}
 
-          {/* Locally added */}
+          {/* Locally added (pending) vessels */}
           {pendingVessels.length > 0 && (
             <div className="flex flex-col gap-2">
               <p className="text-[11px] font-semibold tracking-wide text-zinc-400 uppercase">
@@ -485,7 +512,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
             </p>
           )}
 
-          {/* Add vessel form */}
+          {/* Add vessel form — only when ORDER_PLACED */}
           {orderplaced && (
             <div className="flex flex-col gap-2.5 border-t border-zinc-100 pt-3">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500">
@@ -520,7 +547,7 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
             </div>
           )}
 
-          {/* Start Order */}
+          {/* Start Order button */}
           {pendingVessels.length > 0 && (
             <button
               onClick={handleStartOrder}
@@ -579,7 +606,8 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
             {/* Vessel Returns */}
             <div className="flex flex-col gap-2">
               <p className="flex items-center gap-1.5 text-sm font-semibold text-zinc-800">
-                <Package className="h-4 w-4 text-zinc-400" /> {t('driver_vessel_returns')}
+                <Package className="h-4 w-4 text-zinc-400" />{' '}
+                {t('driver_vessel_returns')}
               </p>
               {order?.vessels && order.vessels.length > 0 ? (
                 <div className="flex flex-col gap-2">
@@ -595,7 +623,10 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
                         <p className="text-xs text-zinc-400">
                           {t('driver_given')}: {vessel.quantityGiven}
                         </p>
-                        <p className="text-xs text-zinc-400">returned: {vessel.quantityReturned}</p>
+                        <p className="text-xs text-zinc-400">
+                          {t('driver_returned') || 'Returned'}:{' '}
+                          {vessel.quantityReturned ?? 0}
+                        </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
                         <label className="text-[11px] text-zinc-400">
@@ -629,12 +660,11 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
               )}
             </div>
 
-
-
             {/* Amount Collected */}
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-1.5 text-sm font-semibold text-zinc-800">
-                <CreditCard className="h-4 w-4 text-zinc-400" /> {t('driver_amount_collected')}
+                <CreditCard className="h-4 w-4 text-zinc-400" />{' '}
+                {t('driver_amount_collected')}
               </label>
               <div className="relative">
                 <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm font-medium text-zinc-500">
@@ -644,52 +674,65 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
                   type="number"
                   min={0}
                   step={0.01}
-                  value={amountCollected  || ''}
+                  value={amountCollected || ''}
                   onChange={(e) => setAmountCollected(Number(e.target.value))}
                   className="w-full rounded-lg border border-zinc-300 py-2.5 pr-4 pl-7 text-sm focus:border-transparent focus:ring-2 focus:ring-orange-500 focus:outline-none"
                   placeholder="0.00"
                 />
               </div>
-            
             </div>
 
-            {/* Payment Summary */}
-            <div className="flex flex-col gap-2 rounded-lg border border-green-100 px-3 py-2.5">
-              <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
-                💰 {t('driver_payment_summary') || 'Payment Status'}
-              </p>
-              <div className="flex flex-col gap-1.5">
-
-                   <div className="flex items-center justify-between border-t border-green-200 pt-1.5">
-                  <span className="text-sm text-gray-900 font-medium">
-                    {t('driver_total_order_amount') || 'Total Order Amount'}
-                  </span>
-                  <span className="text-sm font-bold text-green-800">
-                    ₹{order?.orderTotalAmount.toFixed(2)}
-                  </span>
+            {/* Payment Summary — only shown when orderTotalAmount is available */}
+            {order?.orderTotalAmount != null ? (
+              <div className="flex flex-col gap-2 rounded-lg border border-green-100 px-3 py-2.5">
+                <p className="text-xs font-semibold tracking-wide text-gray-700 uppercase">
+                  💰 {t('driver_payment_summary') || 'Payment Status'}
+                </p>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between border-t border-green-200 pt-1.5">
+                    <span className="text-sm font-medium text-gray-900">
+                      {t('driver_total_order_amount') || 'Total Order Amount'}
+                    </span>
+                    <span className="text-sm font-bold text-green-800">
+                      ₹{formatAmount(order.orderTotalAmount)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-900">
+                      {t('driver_amount_already_received') ||
+                        'Amount Already Received'}
+                    </span>
+                    <span className="text-sm font-bold text-green-700">
+                      ₹{formatAmount(order.amountReceived)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-green-200 pt-1.5">
+                    <span className="text-sm font-medium text-gray-900">
+                      {t('driver_balance_amount') || 'Balance Amount Due'}
+                    </span>
+                    <span
+                      className={`text-sm font-bold ${
+                        balanceAmount > 0 ? 'text-orange-600' : 'text-green-700'
+                      }`}
+                    >
+                      ₹{formatAmount(Math.abs(balanceAmount))}
+                      {balanceAmount < 0 &&
+                        ` (${t('driver_overpaid') || 'Overpaid'})`}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-900">
-                    {t('driver_amount_already_received') || 'Amount Already Received'}
-                  </span>
-                  <span className="text-sm font-bold text-green-700">
-                    ₹{order?.amountReceived?.toFixed(2) || '0.00'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between border-t border-green-200 pt-1.5">
-                  <span className="text-sm text-gray-900 font-medium">
-                    {t('driver_balance_amount') || 'Balance Amount Due'}
-                  </span>
-                  <span
-                    className={`text-sm font-bold ${order?.orderTotalAmount - (order?.amountReceived || 0) > 0 ? 'text-orange-600' : 'text-green-700'}`}
-                  >
-                    ₹{Math.abs(order?.orderTotalAmount - (order?.amountReceived || 0)).toFixed(2)}
-                    {order?.orderTotalAmount - (order?.amountReceived || 0) < 0 && ` (${t('driver_overpaid') || 'Overpaid'})`}
-                  </span>
-                </div>
-             
               </div>
-            </div>
+            ) : (
+              <div className="flex flex-col gap-2 rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5">
+                <p className="text-xs font-semibold tracking-wide text-zinc-400 uppercase">
+                  💰 {t('driver_payment_summary') || 'Payment Status'}
+                </p>
+                <p className="text-sm text-zinc-400">
+                  {t('driver_payment_info_unavailable') ||
+                    'Payment details not available yet.'}
+                </p>
+              </div>
+            )}
 
             {/* Payment Mode */}
             <div className="flex flex-col gap-2">
@@ -704,7 +747,9 @@ const order: DriverOrderDetail | undefined = Array.isArray(data)
                 <option value="CASH">{t('driver_cash')}</option>
                 <option value="CARD">{t('driver_card')}</option>
                 <option value="UPI">UPI</option>
-                <option value="ONLINE_TRANSFER">{t('driver_online_transfer')}</option>
+                <option value="ONLINE_TRANSFER">
+                  {t('driver_online_transfer')}
+                </option>
               </select>
             </div>
 
