@@ -10,7 +10,7 @@ import ButtonSm from '../common/Buttons'
 interface ProductMenuSelectorProps {
   selectedItems: OrderItem[]
   onChange: (items: OrderItem[]) => void
-  totalPlates: number
+  totalPlates?: number
 }
 
 interface MasterCategoryGroup {
@@ -121,7 +121,6 @@ const getOrderItemProductId = (item: OrderItem): number | undefined => {
 
 const ProductMenuSelector = ({
   selectedItems,
-  totalPlates,
   onChange,
   totalPlates = 1,
 }: ProductMenuSelectorProps) => {

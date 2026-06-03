@@ -736,11 +736,11 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
 
             {/* CHANGE 1 & 2: Top Right Contact — bigger/white phones, "GPay Number" label */}
             <View style={s.topRightContact}>
-              <Text style={s.topRightLine}>82307 77007</Text>
-              <Text style={s.topRightLine}>99949 20660</Text>
+              <Text style={s.topRightLine}>8220777007</Text>
+              <Text style={s.topRightLine}>9994620966</Text>
               {/* CHANGE 2: "GPay Number" replaces "Delivery On" */}
               <Text style={s.topRightGpayLabel}>GPay Number</Text>
-              <Text style={s.topRightLine}>9977 20660</Text>
+              <Text style={s.topRightLine}>96777 20966</Text>
             </View>
           </View>
 

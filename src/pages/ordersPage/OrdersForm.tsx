@@ -122,7 +122,6 @@ export const OrdersForm = () => {
 
   const { data: additionalItems = [], isLoading: isAdditionalLoading } =
     useFetchAdditionalItems()
-  const [isNegative, setIsNegative] = useState(false)
   const { saveFormData, clearFormData } = useOrderFormContext()
   const [editData, setEditData] = useState<Order>(defaultOrderData)
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
@@ -794,7 +793,6 @@ export const OrdersForm = () => {
                             items,
                           }))
                         }
-                        totalPlates={editData.totalPlates || 1}
                       />
                     </div>
                   )}

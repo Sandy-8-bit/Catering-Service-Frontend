@@ -54,7 +54,7 @@ const createEmptyRow = (ingredientType: IngredientType): RecipeRow => ({
   subProductId: 0,
   subProductPrimaryName: '',
   qtyPerUnit: 0,
-  unit: ingredientType === 'SUB_PRODUCT' ? 'portion' : '',
+  unit: ingredientType === 'SUB_PRODUCT' ? 'KG' : '',
   notes: '',
 })
 
@@ -514,7 +514,7 @@ const RecipeDetailsPage = () => {
       className: 'min-w-[140px] w-[140px] max-w-[140px]',
       render: (_, row: RecipeRow) => (
         <span className="block w-[140px] text-sm font-medium text-zinc-700">
-          {row.unit || 'portion'} qt
+          {row.unit || 'KG'} 
         </span>
       ),
     },
