@@ -22,9 +22,6 @@ import {
 } from '@/queries/ordersQueries'
 
 // ─── Font Registration ────────────────────────────────────────────────────────
-// Place NotoSansTamil-Regular.ttf in /public/fonts/
-// @react-pdf/renderer embeds the TTF into the PDF — Tamil glyphs render correctly.
-
 Font.register({
   family: 'NotoSansTamil',
   fonts: [
@@ -71,9 +68,17 @@ interface BillSummary {
   profit?: number | null
 }
 
+// ADD: SubProduct type
+interface BillSubProduct {
+  subProductName?: string
+  requiredQuantity?: number | null
+  unit?: string | null
+}
+
 type BillDataWithId = BillData & {
   orderId?: number
-  advanceAmount?: number | null // ADD
+  advanceAmount?: number | null
+  subProducts?: BillSubProduct[] | null // ADD
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -114,10 +119,6 @@ const C = {
 } as const
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
-// All measurements in pt. A5 = 419.53 × 595.28 pt
-// Latin text: Helvetica (built-in, no TTF needed)
-// Tamil text: NotoSansTamil (TTF embedded)
-
 const LATIN = 'Helvetica'
 const LATIN_B = 'Helvetica-Bold'
 const TAMIL = 'NotoSansTamil'
@@ -220,6 +221,7 @@ const s = StyleSheet.create({
     fontSize: 6,
     color: 'rgba(255,255,255,0.5)',
   },
+  // CHANGE 1 & 2: Increased font size for phone numbers, pure white; "GPay Number" label
   topRightContact: {
     width: 100,
     paddingVertical: 4,
@@ -228,10 +230,18 @@ const s = StyleSheet.create({
     gap: 1,
     borderLeft: `0.5pt solid rgba(255,255,255,0.2)`,
   },
+  // CHANGE 1: Larger, pure white phone numbers
   topRightLine: {
-    fontFamily: LATIN,
-    fontSize: 6,
-    color: 'rgba(255,255,255,0.85)',
+    fontFamily: LATIN_B,
+    fontSize: 8.5,
+    color: '#FFFFFF',
+  },
+  // CHANGE 2: "GPay Number" label style (replaces "Delivery On")
+  topRightGpayLabel: {
+    fontFamily: LATIN_B,
+    fontSize: 5.5,
+    color: 'rgba(255,255,255,0.65)',
+    marginTop: 2,
   },
 
   // ── Bill Type + Address Strip ─────────────────────────────────────────────
@@ -279,7 +289,7 @@ const s = StyleSheet.create({
   // ── Customer Section ──────────────────────────────────────────────────────
   customerSection: {
     flexDirection: 'row',
-     fontFamily: LATIN_B,
+    fontFamily: LATIN_B,
     borderBottom: `0.5pt solid ${C.border}`,
   },
   customerLeft: {
@@ -287,7 +297,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     gap: 6,
-     fontFamily: LATIN_B,
+    fontFamily: LATIN_B,
     borderRight: `0.5pt solid ${C.border}`,
   },
   infoRow: {
@@ -467,14 +477,12 @@ const s = StyleSheet.create({
     color: C.light,
     paddingVertical: 2,
   },
-
-  // ← KEY FIX: explicit fontFamily: TAMIL on product name column
   tdParticulars: {
     flex: 1,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    fontFamily: TAMIL, // explicit Tamil font — do not change to LATIN
-    fontWeight: 'bold', // NotoSansTamil Bold weight
+    fontFamily: TAMIL,
+    fontWeight: 'bold',
     fontSize: 7.5,
     color: C.text,
     borderLeft: `0.25pt solid ${C.divider}`,
@@ -521,10 +529,8 @@ const s = StyleSheet.create({
     gap: 3,
     borderRight: `0.5pt solid ${C.border}`,
   },
-
-  // ← KEY FIX: explicit fontFamily: TAMIL on footer Tamil notes
   footerNote: {
-    fontFamily: TAMIL, // explicit Tamil font — do not change to LATIN
+    fontFamily: TAMIL,
     fontWeight: 'normal',
     fontSize: 7,
     color: C.muted,
@@ -619,6 +625,7 @@ interface BillDocProps {
 const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   const customerItems: BillCustomerItem[] = data.customerItems ?? []
   const rawMaterials: BillRawMaterial[] = data.rawMaterials ?? []
+  const subProducts: BillSubProduct[] = data.subProducts ?? []
   const customer = (data.customer ?? {}) as BillCustomerInfo
 
   const getDateWithDay = (dateStr?: string): string => {
@@ -648,15 +655,20 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
       return timeStr
     }
   }
-  
-  const resolvedDate = getDateWithDay(meta.date ?? customer.eventDate ?? undefined)
-  const resolvedTime = getTime12Hour(meta.time ?? customer.eventTime ?? undefined)
+
+  const resolvedDate = getDateWithDay(
+    meta.date ?? customer.eventDate ?? undefined
+  )
+  const resolvedTime = getTime12Hour(
+    meta.time ?? customer.eventTime ?? undefined
+  )
   const resolvedAdvance =
     meta.advance ??
     (data.advanceAmount != null
       ? `Rs. ${fmtMoney(data.advanceAmount)}`
       : undefined)
-  const resolvedDeliveryCharge = data.deliveryCharge != null ? fmtMoney(data.deliveryCharge) : '0.00'
+  const resolvedDeliveryCharge =
+    data.deliveryCharge != null ? fmtMoney(data.deliveryCharge) : '0.00'
   const summary = data as BillSummary
   const billTitle = resolveBillTitle(type)
 
@@ -683,10 +695,21 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
     }
   })
 
-  // Minimum 14 visible rows so the table looks full
+  // Minimum 14 visible rows
   const MIN_ROWS = 14
   const emptyCount = Math.max(0, MIN_ROWS - rows.length)
   const emptyRows = Array.from({ length: emptyCount })
+
+  // CHANGE 3: Shared style values for the three totals columns
+  const totalColShared = {
+    flex: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    paddingVertical: 8 as const,
+    paddingHorizontal: 5 as const,
+    flexDirection: 'column' as const,
+    gap: 3 as const,
+  }
 
   return (
     <Document>
@@ -706,14 +729,17 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             <View style={s.businessSection}>
               <Text style={s.businessName}>VENKATESHWARA</Text>
               <Text style={s.businessSub}>MESS & CATERING</Text>
-              <Text style={s.businessAddress}>Pattanam Road, Vellalore, Coimbatore – 641 111</Text>
+              <Text style={s.businessAddress}>
+                Pattanam Road, Vellalore, Coimbatore – 641 111
+              </Text>
             </View>
 
-            {/* Top Right Contact */}
+            {/* CHANGE 1 & 2: Top Right Contact — bigger/white phones, "GPay Number" label */}
             <View style={s.topRightContact}>
               <Text style={s.topRightLine}>82307 77007</Text>
               <Text style={s.topRightLine}>99949 20660</Text>
-              <Text style={{fontFamily: LATIN_B, fontSize: 5.5, color: 'rgba(255,255,255,0.6)', marginTop: 1}}>Delivery On</Text>
+              {/* CHANGE 2: "GPay Number" replaces "Delivery On" */}
+              <Text style={s.topRightGpayLabel}>GPay Number</Text>
               <Text style={s.topRightLine}>9977 20660</Text>
             </View>
           </View>
@@ -739,7 +765,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                 </Text>
               </View>
 
-              {/* M/s */}
+              {/* Address */}
               <View style={s.infoRow}>
                 <Text style={s.infoLabel}>Address</Text>
                 <Text style={s.infoColon}>:</Text>
@@ -750,7 +776,6 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
 
               {/* Cell / Advance — inline */}
               <View style={s.infoRowInline}>
-                {/* Customer No removed as requested */}
                 <View style={s.infoGroup}>
                   <Text style={s.infoLabel}>Cell No</Text>
                   <Text style={s.infoColon}>:</Text>
@@ -793,7 +818,6 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               <Text style={[s.thLeft, s.colParticulars]}>Particulars</Text>
               <Text style={[s.th, s.colQty]}>QTY</Text>
               <Text style={[s.th, s.colRate]}>PRICE/UNIT</Text>
-              {/* Amount split header */}
               <View
                 style={[
                   s.colRs,
@@ -817,7 +841,6 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             {rows.map((row, i) => (
               <View key={i} style={i % 2 === 0 ? s.tableRow : s.tableRowAlt}>
                 <Text style={s.tdSno}>{row.sno}</Text>
-                {/* Product name — always NotoSansTamil, fontFamily set inline to guarantee it */}
                 <Text
                   style={[
                     s.tdParticulars,
@@ -851,30 +874,91 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
             ))}
           </View>
 
+          {/* Raw Materials: STAFF + OWNER only */}
           {rawMaterials.length > 0 &&
             (type === 'STAFF' || type === 'OWNER') && (
               <RawMaterialsTable rawMaterials={rawMaterials} type={type} />
             )}
 
-          {/* ── Footer: Total Amount & Cash to Collect ───────────────────────────────── */}
+          {/* CHANGE 5: Sub-Products section — STAFF bill only */}
+          {type === 'STAFF' && subProducts.length > 0 && (
+            <SubProductsTable subProducts={subProducts} />
+          )}
+
+          {/* ── Footer: CHANGE 3 — 3 equal columns, same style ───────────── */}
           {type === 'CUSTOMER' && (
             <View style={s.footerBar}>
-              <View style={s.footerNoteCol} />
-              <View style={{width: 110, alignItems: 'center', justifyContent: 'center', paddingVertical: 6, paddingHorizontal: 5, flexDirection: 'column', gap: 3}}>
-                <View style={{alignItems: 'center', gap: 1}}>
-                  <Text style={{fontFamily: LATIN_B, fontSize: 6, color: C.light, letterSpacing: 0.4}}>TOTAL AMOUNT</Text>
-                  <Text style={{fontFamily: LATIN_B, fontSize: 10, color: C.navy}}>Rs. {fmtMoney(totalValue)}</Text>
+              {/* Left spacer */}
+              <View
+                style={[
+                  s.footerNoteCol,
+                  { borderRight: `0.5pt solid ${C.border}` },
+                ]}
+              />
+
+              {/* DELIVERY CHARGE col */}
+              <View
+                style={[
+                  totalColShared,
+                  { borderRight: `0.5pt solid ${C.border}` },
+                ]}
+              >
+                <View style={s.footerTotalChip}>
+                  <Text style={s.footerTotalChipText}>DELIVERY Amount</Text>
                 </View>
-                <Text style={{fontFamily: LATIN_B, fontSize: 6, color: C.navy, textAlign: 'center', fontWeight: 'bold'}}>Advance Amount: Rs. {fmtMoney(data.advanceAmount ?? 0)}</Text>
-                <View style={{alignItems: 'center', gap: 2, paddingTop: 1}}>
-                  <View style={{backgroundColor: C.navy, paddingHorizontal: 4, paddingVertical: 1.5, borderRadius: 1}}>
-                    <Text style={{fontFamily: LATIN_B, fontSize: 5.5, color: C.white, letterSpacing: 0.3}}>CASH TO COLLECT</Text>
-                  </View>
-                  <Text style={{fontFamily: LATIN_B, fontSize: 10, color: C.navy}}>Rs. {fmtMoney(Math.max(0, (totalValue ?? 0) - (data.advanceAmount ?? 0)))}</Text>
+                <Text style={s.footerTotalValue}>
+                  Rs. {resolvedDeliveryCharge}
+                </Text>
+              </View>
+
+              {/* TOTAL AMOUNT col */}
+              <View
+                style={[
+                  totalColShared,
+                  { borderRight: `0.5pt solid ${C.border}` },
+                ]}
+              >
+                <View style={s.footerTotalChip}>
+                  <Text style={s.footerTotalChipText}>TOTAL AMOUNT</Text>
                 </View>
+                <Text style={s.footerTotalValue}>
+                  Rs. {fmtMoney(totalValue)}
+                </Text>
+              </View>
+
+              {/* ADVANCE AMOUNT col */}
+              <View
+                style={[
+                  totalColShared,
+                  { borderRight: `0.5pt solid ${C.border}` },
+                ]}
+              >
+                <View style={s.footerTotalChip}>
+                  <Text style={s.footerTotalChipText}>ADVANCE AMT</Text>
+                </View>
+                <Text style={s.footerTotalValue}>
+                  Rs. {fmtMoney(data.advanceAmount ?? 0)}
+                </Text>
+              </View>
+
+              {/* CASH TO COLLECT col */}
+              <View style={totalColShared}>
+                <View style={[s.footerTotalChip, { backgroundColor: C.navy }]}>
+                  <Text style={[s.footerTotalChipText, { color: C.white }]}>
+                    CASH TO COLLECT
+                  </Text>
+                </View>
+                <Text style={[s.footerTotalValue, { color: C.navy }]}>
+                  Rs.{' '}
+                  {fmtMoney(
+                    Math.max(0, (totalValue ?? 0) - (data.advanceAmount ?? 0))
+                  )}
+                </Text>
               </View>
             </View>
           )}
+
+          {/* Non-CUSTOMER footer — unchanged */}
           {type !== 'CUSTOMER' && (
             <View style={s.footerBar}>
               <View style={s.footerNoteCol} />
@@ -882,14 +966,16 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                 <View style={s.footerTotalChip}>
                   <Text style={s.footerTotalChipText}>TOTAL AMOUNT</Text>
                 </View>
-                <Text style={s.footerTotalValue}>Rs. {fmtMoney(totalValue)}</Text>
+                <Text style={s.footerTotalValue}>
+                  Rs. {fmtMoney(totalValue)}
+                </Text>
               </View>
             </View>
           )}
 
           {/* ── Signoff Bar ───────────────────────────────────────────────── */}
           <View style={s.signoffBar}>
-            <View style={s.signoffLeft}>
+            <View style={[s.signoffLeft, { borderRight: 'none' }]}>
               {type === 'OWNER' ? (
                 <>
                   <Text style={s.signoffStat}>
@@ -904,18 +990,23 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                   </Text>
                 </>
               ) : (
-                <>
-                  <Text style={s.signoffStat}>
-                    Items: {customerItems.length} | Delivery: Rs. {resolvedDeliveryCharge}
-                  </Text>
-                  {type === 'STAFF' && (
-                    <Text style={s.signoffStatBold}>Internal Copy</Text>
-                  )}
-                </>
+                // CHANGE 4: "Items: N | Delivery: Rs. X" right-aligned
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'flex-end',
+                    flex: 1,
+                  }}
+                >
+                  {/* <Text style={[s.signoffStat, { textAlign: 'right' }]}>
+                    Items: {customerItems.length} | Delivery: Rs.{' '}
+                    {resolvedDeliveryCharge}
+                    {type === 'STAFF' ? '   Internal Copy' : ''}
+                  </Text> */}
+                </View>
               )}
             </View>
-              <View style={s.signoffRight}>
-              </View>
+            <View style={s.signoffRight} />
           </View>
         </View>
       </Page>
@@ -923,6 +1014,7 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   )
 }
 
+// ─── Raw Materials Table ──────────────────────────────────────────────────────
 const RawMaterialsTable: React.FC<{
   rawMaterials: BillRawMaterial[]
   type: BillType
@@ -931,12 +1023,10 @@ const RawMaterialsTable: React.FC<{
 
   return (
     <View style={s.rmSection}>
-      {/* Section title bar */}
       <View style={s.rmSectionHeader}>
         <Text style={s.rmSectionTitle}>RAW MATERIALS</Text>
       </View>
 
-      {/* Table head */}
       <View style={s.rmTableHead}>
         <Text style={[s.th, s.colSno]}>S.No</Text>
         <Text style={[s.thLeft, { flex: 1 }]}>Material</Text>
@@ -963,7 +1053,6 @@ const RawMaterialsTable: React.FC<{
         )}
       </View>
 
-      {/* Rows */}
       {rawMaterials.map((mat, i) => (
         <View key={i} style={i % 2 === 0 ? s.rmRow : s.rmRowAlt}>
           <Text style={s.tdSno}>{i + 1}</Text>
@@ -997,6 +1086,47 @@ const RawMaterialsTable: React.FC<{
     </View>
   )
 }
+
+// ─── CHANGE 5: Sub-Products Table (STAFF bill only) ───────────────────────────
+const SubProductsTable: React.FC<{ subProducts: BillSubProduct[] }> = ({
+  subProducts,
+}) => {
+  return (
+    <View style={s.rmSection}>
+      {/* Section title bar — same style as Raw Materials but distinct color */}
+      <View style={[s.rmSectionHeader, { backgroundColor: '#2D4A8C' }]}>
+        <Text style={s.rmSectionTitle}>SUB-PRODUCTS</Text>
+      </View>
+
+      {/* Table head — name + qty only (no pricing for staff) */}
+      <View style={s.rmTableHead}>
+        <Text style={[s.th, s.colSno]}>S.No</Text>
+        <Text style={[s.thLeft, { flex: 1 }]}>Sub-Product</Text>
+        <Text style={[s.th, { width: 80 }]}>QTY / UNIT</Text>
+      </View>
+
+      {subProducts.map((sp, i) => (
+        <View key={i} style={i % 2 === 0 ? s.rmRow : s.rmRowAlt}>
+          <Text style={s.tdSno}>{i + 1}</Text>
+          <Text
+            style={[
+              s.tdParticulars,
+              { flex: 1, fontFamily: TAMIL, fontWeight: 'bold' },
+            ]}
+          >
+            {sp.subProductName ?? '—'}
+          </Text>
+          <Text style={[s.tdQty, { width: 80 }]}>
+            {sp.requiredQuantity != null
+              ? `${sp.requiredQuantity} ${sp.unit ?? ''}`.trim()
+              : '—'}
+          </Text>
+        </View>
+      ))}
+    </View>
+  )
+}
+
 // ─── Download Button Component ────────────────────────────────────────────────
 interface DownloadBillButtonProps {
   orderId: number
@@ -1034,7 +1164,6 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
   })
   const [loadingType, setLoadingType] = useState<BillType | null>(null)
 
-  // Recalculate dropdown position whenever it opens
   useEffect(() => {
     if (isOpen && buttonRef.current) {
       const r = buttonRef.current.getBoundingClientRect()
@@ -1138,11 +1267,7 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
           <>
             {/* Click-away overlay */}
             <div
-              style={{
-                position: 'fixed',
-                inset: 0,
-                zIndex: 40,
-              }}
+              style={{ position: 'fixed', inset: 0, zIndex: 40 }}
               onClick={() => setIsOpen(false)}
             />
 
@@ -1257,7 +1382,6 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
                 ))}
               </ul>
 
-              {/* CSS keyframes for spinner */}
               <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
             </div>
           </>,
