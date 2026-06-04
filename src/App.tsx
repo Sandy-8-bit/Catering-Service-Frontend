@@ -9,6 +9,7 @@ import DriverOrderPage from './pages/driver/DriverOrderPage'
 import DriverPendingOrdersPage from '@/pages/driver/DriverPendingOrdersPage'
 import ExpensePage from './pages/expense/ExpensePage'
 import FinancialReport from './pages/reportsPage/PdfRenderer'
+import PublicRoute from './components/layout/PublicRoute'
 
 const AdditionalItemsPage = lazy(
   () => import('@/pages/additionalItemsPage/AdditionalItemsPage')
@@ -55,8 +56,9 @@ function App() {
       }
     >
       <Routes>
-        {/* Public Route */}
-        <Route path={appRoutes.signInPage} element={<SignInPage />} />
+        <Route element={<PublicRoute />}>
+          <Route path={appRoutes.signInPage} element={<SignInPage />} />
+        </Route>
         <Route
           path={'/test'}
           element={

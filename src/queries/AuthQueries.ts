@@ -31,18 +31,17 @@ export const useLogin = () => {
     onSuccess: (data) => {
       if (!data?.token) return
 
-      // ✅ Store JWT in cookie (CATERING prefix)
+      const isProduction = window.location.protocol === 'https:'
+
       Cookies.set('CATERING_TOKEN', data.token, {
-        expires: 7, // 7 days
-        secure: false, // false for localhost, must be set to true only in production
+        expires: 7,
+        secure: isProduction,
         sameSite: 'lax',
         path: '/',
       })
 
-      // ✅ Store user info in localStorage (CATERING prefix)
       localStorage.setItem('CATERING_ROLE', data.role || '')
       localStorage.setItem('CATERING_USER_ID', String(data.Id))
-
     },
     onError: (error) => {
       if (axios.isAxiosError(error)) {
@@ -102,15 +101,17 @@ export const useVerifyTotp = () => {
   return useMutation({
     mutationFn: verifyTotp,
     onSuccess: (data) => {
+      const isProduction = window.location.protocol === 'https:'
+
       if (!data?.token) return
+
       Cookies.set('CATERING_TOKEN', data.token, {
         expires: 7,
-        secure: false, // false for localhost, must be set to true only in production
+        secure: isProduction,
         sameSite: 'lax',
         path: '/',
       })
 
-      // ✅ Store user info in localStorage (CATERING prefix)
       localStorage.setItem('CATERING_ROLE', data.role || '')
       localStorage.setItem('CATERING_USER_ID', String(data.Id))
 
