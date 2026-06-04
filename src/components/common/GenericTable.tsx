@@ -1005,7 +1005,7 @@ export default function GenericTable({
                             }}
                             state="outline"
                           >
-                            <EyeIcon size={13} />
+                            <EyeIcon className="min-w-4" size={18} />
                           </ButtonSm>
                         )}
                         {onEdit && (
@@ -1017,7 +1017,7 @@ export default function GenericTable({
                             }}
                             state="outline"
                           >
-                            <Edit2 size={13} />
+                            <Edit2 className="min-w-4" size={13} />
                           </ButtonSm>
                         )}
                         {customActionButtons && customActionButtons(row)}
@@ -1030,7 +1030,11 @@ export default function GenericTable({
                             className="h-8 w-8 shrink-0 bg-white p-0 shadow-sm outline-1 outline-white hover:bg-red-50 active:bg-red-100"
                             state="default"
                           >
-                            <Trash2 className="text-red-500" size={13} />
+                            <Trash2
+                              className="min-w-4"
+                              className="text-red-500"
+                              size={13}
+                            />
                           </ButtonSm>
                         )}
                         {isADropDown && dropdownColumn && (

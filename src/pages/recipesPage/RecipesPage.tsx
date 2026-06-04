@@ -24,7 +24,7 @@ const RecipesPage = () => {
   const recipeTableColumns: DataCell[] = [
     {
       headingTitle: 'Product',
-      className: 'min-w-[220px]',
+      className: 'min-w-[380px]',
       accessVar: 'primaryName',
       render: (_value, row: Product) => (
         <div className="flex flex-col">

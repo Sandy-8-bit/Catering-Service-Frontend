@@ -224,7 +224,7 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
       {/* ── Visualiser / timer ── */}
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-zinc-100 bg-zinc-50 py-6">
         <div
-          className={`flex h-16 w-16 items-center justify-center rounded-full shadow-lg transition-all ${iconBg}`}
+        className={`flex h-16 w-16 items-center justify-center rounded-full shadow-lg transition-all ${iconBg}`}
         >
           {status === 'recording' ? (
             <Mic className="h-7 w-7 text-white" />
