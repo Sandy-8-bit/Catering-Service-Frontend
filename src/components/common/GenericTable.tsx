@@ -1031,8 +1031,7 @@ export default function GenericTable({
                             state="default"
                           >
                             <Trash2
-                              className="min-w-4"
-                              className="text-red-500"
+                              className="min-w-4 text-red-500"
                               size={13}
                             />
                           </ButtonSm>
