@@ -58,7 +58,16 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
 
-      const mediaRecorder = new MediaRecorder(stream)
+      // Pick a format the current browser actually supports
+      const mimeType =
+        ['audio/mp4', 'audio/webm', 'audio/ogg'].find((type) =>
+          MediaRecorder.isTypeSupported(type)
+        ) ?? ''
+
+      const mediaRecorder = new MediaRecorder(
+        stream,
+        mimeType ? { mimeType } : undefined
+      )
       mediaRecorderRef.current = mediaRecorder
       chunksRef.current = []
 
@@ -67,7 +76,9 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
       }
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        const blob = new Blob(chunksRef.current, {
+          type: mimeType || 'audio/webm',
+        })
         setAudioBlob(blob)
         setStatus('done')
         stopTimer()
@@ -78,7 +89,7 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
       setElapsedSeconds(0)
       startTimer()
     } catch {
-      // microphone denied — nothing to do, user sees the idle state
+      setFormError('Microphone access denied')
     }
   }
 
@@ -105,61 +116,6 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
     }
   }
 
-  /* ── Convert WebM to WAV ───────────────────── */
-  const convertToWav = async (webmBlob: Blob): Promise<Blob> => {
-    const arrayBuffer = await webmBlob.arrayBuffer()
-    const audioContext = new AudioContext()
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer)
-
-    // Create WAV file from audio buffer
-    const numberOfChannels = audioBuffer.numberOfChannels
-    const sampleRate = audioBuffer.sampleRate
-    const length = audioBuffer.length * numberOfChannels * 2 + 44
-
-    const buffer = new ArrayBuffer(length)
-    const view = new DataView(buffer)
-
-    // WAV header
-    const writeString = (offset: number, string: string) => {
-      for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i))
-      }
-    }
-
-    writeString(0, 'RIFF')
-    view.setUint32(4, length - 8, true)
-    writeString(8, 'WAVE')
-    writeString(12, 'fmt ')
-    view.setUint32(16, 16, true)
-    view.setUint16(20, 1, true)
-    view.setUint16(22, numberOfChannels, true)
-    view.setUint32(24, sampleRate, true)
-    view.setUint32(28, sampleRate * numberOfChannels * 2, true)
-    view.setUint16(32, numberOfChannels * 2, true)
-    view.setUint16(34, 16, true)
-    writeString(36, 'data')
-    view.setUint32(40, length - 44, true)
-
-    // Write audio data
-    let offset = 44
-    for (let i = 0; i < audioBuffer.length; i++) {
-      for (let channel = 0; channel < numberOfChannels; channel++) {
-        const sample = Math.max(
-          -1,
-          Math.min(1, audioBuffer.getChannelData(channel)[i])
-        )
-        view.setInt16(
-          offset,
-          sample < 0 ? sample * 0x8000 : sample * 0x7fff,
-          true
-        )
-        offset += 2
-      }
-    }
-
-    return new Blob([buffer], { type: 'audio/wav' })
-  }
-
   /* ── Upload ────────────────────────────────── */
   const handleUpload = async () => {
     if (!audioBlob) return
@@ -174,36 +130,17 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
 
     setFormError(null)
 
-    try {
-      const wavBlob = await convertToWav(audioBlob)
-      uploadVoiceOrder(
-        {
-          file: wavBlob,
-          customerName: customerName.trim(),
-          eventDate: selectedEventDate,
-        },
-        {
-          onSuccess: () => {
-            handleCancel()
-          },
-        }
-      )
-    } catch (error) {
-      console.error('Audio conversion failed:', error)
-      // Fallback: upload original webm if conversion fails
-      uploadVoiceOrder(
-        {
-          file: audioBlob,
-          customerName: customerName.trim(),
-          eventDate: selectedEventDate,
-        },
-        {
-          onSuccess: () => {
-            handleCancel()
-          },
-        }
-      )
-    }
+    uploadVoiceOrder(
+      {
+        file: audioBlob,
+        customerName: customerName.trim(),
+        eventDate: selectedEventDate,
+      },
+      {
+        onSuccess: () => handleCancel(),
+        onError: () => setFormError('Upload failed. Please try again.'),
+      }
+    )
   }
 
   /* ── Cancel / close ────────────────────────── */
