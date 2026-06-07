@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { appRoutes } from '@/routes/appRoutes'
 import LogoutConfirmModal from './LogoutConfirmModal'
+import Cookies from 'js-cookie'
 
 type NavigationSection = 'main' | 'orders' | 'settings'
 
@@ -35,10 +36,6 @@ const SideNav: React.FC = () => {
   const { t } = useTranslation()
   const role = localStorage.getItem('CATERING_ROLE')
   const normalizedRole = (role ?? '').toUpperCase()
-
-  if (normalizedRole === 'DRIVER') {
-    return null
-  }
 
   const [activeRoute, setActiveRoute] = useState<string>('')
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
@@ -102,7 +99,7 @@ const SideNav: React.FC = () => {
   }, [normalizedRole, t])
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('CATERING_TOKEN')
+    Cookies.remove('CATERING_TOKEN')
     window.location.href = appRoutes.signInPage
   }, [])
 
@@ -116,6 +113,10 @@ const SideNav: React.FC = () => {
     const [menuOpen, setMenuOpen] = useState(false)
 
     const isRouteActive = (route: string) => activeRoute.startsWith(route)
+
+    if (normalizedRole === 'DRIVER') {
+      return null
+    }
 
     return (
       <div className="md:hidden">
