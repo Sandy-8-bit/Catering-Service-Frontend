@@ -1,8 +1,9 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Mic, MicOff, Square, Upload } from 'lucide-react'
 import { useUploadVoiceOrder } from '@/queries/ordersQueries'
 
 type RecordingStatus = 'idle' | 'recording' | 'paused' | 'done'
+type PermissionState = 'unknown' | 'granted' | 'denied' | 'prompt'
 
 interface VoiceOrderDialogProps {
   onClose: () => void
@@ -19,6 +20,8 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
   const [status, setStatus] = useState<RecordingStatus>('idle')
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [permissionState, setPermissionState] =
+    useState<PermissionState>('unknown')
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -31,6 +34,25 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
     isSuccess,
     isError,
   } = useUploadVoiceOrder()
+
+  /* ── Check mic permission on mount ─────────── */
+  useEffect(() => {
+    const checkPermission = async () => {
+      try {
+        const result = await navigator.permissions.query({
+          name: 'microphone' as PermissionName,
+        })
+        setPermissionState(result.state as PermissionState)
+        result.onchange = () =>
+          setPermissionState(result.state as PermissionState)
+      } catch {
+        // iOS Safari / some PWAs don't support permissions API
+        setPermissionState('unknown')
+      }
+    }
+
+    checkPermission()
+  }, [])
 
   /* ── Timer helpers ─────────────────────────── */
   const startTimer = () => {
@@ -54,11 +76,19 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
 
   /* ── Recording controls ────────────────────── */
   const startRecording = async () => {
+    if (permissionState === 'denied') {
+      setFormError(
+        'Microphone access is blocked. Please enable it in your browser or device settings.'
+      )
+      return
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      setPermissionState('granted')
+      setFormError(null)
       streamRef.current = stream
 
-      // Pick a format the current browser actually supports
       const mimeType =
         ['audio/mp4', 'audio/webm', 'audio/ogg'].find((type) =>
           MediaRecorder.isTypeSupported(type)
@@ -88,8 +118,20 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
       setStatus('recording')
       setElapsedSeconds(0)
       startTimer()
-    } catch {
-      setFormError('Microphone access denied')
+    } catch (err) {
+      if (
+        err instanceof DOMException &&
+        (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')
+      ) {
+        setPermissionState('denied')
+        setFormError(
+          'Microphone access denied. Please enable it in your browser settings and try again.'
+        )
+      } else if (err instanceof DOMException && err.name === 'NotFoundError') {
+        setFormError('No microphone found on this device.')
+      } else {
+        setFormError('Could not access microphone. Please try again.')
+      }
     }
   }
 
@@ -158,7 +200,9 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
     onClose()
   }
 
-  /* ── Icon colour by status ─────────────────── */
+  /* ── Derived UI values ─────────────────────── */
+  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent)
+
   const iconBg =
     status === 'recording'
       ? 'animate-pulse bg-red-500'
@@ -221,10 +265,27 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
         </div>
       </div>
 
+      {/* ── Permission denied banner ── */}
+      {permissionState === 'denied' && (
+        <div className="flex items-start gap-3 rounded-xl bg-red-50 px-4 py-3 ring-1 ring-red-200">
+          <MicOff className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-semibold text-red-700">
+              Microphone access blocked
+            </p>
+            <p className="text-xs text-red-500">
+              {isIOS
+                ? 'Go to Settings → Safari → Microphone and allow access, then refresh.'
+                : 'Click the lock icon in your browser address bar, allow microphone access, then refresh.'}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── Visualiser / timer ── */}
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-zinc-100 bg-zinc-50 py-6">
         <div
-        className={`flex h-16 w-16 items-center justify-center rounded-full shadow-lg transition-all ${iconBg}`}
+          className={`flex h-16 w-16 items-center justify-center rounded-full shadow-lg transition-all ${iconBg}`}
         >
           {status === 'recording' ? (
             <Mic className="h-7 w-7 text-white" />
@@ -248,7 +309,8 @@ const VoiceOrderDialog: React.FC<VoiceOrderDialogProps> = ({
           <button
             type="button"
             onClick={startRecording}
-            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600"
+            disabled={permissionState === 'denied'}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Mic className="h-4 w-4" /> Record
           </button>

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Moon, Sun, LogOut } from 'lucide-react'
 import { appRoutes } from '../../routes/appRoutes'
 import useClickOutside from '../../hooks/useClickOutside'
+import Cookies from 'js-cookie'
 
 export default function ProfileMenu() {
   // const [open, setOpen] = useState(false)
@@ -40,7 +41,7 @@ export default function ProfileMenu() {
   const [containerRef, open, setOpen] = useClickOutside(false)
 
   const handleLogout = () => {
-    localStorage.removeItem('CATERING_TOKEN')
+    Cookies.remove('CATERING_TOKEN')
     window.location.href = appRoutes.signInPage
   }
 
