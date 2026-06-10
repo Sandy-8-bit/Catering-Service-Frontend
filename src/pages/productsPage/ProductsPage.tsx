@@ -616,12 +616,10 @@ function ProductFormModal({
       newErrors.primaryName =
         t('product_name_required') || 'Product name is required'
     }
-
-    if (formData.price <= 0) {
-      newErrors.price =
-        t('price_must_be_greater') || 'Price must be greater than 0'
-    }
-
+if (formData.price < 0) {
+  newErrors.price =
+    t('price_cannot_be_negative') || 'Price cannot be negative'
+}
     if (
       !Array.isArray(formData.categoryIds) ||
       formData.categoryIds.length === 0
@@ -774,12 +772,15 @@ function ProductFormModal({
             <input
               type="number"
               value={formData.price || ''}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  price: parseFloat(e.target.value) || 0,
-                })
-              }
+             onChange={(e) =>
+  setFormData({
+    ...formData,
+    price:
+      e.target.value === ''
+        ? 0
+        : Number(e.target.value),
+  })
+}
               placeholder="0"
               min="0"
               step="0.01"
