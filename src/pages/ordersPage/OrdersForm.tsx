@@ -733,7 +733,7 @@ export const OrdersForm = () => {
  
 
           {/* Menu Selection */}
-          <button
+          {/* <button
             type="button"
             onClick={() =>
               setExpandedSections((prev) => ({ ...prev, menu: !prev.menu }))
@@ -749,7 +749,7 @@ export const OrdersForm = () => {
               }`}
             />
           </button>
-          {expandedSections.menu && (
+          {expandedSections.menu && ( */}
             <div className="flex flex-col gap-5 sm:gap-6">
               {/* Product Menu Items Separator */}
               <div
@@ -897,7 +897,7 @@ export const OrdersForm = () => {
                 </div>
               </div>
             </div>
-          )}
+          {/* )} */}
 
           <button
             type="button"

@@ -276,65 +276,53 @@ const AdditionalMenuSelector = ({
     updateItems(nextItems)
   }
 
-  const handleQuantityInputChange = (productId: number, value: string) => {
-    setQuantityDrafts((prev) => ({
-      ...prev,
-      [productId]: value,
-    }))
+const handleQuantityInputChange = (productId: number, value: string) => {
+  setQuantityDrafts((prev) => ({ ...prev, [productId]: value }))
 
-    if (value === '' || !/^\d+$/.test(value)) return
+  // Allow partial input (empty, just a dot, trailing dot like "1.")
+  if (value === '' || value === '.' || value.endsWith('.')) return
 
-    const parsedQuantity = Number.parseInt(value, 10)
-    if (!Number.isFinite(parsedQuantity) || parsedQuantity < 1) return
+  // Allow positive numbers including decimals (e.g. 1.5, 0.5)
+  if (!/^\d+(\.\d*)?$/.test(value)) return
 
-    const nextItems = safeItems.map((item) => {
-      if (item.productId !== productId) return item
+  const parsedQuantity = parseFloat(value)
+  if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) return
 
-      return { ...item, quantity: parsedQuantity }
+  const nextItems = safeItems.map((item) =>
+    item.productId !== productId ? item : { ...item, quantity: parsedQuantity }
+  )
+  updateItems(nextItems)
+}
+
+const handleQuantityInputBlur = (productId: number, currentQuantity: number) => {
+  const draftValue = quantityDrafts[productId]
+  if (draftValue == null) return
+
+  const parsedQuantity = parseFloat(draftValue)
+  const isValidQuantity =
+    Number.isFinite(parsedQuantity) &&
+    parsedQuantity > 0 &&
+    /^\d+(\.\d+)?$/.test(draftValue)
+
+  if (!isValidQuantity) {
+    // Revert to current committed quantity
+    setQuantityDrafts((prev) => {
+      const next = { ...prev }
+      delete next[productId]
+      return next
     })
+    return
+  }
 
+  if (parsedQuantity !== currentQuantity) {
+    const nextItems = safeItems.map((item) =>
+      item.productId !== productId ? item : { ...item, quantity: parsedQuantity }
+    )
     updateItems(nextItems)
   }
 
-  const handleQuantityInputBlur = (
-    productId: number,
-    currentQuantity: number
-  ) => {
-    const draftValue = quantityDrafts[productId]
-
-    if (draftValue == null) return
-
-    const parsedQuantity = Number.parseInt(draftValue, 10)
-    const isValidQuantity =
-      Number.isFinite(parsedQuantity) &&
-      parsedQuantity >= 1 &&
-      /^\d+$/.test(draftValue)
-
-    if (!isValidQuantity) {
-      setQuantityDrafts((prev) => {
-        const next = { ...prev }
-        delete next[productId]
-        return next
-      })
-      return
-    }
-
-    if (parsedQuantity !== currentQuantity) {
-      const nextItems = safeItems.map((item) => {
-        if (item.productId !== productId) return item
-
-        return { ...item, quantity: parsedQuantity }
-      })
-
-      updateItems(nextItems)
-    }
-
-    setQuantityDrafts((prev) => ({
-      ...prev,
-      [productId]: String(parsedQuantity),
-    }))
-  }
-
+  setQuantityDrafts((prev) => ({ ...prev, [productId]: String(parsedQuantity) }))
+}
   return (
     <section className="">
       {isLoading ? (
