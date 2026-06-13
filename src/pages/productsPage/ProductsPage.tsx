@@ -251,7 +251,7 @@ export const ProductsPage = () => {
             'success',
             `${formProduct.primaryName} created successfully`
           )
-          document.location.reload()
+          
         } else if (formState.type === 'edit') {
           // Edit existing product
           await editProduct([formProduct])
@@ -260,7 +260,7 @@ export const ProductsPage = () => {
             'success',
             `${formProduct.primaryName} updated successfully`
           )
-          document.location.reload()
+          
         }
 
         setFormState({ type: null, product: null })

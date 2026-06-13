@@ -223,6 +223,18 @@ export const useDeleteOrder = () => {
       toast.success('Order deleted successfully')
       queryClient.invalidateQueries({ queryKey: ORDERS_KEY })
       queryClient.invalidateQueries({ queryKey: orderKey(orderId) })
+      
+  // Refresh all order list queries
+  queryClient.invalidateQueries({
+    queryKey: ORDERS_KEY,
+  })
+
+  // Refresh specific order details if needed
+  if (orderId) {
+    queryClient.invalidateQueries({
+      queryKey: orderKey(orderId),
+    })
+  }
     },
   })
 }
