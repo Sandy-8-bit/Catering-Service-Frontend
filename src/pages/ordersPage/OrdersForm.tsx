@@ -323,7 +323,7 @@ export const OrdersForm = () => {
       onSuccess: () => {
         clearFormData() // Clear saved data on successful submission
         navigate(appRoutes.orders.path)
-       
+        window.location.reload() // Refresh orders list after creating new order
       },
     })
   }
