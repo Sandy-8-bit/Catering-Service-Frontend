@@ -440,6 +440,7 @@ remarksText: {
   tableWrapper: {
     flex: 1,
     flexDirection: 'column',
+    
   },
 
   // Table header
@@ -717,8 +718,13 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   })
 
   // Minimum 14 visible rows
-  const MIN_ROWS = 14
-  const emptyCount = Math.max(0, MIN_ROWS - rows.length)
+const TOP_EMPTY_ROWS = 2
+const MIN_ROWS = 14
+
+const emptyCount = Math.max(
+  0,
+  MIN_ROWS - rows.length - TOP_EMPTY_ROWS
+)
   const emptyRows = Array.from({ length: emptyCount })
 
   // CHANGE 3: Shared style values for the three totals columns
@@ -859,7 +865,16 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                 </Text>
               </View>
             </View>
-
+{/* Top 2 blank rows */}
+{Array.from({ length: 2 }).map((_, i) => (
+  <View key={`top-${i}`} style={s.tableRow}>
+    <Text style={s.tdSno}> </Text>
+    <Text style={[s.tdParticulars, { fontFamily: TAMIL }]}> </Text>
+    <Text style={s.tdQty}> </Text>
+    <Text style={s.tdRate}> </Text>
+    <Text style={s.tdRs}> </Text>
+  </View>
+))}
             {/* Data rows */}
             {rows.map((row, i) => (
               <View key={i} style={i % 2 === 0 ? s.tableRow : s.tableRowAlt}>
