@@ -54,6 +54,7 @@ export const defaultOrderData: Order = {
   additionalItems: [],
   additionalMenuItems: [],
   createdAt: '',
+  remarks: '',
   updatedAt: '',
   locationUrl: '',
   priceReducedPerPlate: 0,

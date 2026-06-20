@@ -323,7 +323,7 @@ export const OrdersForm = () => {
       onSuccess: () => {
         clearFormData() // Clear saved data on successful submission
         navigate(appRoutes.orders.path)
-        window.location.reload() // Refresh orders list after creating new order
+       
       },
     })
   }
@@ -1057,6 +1057,18 @@ export const OrdersForm = () => {
                     </button>
                   </div>
                 </div> */}
+                <Input
+  title="Remarks"
+  name="remarks"
+  placeholder="Enter remarks"
+  inputValue={editData.remarks ?? ''}
+  onChange={(value) =>
+    setEditData((prev) => ({
+      ...prev,
+      remarks: value,
+    }))
+  }
+/>
 
                 <Input
                   title={t('discount_percentage')}

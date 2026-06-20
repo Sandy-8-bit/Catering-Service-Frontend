@@ -13,6 +13,7 @@ export const mapOrderToPayload = (order: Order): OrderPayload => {
     eventDate: order.eventDate || '',
     eventTime: order.eventTime || '',
     locationUrl: order.locationUrl || '',
+    remarks: order.remarks || '',
     totalPlates: order.totalPlates || 1,
     priceReducedPerPlate: order.priceReducedPerPlate || 0,
     deliveredByUs: order.deliveredByUs || false,

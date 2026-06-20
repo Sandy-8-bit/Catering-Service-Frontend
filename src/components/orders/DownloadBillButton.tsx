@@ -57,6 +57,7 @@ interface BillCustomerInfo {
   customerAddress?: string
   totalPlates?: number
   eventDate?: string
+  remarks?: string
   eventTime?: string
 }
 
@@ -134,6 +135,26 @@ const s = StyleSheet.create({
     paddingVertical: 16,
   },
 
+  remarksSection: {
+  paddingHorizontal: 10,
+  paddingVertical: 6,
+  borderTop: `0.5pt solid ${C.border}`,
+  minHeight: 40,
+},
+
+remarksTitle: {
+  fontFamily: LATIN_B,
+  fontSize: 7,
+  color: C.navy,
+  marginBottom: 4,
+},
+
+remarksText: {
+  fontFamily: TAMIL,
+  fontSize: 7,
+  color: C.text,
+  lineHeight: 1.4,
+},
   // Outer card with full border
   card: {
     flex: 1,
@@ -783,13 +804,15 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
                     {dot(meta.cellNo ?? customer.customerPhone)}
                   </Text>
                 </View>
-                <View style={s.infoGroup}>
-                  <Text style={s.infoLabel}>Advance</Text>
-                  <Text style={s.infoColon}>:</Text>
-                  <Text style={s.infoValue}>
-                    {resolvedAdvance ?? '........'}
-                  </Text>
-                </View>
+          {type !== 'STAFF' && (
+    <View style={s.infoGroup}>
+      <Text style={s.infoLabel}>Advance</Text>
+      <Text style={s.infoColon}>:</Text>
+      <Text style={s.infoValue}>
+        {resolvedAdvance ?? '........'}
+      </Text>
+    </View>
+  )}
               </View>
             </View>
 
@@ -972,42 +995,16 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
               </View>
             </View>
           )}
-
-          {/* ── Signoff Bar ───────────────────────────────────────────────── */}
-          <View style={s.signoffBar}>
-            <View style={[s.signoffLeft, { borderRight: 'none' }]}>
-              {type === 'OWNER' ? (
-                <>
-                  <Text style={s.signoffStat}>
-                    Raw Material Cost: Rs.{' '}
-                    {fmtMoney(summary.totalRawMaterialCost)}
-                    {'   '}
-                    Sub-Product Cost: Rs.{' '}
-                    {fmtMoney(summary.totalSubProductCost)}
-                  </Text>
-                  <Text style={s.signoffStatBold}>
-                    Net Profit: Rs. {fmtMoney(summary.profit)}
-                  </Text>
-                </>
-              ) : (
-                // CHANGE 4: "Items: N | Delivery: Rs. X" right-aligned
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'flex-end',
-                    flex: 1,
-                  }}
-                >
-                  {/* <Text style={[s.signoffStat, { textAlign: 'right' }]}>
-                    Items: {customerItems.length} | Delivery: Rs.{' '}
-                    {resolvedDeliveryCharge}
-                    {type === 'STAFF' ? '   Internal Copy' : ''}
-                  </Text> */}
-                </View>
-              )}
-            </View>
-            <View style={s.signoffRight} />
-          </View>
+{customer.remarks && (
+  <View style={s.remarksSection}>
+    <Text style={s.remarksTitle}>Remarks</Text>
+    <Text style={s.remarksText}>
+      {customer.remarks}
+    </Text>
+  </View>
+)}
+  
+          
         </View>
       </Page>
     </Document>

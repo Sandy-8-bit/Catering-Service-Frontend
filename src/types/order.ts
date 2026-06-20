@@ -70,6 +70,7 @@ export interface Order {
   driver?: OrderDriver
   driverId?: number | null
   driverName?: string | null
+  remarks?: string | null
   offerPercentage?: number
   totalAmount?: number
   advanceAmount: number
@@ -124,6 +125,7 @@ export interface OrderPayload {
   eventDate: string
   eventTime: string
   totalPlates: number
+  remarks?: string | null
   offerPercentage?: number
   priceReducedPerPlate?: number
   discountAmount?: number
