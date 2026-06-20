@@ -1222,6 +1222,31 @@ const DownloadBillButton: React.FC<DownloadBillButtonProps> = ({
       link.click()
       URL.revokeObjectURL(url)
       toast.success(t('bill_downloaded_success', { billType: option.label }))
+
+if (option.type === 'CUSTOMER') {
+  const shouldShare = window.confirm(
+    'Bill downloaded successfully.\n\nDo you want to share this bill via WhatsApp?'
+  )
+
+  if (shouldShare) {
+    const phone =
+      data.customer?.customerPhone?.replace(/\D/g, '')
+
+    if (phone) {
+      const message = encodeURIComponent(
+        `Hello ${data.customer?.customerName ?? ''},
+
+Thank you,
+Venkateshwara Mess & Catering`
+      )
+
+      window.open(
+        `https://wa.me/91${phone}?text=${message}`,
+        '_blank'
+      )
+    }
+  }
+}
     } catch {
       toast.error(t('bill_downloaded_error', { billType: option.label }))
     } finally {
