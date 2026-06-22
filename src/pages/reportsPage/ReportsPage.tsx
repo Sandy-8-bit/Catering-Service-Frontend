@@ -238,21 +238,7 @@ const ReportsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Misc Expenses card removed per request */}
 
-              <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 p-3.5">
-                <div className="flex flex-col gap-1">
-                  <p className="text-xs font-medium text-orange-100">
-                    {t('profit')}
-                  </p>
-                  <p className="text-2xl leading-none font-bold text-white">
-                    {fmt(data.totalGlobalNetProfit)}
-                  </p>
-                </div>
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-                  <span className="text-sm font-bold text-white">₹</span>
-                </div>
-              </div>
 
               <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-3.5">
                 <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-100">
