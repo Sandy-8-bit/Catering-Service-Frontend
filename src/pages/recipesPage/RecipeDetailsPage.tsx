@@ -33,6 +33,8 @@ interface RecipeRow {
   subProductPrimaryName: string
   // Shared
   qtyPerUnit: number
+  // in RecipeRow interface — add:
+qtyPerUnitRaw: string
   unit: string
   notes: string
 }
@@ -52,6 +54,7 @@ const createEmptyRow = (ingredientType: IngredientType): RecipeRow => ({
   rawMaterialPrimaryName: '',
   unitPrice: 0,
   subProductId: 0,
+  qtyPerUnitRaw: '',
   subProductPrimaryName: '',
   qtyPerUnit: 0,
   unit: ingredientType === 'SUB_PRODUCT' ? 'KG' : '',
@@ -142,6 +145,7 @@ const mapRecipeToRow = (
     localId: typeof recipe.id === 'number' ? recipe.id : nextTempId(),
     id: recipe.id,
     ingredientType: type,
+    qtyPerUnitRaw: String(recipe.rawMaterial?.qtyPerUnit ?? recipe.subProduct?.qtyPerUnit ?? recipe.qtyPerUnit ?? ''),
     rawMaterialId: recipe.rawMaterial?.rawMaterialId ?? 0,
     rawMaterialPrimaryName: recipe.rawMaterial?.rawMaterialPrimaryName ?? '',
     unitPrice: material?.purchasePricePerUnit ?? 0,
@@ -382,11 +386,14 @@ const RecipeDetailsPage = () => {
           className="w-[140px] max-w-[140px]"
           title=""
           type="num"
-          inputValue={row.qtyPerUnit === 0 ? '' : String(row.qtyPerUnit)}
+         inputValue={row.qtyPerUnitRaw ?? row.qtyPerUnit?.toString() ?? ''}
           isEditMode={isEditMode}
-          onChange={(val) =>
-            updateRow(row.localId, { qtyPerUnit: val === '' ? 0 : Number(val) })
-          }
+          onChange={(val) => {
+  updateRow(row.localId, {
+    qtyPerUnitRaw: val,
+    qtyPerUnit: val === '' || val === '.' ? 0 : Number(val),
+  })
+}}  
         />
       ),
     },
@@ -501,11 +508,14 @@ const RecipeDetailsPage = () => {
           className="w-[140px] max-w-[140px]"
           title=""
           type="num"
-          inputValue={row.qtyPerUnit === 0 ? '' : String(row.qtyPerUnit)}
+          inputValue={row.qtyPerUnitRaw ?? row.qtyPerUnit?.toString() ?? ''}
           isEditMode={isEditMode}
-          onChange={(val) =>
-            updateRow(row.localId, { qtyPerUnit: val === '' ? 0 : Number(val) })
-          }
+         onChange={(val) => {
+  updateRow(row.localId, {
+    qtyPerUnitRaw: val,
+    qtyPerUnit: val === '' || val === '.' ? 0 : Number(val),
+  })
+}}
         />
       ),
     },
