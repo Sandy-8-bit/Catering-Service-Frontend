@@ -76,10 +76,18 @@ interface BillSubProduct {
   unit?: string | null
 }
 
+interface BillAdditionalItem {
+  additionalItemName?: string
+  quantity?: number | null
+  totalPrice?: number | null
+  unitPrice?: number | null
+}
+
 type BillDataWithId = BillData & {
   orderId?: number
   advanceAmount?: number | null
-  subProducts?: BillSubProduct[] | null // ADD
+  subProducts?: BillSubProduct[] | null
+  additionalItems?: BillAdditionalItem[] | null
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -646,6 +654,8 @@ interface BillDocProps {
 
 const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
   const customerItems: BillCustomerItem[] = data.customerItems ?? []
+  const additionalItems: BillAdditionalItem[] =
+  data.additionalItems ?? []
   const rawMaterials: BillRawMaterial[] = data.rawMaterials ?? []
   const subProducts: BillSubProduct[] = data.subProducts ?? []
   const customer = (data.customer ?? {}) as BillCustomerInfo
@@ -701,21 +711,34 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
       : customerItems.reduce((acc, item) => acc + (item.lineTotal ?? 0), 0))
 
   // Build rows from customerItems
-  const rows: RowEntry[] = customerItems.map((item, i) => {
-    const qty = item.quantity ?? null
-    const isMenuItem = item.isMenuItem === true
-    const qtyDisplay = qty != null ? String(qty) : '—'
-    return {
-      sno: i + 1,
-      particulars: item.productName ?? '—',
-      productName: item.productName ?? '—',
-      qty,
-      isMenuItem,
-      qtyDisplay,
-      rate: item.unitPrice != null ? String(item.unitPrice) : '—',
-      total: (item.lineTotal ?? null) != null ? fmtMoney(item.lineTotal) : '—',
-    }
-  })
+const rows: RowEntry[] = [
+  ...customerItems.map((item, i) => ({
+    sno: i + 1,
+    particulars: item.productName ?? '—',
+    productName: item.productName ?? '—',
+    qty: item.quantity ?? null,
+    isMenuItem: item.isMenuItem === true,
+    qtyDisplay: item.quantity != null ? String(item.quantity) : '—',
+    rate: item.unitPrice != null ? String(item.unitPrice) : '—',
+    total:
+      item.lineTotal != null ? fmtMoney(item.lineTotal) : '—',
+  })),
+
+  ...additionalItems.map((item, index) => ({
+    sno: customerItems.length + index + 1,
+    particulars: item.additionalItemName ?? '—',
+    productName: item.additionalItemName ?? '—',
+    qty: item.quantity ?? null,
+    isMenuItem: false,
+    qtyDisplay: item.quantity != null ? String(item.quantity) : '—',
+
+    // Additional items don't have a unit price
+    rate: item.unitPrice != null ? String(item.unitPrice) : '—',
+
+    total:
+      item.totalPrice != null ? fmtMoney(item.totalPrice) : '—',
+  })),
+]
 
   // Minimum 14 visible rows
 const TOP_EMPTY_ROWS = 2
