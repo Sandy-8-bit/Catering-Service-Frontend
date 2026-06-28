@@ -202,7 +202,16 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
             label={t('balance')}
             value={`₹${(order.balanceAmount || 0).toLocaleString()}`}
           />
+                  {order.remarks && (
+  <div className="col-span-2 lg:col-span-4">
+    <DetailCell
+      label="Remarks"
+      value={order.remarks}
+    />
+  </div>
+)}
         </dl>
+
       </div>
     </article>
   )
