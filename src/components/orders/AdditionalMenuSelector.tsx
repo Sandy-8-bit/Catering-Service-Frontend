@@ -101,25 +101,34 @@ const AdditionalMenuSelector = ({
   const [quantityDrafts, setQuantityDrafts] = useState<Record<number, string>>(
     {}
   )
-  const [selectedProductType, setSelectedProductType] =
-    useState<ProductTypeFilter>('all')
+const [searchQuery, setSearchQuery] = useState('')
+const [selectedProductType, setSelectedProductType] =
+  useState<ProductTypeFilter>('all')
   const [selectedMasterCategory, setSelectedMasterCategory] = useState<
     number | null
   >(null)
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
 
   // Filter products by type
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      if (selectedProductType === 'all') return true
-      const productType = getProductType(product)
-      if (selectedProductType === 'Vegetarian') return productType === 'VEG'
-      if (selectedProductType === 'Non-Vegetarian')
-        return productType === 'NON_VEG'
-      return true
-    })
-  }, [products, selectedProductType])
+const filteredProducts = useMemo(() => {
+  const query = searchQuery.trim().toLowerCase()
 
+  return products.filter((product) => {
+    if (selectedProductType !== 'all') {
+      const productType = getProductType(product)
+      if (selectedProductType === 'Vegetarian' && productType !== 'VEG') return false
+      if (selectedProductType === 'Non-Vegetarian' && productType !== 'NON_VEG') return false
+    }
+
+    if (query) {
+      const primary = (product.primaryName ?? '').toLowerCase()
+      const secondary = (product.secondaryName ?? '').toLowerCase()
+      if (!primary.includes(query) && !secondary.includes(query)) return false
+    }
+
+    return true
+  })
+}, [products, selectedProductType, searchQuery])
   // Group products by master categories
   const masterCategoryGroups = useMemo<MasterCategoryGroup[]>(() => {
     const masterMap = new Map<number, MasterCategoryGroup>()
@@ -331,6 +340,35 @@ const handleQuantityInputBlur = (productId: number, currentQuantity: number) => 
         </div>
       ) : (
         <div className="space-y-7 sm:space-y-9">
+          
+            <div className="relative">
+    <input
+      type="text"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      placeholder={t('search_products') || 'Search by product name...'}
+      className="w-full rounded-md border border-[#E4E4E7] bg-white px-3 py-2 pl-9 text-xs text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-zinc-900 sm:text-sm"
+    />
+    <svg
+      className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+    {searchQuery && (
+      <button
+        type="button"
+        onClick={() => setSearchQuery('')}
+        aria-label="Clear search"
+        className="absolute top-1/2 right-2.5 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
+      >
+        ✕
+      </button>
+    )}
+  </div>
           {/* Product Type Filter Chips */}
           <div className="space-y-3">
             <p className="my-2 text-xs font-semibold tracking-wider text-zinc-600 uppercase">
