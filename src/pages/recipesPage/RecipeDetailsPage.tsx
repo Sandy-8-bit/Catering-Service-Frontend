@@ -157,12 +157,14 @@ const mapRecipeToRow = (
       type === 'RAW_MATERIAL'
         ? (recipe.rawMaterial?.qtyPerUnit ?? recipe.qtyPerUnit ?? 0)
         : (recipe.subProduct?.qtyPerUnit ?? recipe.qtyPerUnit ?? 0),
-    unit:
-      type === 'RAW_MATERIAL'
-        ? (material?.purchaseUnit ??
-          recipe.rawMaterial?.unit ??
-          recipe.unit ??
-          '')
+unit:
+  type === 'RAW_MATERIAL'
+    ? (
+        recipe.rawMaterial?.unit ??
+        recipe.unit ??
+        material?.purchaseUnit ??
+        ''
+      )
         : (recipe.subProduct?.unit ?? recipe.unit ?? ''),
     notes: recipe.notes ?? '',
   }
@@ -228,11 +230,10 @@ const RecipeDetailsPage = () => {
           return row
         const material = rawMaterialMap.get(row.rawMaterialId)
         if (!material) return row
-        return {
-          ...row,
-          unit: material.purchaseUnit ?? row.unit,
-          unitPrice: material.purchasePricePerUnit ?? row.unitPrice,
-        }
+return {
+  ...row,
+  unitPrice: material.purchasePricePerUnit ?? row.unitPrice,
+}
       })
     )
   }, [rawMaterials, rawMaterialMap])
@@ -313,6 +314,12 @@ const RecipeDetailsPage = () => {
     setIsEditMode(false)
   }
 
+
+const unitOptions = [
+  { id: 1, label: 'KG' },
+  { id: 2, label: 'Gram' },
+  { id: 3, label: 'Portion' },
+]
   // ─── Column definitions ────────────────────────────────────────────────────
 
   const rawMaterialColumns: DataCell[] = [
@@ -397,27 +404,44 @@ const RecipeDetailsPage = () => {
         />
       ),
     },
-    {
-      headingTitle: 'Unit',
-      className: 'min-w-[100px] w-[100px] max-w-[100px]',
-      render: (_, row: RecipeRow) => (
-        <span className="block w-[100px] text-sm font-medium text-zinc-700">
-          {row.unit || '—'}
-        </span>
-      ),
-    },
-    {
-      headingTitle: 'Total Cost (₹)',
-      className: 'min-w-[120px] w-[120px] max-w-[120px]',
-      render: (_, row: RecipeRow) => {
-        const total = row.unitPrice * row.qtyPerUnit
-        return (
-          <span className="block w-[120px] text-sm font-semibold text-zinc-800">
-            {total > 0 ? total.toFixed(2) : '—'}
-          </span>
-        )
-      },
-    },
+{
+  headingTitle: 'Unit',
+  className: 'min-w-[140px] w-[140px] max-w-[140px]',
+  render: (_, row: RecipeRow) => (
+    <TableDropDown
+      title=""
+      options={unitOptions}
+selected={
+  unitOptions.find(
+    (o) => o.label.toLowerCase() === row.unit?.trim().toLowerCase()
+  ) ?? null
+}
+      placeholder="Select Unit"
+      isEditMode={isEditMode}
+      onChange={(option) =>
+  updateRow(row.localId, {
+    unit: option.label,
+  })
+} 
+    />
+  ),
+},
+{
+  headingTitle: 'Total Cost (₹)',
+  className: 'min-w-[120px] w-[120px] max-w-[120px]',
+  render: (_, row: RecipeRow) => {
+const total =
+  row.unit?.toLowerCase() === 'gram'
+    ? (row.unitPrice / 1000) * row.qtyPerUnit
+    : row.unitPrice * row.qtyPerUnit
+    
+    return (
+      <span className="block w-[120px] text-sm font-semibold text-zinc-800">
+        {total > 0 ? total.toFixed(2) : '—'}
+      </span>
+    )
+  },
+},
     {
       headingTitle: 'Notes',
       className: 'min-w-[200px] w-[200px] max-w-[200px]',

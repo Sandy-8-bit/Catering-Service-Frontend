@@ -27,6 +27,7 @@ import type {
   CalculateRawMaterialsRequest,
   CalculateRawMaterialsProductItem,
 } from '@/types/calculateRawMaterials'
+import { formatQuantityForDisplay } from './utils'
 
 // ─── Font Registration ────────────────────────────────────────────────────────
 
@@ -385,16 +386,22 @@ const RawMaterialsPdfDoc = ({
                         </Text>
                       )}
                     </View>
-                    <View style={pdfStyles.colQty}>
-                      <Text style={pdfStyles.qtyValue}>
-                        {material.totalQuantity ?? '—'}
-                      </Text>
-                    </View>
-                    <View style={pdfStyles.colUnit}>
-                      <Text style={pdfStyles.unitValue}>
-                        {material.unit ?? '—'}
-                      </Text>
-                    </View>
+                   {(() => {
+  const { qty, unit } = formatQuantityForDisplay(
+    material.totalQuantity ?? 0,
+    material.unit
+  )
+  return (
+    <>
+      <View style={pdfStyles.colQty}>
+        <Text style={pdfStyles.qtyValue}>{qty}</Text>
+      </View>
+      <View style={pdfStyles.colUnit}>
+        <Text style={pdfStyles.unitValue}>{unit}</Text>
+      </View>
+    </>
+  )
+})()}
                   </View>
                 ))}
               </View>
@@ -448,16 +455,22 @@ const RawMaterialsPdfDoc = ({
                         </Text>
                       )}
                     </View>
-                    <View style={pdfStyles.colQty}>
-                      <Text style={pdfStyles.qtyValue}>
-                        {subProduct.totalQuantity ?? '—'}
-                      </Text>
-                    </View>
-                    <View style={pdfStyles.colUnit}>
-                      <Text style={pdfStyles.unitValue}>
-                        {"KG"}
-                      </Text>
-                    </View>
+                    {(() => {
+  const { qty, unit } = formatQuantityForDisplay(
+    subProduct.totalQuantity ?? 0,
+    subProduct.unit ?? 'KG'
+  )
+  return (
+    <>
+      <View style={pdfStyles.colQty}>
+        <Text style={pdfStyles.qtyValue}>{qty}</Text>
+      </View>
+      <View style={pdfStyles.colUnit}>
+        <Text style={pdfStyles.unitValue}>{unit}</Text>
+      </View>
+    </>
+  )
+})()}
                   </View>
                 ))}
               </View>
@@ -644,6 +657,7 @@ export const CalculateRawMaterialsPage = () => {
     totalSelectedProducts,
     totalSelectedQuantity,
   ])
+  
 
   return (
     <main className="layout-container flex min-h-[95vh] flex-col overflow-hidden rounded-[12px] border border-zinc-200 bg-zinc-50 shadow-sm">
@@ -979,10 +993,17 @@ export const CalculateRawMaterialsPage = () => {
                               >
                                 <div className="flex items-center justify-between text-zinc-700">
                                   <span>{material.rawMaterialPrimaryName}</span>
-                                  <span className="font-semibold text-zinc-900">
-                                    {material.totalQuantity.toFixed(2)}{' '}
-                                    {material.unit}
-                                  </span>
+                         {(() => {
+  const { qty, unit } = formatQuantityForDisplay(
+    material.totalQuantity,
+    material.unit
+  )
+  return (
+    <span className="font-semibold text-zinc-900">
+      {qty} {unit}
+    </span>
+  )
+})()}
                                 </div>
                                 {material.rawMaterialSecondaryName && (
                                   <p className="text-xs text-zinc-400">
@@ -1012,10 +1033,17 @@ export const CalculateRawMaterialsPage = () => {
                               >
                                 <div className="flex items-center justify-between text-zinc-700">
                                   <span>[{subProduct.rawMaterialPrimaryName}]</span>
-                                  <span className="font-semibold text-zinc-900">
-                                    {subProduct.totalQuantity.toFixed(2)}{' '}
-                                    {"KG"}
-                                  </span>
+                                  {(() => {
+  const { qty, unit } = formatQuantityForDisplay(
+    subProduct.totalQuantity,
+    subProduct.unit ?? 'KG'
+  )
+  return (
+    <span className="font-semibold text-zinc-900">
+      {qty} {unit}
+    </span>
+  )
+})()}
                                 </div>
                                 {subProduct.notes && (
                                   <p className="text-xs italic text-amber-600">
