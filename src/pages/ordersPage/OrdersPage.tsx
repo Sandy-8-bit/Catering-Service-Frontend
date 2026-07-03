@@ -247,7 +247,10 @@ const getAdditionalMenuItemDisplayName = (
     ''
   )
 }
-
+const formatQty = (qty: number) => {
+  const rounded = Math.round((qty || 0) * 100) / 100
+  return rounded.toFixed(2)
+}
 const buildQuantitySummary = <T,>(
   orders: Order[],
   getItems: (order: Order) => T[],
@@ -513,16 +516,25 @@ export const OrdersPage = () => {
     [sourceOrders, t]
   )
 
-  const requiredSubProductsSummary = useMemo(
-    () =>
-      buildQuantitySummary(
-        sourceOrders,
-        (order) => order.requiredSubProducts ?? [],
-        (item) => item?.subProductName || '',
-        (item) => (item.requiredQuantity || 0)
-      ),
-    [sourceOrders]
-  )
+const requiredSubProductsSummary = useMemo(() => {
+  const map = new Map<string, { quantity: number; unit: string }>()
+  sourceOrders.forEach((order) => {
+    ;(order.requiredSubProducts ?? []).forEach((item) => {
+      const label = item.subProductName
+      if (!label) return
+      const existing = map.get(label)
+      map.set(label, {
+        quantity: (existing?.quantity ?? 0) + (item.requiredQuantity || 0),
+        unit: item.unit ?? existing?.unit ?? 'kg',
+      })
+    })
+  })
+  return Array.from(map.entries()).map(([label, { quantity, unit }]) => ({
+    label,
+    quantity,
+    unit,
+  }))
+}, [sourceOrders])
 
   const infoMessage =
     !isLoading && ordersForDate.length === 0 ? t('no_orders_scheduled') : null
@@ -1133,72 +1145,84 @@ export const OrdersPage = () => {
                 {selectedOrder ? (
                   selectedOrder.requiredSubProducts &&
                   selectedOrder.requiredSubProducts.length > 0 ? (
-                    <BillTable
-                      data={selectedOrder.requiredSubProducts.map((item) => ({
-                        subProductName: item.subProductName,
-                        quantity: (item.requiredQuantity || 0),
-                        unit: 'KG',
-                      }))}
-                      columns={[
-                        {
-                          key: 'subProductName',
-                          label: t('product_name'),
-                          width: '50%',
-                        },
-                        {
-                          key: 'quantity',
-                          label: t('quantity'),
-                          width: '30%',
-                          align: 'center',
-                          render: (value) => (
-                            <span className="font-semibold">{value}</span>
-                          ),
-                        },
-                        {
-                          key: 'unit',
-                          label: t('unit'),
-                          width: '20%',
-                          align: 'center',
-                          render: (value) => (
-                            <span className="text-xs text-zinc-600">
-                              {value || '-'}
-                            </span>
-                          ),
-                        },
-                      ]}
-                      messageWhenNoData={t('no_sub_products_order')}
-                    />
+         <BillTable
+  data={selectedOrder.requiredSubProducts.map((item) => ({
+    subProductName: item.subProductName,
+    quantity: item.requiredQuantity || 0,
+    unit: item.unit ?? 'kg',
+  }))}
+  columns={[
+    {
+      key: 'subProductName',
+      label: t('product_name'),
+      width: '50%',
+    },
+    {
+      key: 'quantity',
+      label: t('quantity'),
+      width: '30%',
+      align: 'center',
+      render: (value) => (
+        <span className="font-semibold">{formatQty(value)}</span>
+      ),
+    },
+    {
+      key: 'unit',
+      label: t('unit'),
+      width: '20%',
+      align: 'center',
+      render: (value) => (
+        <span className="text-xs text-zinc-600">
+          {(value || 'kg').toUpperCase()}
+        </span>
+      ),
+    },
+  ]}
+  messageWhenNoData={t('no_sub_products_order')}
+/>
                   ) : (
                     <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
                       <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
                       {t('no_sub_products_order')}
                     </p>
                   )
-                ) : requiredSubProductsSummary.length > 0 ? (
-                  <BillTable
-                    data={requiredSubProductsSummary.map((item) => ({
-                      subProductName: item.label,
-                      quantity: item.quantity,
-                    }))}
-                    columns={[
-                      {
-                        key: 'subProductName',
-                        label: t('product_name'),
-                        width: '70%',
-                      },
-                      {
-                        key: 'quantity',
-                        label: t('quantity'),
-                        width: '30%',
-                        align: 'right',
-                        render: (value) => (
-                          <span className="font-semibold">{value} KG</span>
-                        ),
-                      },
-                    ]}
-                    messageWhenNoData={t('no_sub_products_planned')}
-                  />
-                ) : (
+) : requiredSubProductsSummary.length > 0 ? (
+  <BillTable
+    data={requiredSubProductsSummary.map((item) => ({
+      subProductName: item.label,
+      quantity: item.quantity,
+      unit: item.unit,
+    }))}
+    columns={[
+      {
+        key: 'subProductName',
+        label: t('product_name'),
+        width: '50%',
+      },
+      {
+        key: 'quantity',
+        label: t('quantity'),
+        width: '30%',
+        align: 'right',
+        render: (value) => (
+          <span className="font-semibold">{formatQty(value)}</span>
+        ),
+      },
+      {
+        key: 'unit',
+        label: t('unit'),
+        width: '20%',
+        align: 'center',
+        render: (value) => (
+          <span className="text-xs text-zinc-600">
+            {(value || 'kg').toUpperCase()}
+          </span>
+        ),
+      },
+    ]}
+    messageWhenNoData={t('no_sub_products_planned')}
+  />
+) : (
                   <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
                     <Archive size={16} className="shrink-0 text-zinc-300" />{' '}
                     {t('no_sub_products_planned')}

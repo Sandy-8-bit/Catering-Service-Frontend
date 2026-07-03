@@ -434,7 +434,7 @@ const total =
   row.unit?.toLowerCase() === 'gram'
     ? (row.unitPrice / 1000) * row.qtyPerUnit
     : row.unitPrice * row.qtyPerUnit
-    
+
     return (
       <span className="block w-[120px] text-sm font-semibold text-zinc-800">
         {total > 0 ? total.toFixed(2) : '—'}
@@ -543,15 +543,28 @@ const total =
         />
       ),
     },
-    {
-      headingTitle: 'Unit',
-      className: 'min-w-[140px] w-[140px] max-w-[140px]',
-      render: (_, row: RecipeRow) => (
-        <span className="block w-[140px] text-sm font-medium text-zinc-700">
-          {row.unit || 'KG'} 
-        </span>
-      ),
-    },
+{
+  headingTitle: 'Unit',
+  className: 'min-w-[140px] w-[140px] max-w-[140px]',
+  render: (_, row: RecipeRow) => (
+    <TableDropDown
+      title=""
+      options={unitOptions}
+      selected={
+        unitOptions.find(
+          (o) => o.label.toLowerCase() === row.unit?.trim().toLowerCase()
+        ) ?? null
+      }
+      placeholder="Select Unit"
+      isEditMode={isEditMode}
+      onChange={(option) =>
+        updateRow(row.localId, {
+          unit: option.label,
+        })
+      }
+    />
+  ),
+},
     {
       headingTitle: 'Notes',
       className: 'min-w-[200px] w-[200px] max-w-[200px]',
