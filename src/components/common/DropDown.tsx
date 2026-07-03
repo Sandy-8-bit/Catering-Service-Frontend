@@ -13,6 +13,7 @@ import Spinner from './Spinner'
 export interface DropdownOption {
   label: string
   id: number
+  secondaryLabel?: string
 }
 
 interface DropdownSelectProps {

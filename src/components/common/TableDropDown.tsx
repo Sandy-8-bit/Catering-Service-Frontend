@@ -41,11 +41,15 @@ const TableDropDown: React.FC<TableDropdownProps> = ({
   const inputRef = useRef<HTMLInputElement | null>(null)
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([])
 
-  const filteredOptions = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase()
-    if (!q) return options
-    return options.filter((o) => o.label.toLowerCase().includes(q))
-  }, [options, searchQuery])
+const filteredOptions = useMemo(() => {
+  const q = searchQuery.trim().toLowerCase()
+  if (!q) return options
+  return options.filter(
+    (o) =>
+      o.label.toLowerCase().includes(q) ||
+      (o.secondaryLabel ?? '').toLowerCase().includes(q)
+  )
+}, [options, searchQuery])
 
   const displayOption = useMemo<DropdownOption>(() => {
     if (selected) return selected

@@ -202,20 +202,28 @@ const RecipeDetailsPage = () => {
     [rawMaterials]
   )
 
-  const rawMaterialOptions = useMemo(
-    () => rawMaterials.map((m) => ({ id: m.id, label: m.primaryName })),
-    [rawMaterials]
-  )
+const rawMaterialOptions = useMemo(
+  () =>
+    rawMaterials.map((m) => ({
+      id: m.id,
+      label: m.primaryName,
+      secondaryLabel: m.secondaryName,
+    })),
+  [rawMaterials]
+)
 
   // Products available as sub-products — cannot be sub-product of itself
-  const subProductOptions = useMemo(
-    () =>
-      allProducts
-        .filter((p) => p.id !== productId)
-        .map((p) => ({ id: p.id, label: p.primaryName })),
-    [allProducts, productId]
-  )
-
+const subProductOptions = useMemo(
+  () =>
+    allProducts
+      .filter((p) => p.id !== productId)
+      .map((p) => ({
+        id: p.id,
+        label: p.primaryName,
+        secondaryLabel: p.secondaryName,
+      })),
+  [allProducts, productId]
+)
   useEffect(() => {
     const mapped = recipeRows.map((row) => mapRecipeToRow(row, rawMaterialMap))
     setEditData(ensureDraftRows(mapped))
