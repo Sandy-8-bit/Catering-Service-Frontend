@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'motion/react'
 
 import type { DropdownOption } from './DropDown'
@@ -41,15 +42,44 @@ const TableDropDown: React.FC<TableDropdownProps> = ({
   const inputRef = useRef<HTMLInputElement | null>(null)
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([])
 
-const filteredOptions = useMemo(() => {
-  const q = searchQuery.trim().toLowerCase()
-  if (!q) return options
-  return options.filter(
-    (o) =>
-      o.label.toLowerCase().includes(q) ||
-      (o.secondaryLabel ?? '').toLowerCase().includes(q)
-  )
-}, [options, searchQuery])
+  // ── Portal positioning ─────────────────────────────────────────────────
+  const [position, setPosition] = useState<{
+    top: number
+    left: number
+    width: number
+  }>({ top: 0, left: 0, width: 0 })
+
+  const updatePosition = () => {
+    if (!containerRef.current) return
+    const r = containerRef.current.getBoundingClientRect()
+    setPosition({
+      top: r.bottom + window.scrollY + 4,
+      left: r.left + window.scrollX,
+      width: r.width,
+    })
+  }
+
+  useEffect(() => {
+    if (!isOpen) return
+    updatePosition()
+    const handleReposition = () => updatePosition()
+    window.addEventListener('scroll', handleReposition, true)
+    window.addEventListener('resize', handleReposition)
+    return () => {
+      window.removeEventListener('scroll', handleReposition, true)
+      window.removeEventListener('resize', handleReposition)
+    }
+  }, [isOpen])
+
+  const filteredOptions = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return options
+    return options.filter(
+      (o) =>
+        o.label.toLowerCase().includes(q) ||
+        (o.secondaryLabel ?? '').toLowerCase().includes(q)
+    )
+  }, [options, searchQuery])
 
   const displayOption = useMemo<DropdownOption>(() => {
     if (selected) return selected
@@ -60,9 +90,13 @@ const filteredOptions = useMemo(() => {
     if (!isOpen || !isInteractive) return
 
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        !containerRef.current.contains(target) &&
+        !(event.target as HTMLElement).closest(
+          '[data-table-dropdown-portal="true"]'
+        )
       ) {
         setIsOpen(false)
         setSearchQuery('')
@@ -86,26 +120,29 @@ const filteredOptions = useMemo(() => {
     }
   }, [isInteractive])
 
-  const toggleOpen = () => {
-    const opening = !isOpen
-    setIsOpen(opening)
-    if (opening) {
-      setHighlightIndex(filteredOptions.length ? 0 : -1)
-    } else {
-      setSearchQuery('')
-      setHighlightIndex(-1)
-    }
-    // focus input when opening
+  const openDropdown = () => {
+    setIsOpen(true)
+    setHighlightIndex(filteredOptions.length ? 0 : -1)
+    updatePosition()
     setTimeout(() => {
       if (inputRef.current) inputRef.current.focus()
     }, 0)
   }
 
+  const toggleOpen = () => {
+    if (isOpen) {
+      setIsOpen(false)
+      setSearchQuery('')
+      setHighlightIndex(-1)
+      return
+    }
+    openDropdown()
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isOpen) {
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        setIsOpen(true)
-        setHighlightIndex(0)
+        openDropdown()
         e.preventDefault()
       }
       return
@@ -142,6 +179,8 @@ const filteredOptions = useMemo(() => {
   const handleSelect = (option: DropdownOption) => {
     onChange(option)
     setIsOpen(false)
+    setSearchQuery('')
+    setHighlightIndex(-1)
   }
 
   const displayLabel =
@@ -185,7 +224,7 @@ const filteredOptions = useMemo(() => {
               setSearchQuery(e.target.value)
               setHighlightIndex(0)
             }}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => openDropdown()}
             onKeyDown={handleKeyDown}
             placeholder={displayLabel}
             className="w-full bg-transparent text-sm text-slate-700 outline-none"
@@ -244,63 +283,74 @@ const filteredOptions = useMemo(() => {
         </button>
       )}
 
-      {isInteractive && isOpen && (
-        <motion.ul
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -4 }}
-          transition={{ duration: 0.15 }}
-          className={`absolute left-0 z-50 mt-3 max-h-48 w-full overflow-y-auto rounded-sm border border-zinc-100 bg-white text-sm ${dropdownClassName}`}
-        >
-          {filteredOptions.length === 0 && (
-            <li className="px-3 py-2 text-slate-500">
-              {searchQuery.trim().length > 0
-                ? 'No results found'
-                : 'No options available'}
-            </li>
-          )}
-          {filteredOptions.map((option, idx) => {
-            const isActive = option.id === displayOption.id
-            const isHighlighted = idx === highlightIndex
-            return (
-              <button
-                key={option.id}
-                ref={(el) => {
-                  optionRefs.current[idx] = el
-                }}
-                type="button"
-                onClick={() => handleSelect(option)}
-                className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left transition-colors ${
-                  isHighlighted
-                    ? 'bg-slate-100'
-                    : isActive
-                      ? 'bg-orange-500/5 text-orange-700'
-                      : 'text-zinc-500 hover:bg-zinc-50'
-                }`}
-              >
-                <span>{option.label}</span>
-                {(isActive || isHighlighted) && (
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M5 13l4 4L19 7"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </button>
-            )
-          })}
-        </motion.ul>
-      )}
+      {isInteractive &&
+        isOpen &&
+        createPortal(
+          <motion.ul
+            data-table-dropdown-portal="true"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'absolute',
+              top: position.top,
+              left: position.left,
+              width: position.width,
+              zIndex: 9999,
+            }}
+            className={`max-h-48 overflow-y-auto rounded-sm border border-zinc-100 bg-white text-sm shadow-lg ${dropdownClassName}`}
+          >
+            {filteredOptions.length === 0 && (
+              <li className="px-3 py-2 text-slate-500">
+                {searchQuery.trim().length > 0
+                  ? 'No results found'
+                  : 'No options available'}
+              </li>
+            )}
+            {filteredOptions.map((option, idx) => {
+              const isActive = option.id === displayOption.id
+              const isHighlighted = idx === highlightIndex
+              return (
+                <button
+                  key={option.id}
+                  ref={(el) => {
+                    optionRefs.current[idx] = el
+                  }}
+                  type="button"
+                  onClick={() => handleSelect(option)}
+                  className={`flex w-full cursor-pointer items-center justify-between px-3 py-2 text-left transition-colors ${
+                    isHighlighted
+                      ? 'bg-slate-100'
+                      : isActive
+                        ? 'bg-orange-500/5 text-orange-700'
+                        : 'text-zinc-500 hover:bg-zinc-50'
+                  }`}
+                >
+                  <span>{option.label}</span>
+                  {(isActive || isHighlighted) && (
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M5 13l4 4L19 7"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </button>
+              )
+            })}
+          </motion.ul>,
+          document.body
+        )}
     </motion.div>
   )
 }
