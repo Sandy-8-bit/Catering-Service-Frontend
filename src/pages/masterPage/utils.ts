@@ -19,8 +19,8 @@ export const formatQuantityForDisplay = (
     return { qty: qty.toFixed(2), unit: 'KG' }
   }
 
-  if (normalizedUnit === 'portion') {
-    return { qty: qty.toFixed(2), unit: 'Portion' }
+  if (normalizedUnit === 'piece') {
+    return { qty: qty.toFixed(2), unit: 'piece' }
   }
 
   // Unknown unit — show as-is, no conversion

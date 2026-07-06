@@ -326,7 +326,7 @@ return {
 const unitOptions = [
   { id: 1, label: 'KG' },
   { id: 2, label: 'Gram' },
-  { id: 3, label: 'Portion' },
+  { id: 3, label: 'Piece' },
 ]
   // ─── Column definitions ────────────────────────────────────────────────────
 
