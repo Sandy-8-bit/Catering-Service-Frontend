@@ -202,14 +202,28 @@ const OrderDetailsCard = ({ order }: { order: Order | null }) => {
             label={t('balance')}
             value={`₹${(order.balanceAmount || 0).toLocaleString()}`}
           />
-                  {order.remarks && (
-  <div className="col-span-2 lg:col-span-4">
+               
+<div className="col-span-1 lg:col-span-4 grid grid-cols-1 lg:grid-cols-4 gap-3">
+
+     <div className="lg:col-span-1">
+      <DetailCell
+      label={t('paymentdoneto')}
+      value={order.paymentDoneTo || <span className="text-zinc-400">{t('not_specified') || 'N/A'}</span>}
+    />
+</div>
+       {order.remarks && (
+    <div className="lg:col-span-3">
     <DetailCell
-      label="Remarks"
+      label={t('remarks')}
       value={order.remarks}
     />
-  </div>
+    </div>
 )}
+
+
+
+  </div>  
+
         </dl>
 
       </div>

@@ -225,8 +225,9 @@
   "returnable": "Returnable",
   "save_item": "Save Item",
   "no_additional_items": "No additional items available.",
-
+  "paymentdoneto": "Payment Done To",
   "headcount": "Headcount",
+  "remarks": "Remarks",
   "payment": "Payment",
   "advance": "Advance",
   "balance": "Balance",

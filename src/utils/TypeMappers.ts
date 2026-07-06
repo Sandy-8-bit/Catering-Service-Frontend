@@ -15,6 +15,7 @@ export const mapOrderToPayload = (order: Order): OrderPayload => {
     locationUrl: order.locationUrl || '',
     remarks: order.remarks || '',
     totalPlates: order.totalPlates || 1,
+    paymentDoneTo: order.paymentDoneTo || '',
     priceReducedPerPlate: order.priceReducedPerPlate || 0,
     deliveredByUs: order.deliveredByUs || false,
     driverId: order.driver?.driverId || undefined,
@@ -59,6 +60,9 @@ export const mapOrderToUpdatePayload = (
     eventDate: order.eventDate || existingOrder?.eventDate || '',
     eventTime: order.eventTime || existingOrder?.eventTime || '',
     locationUrl: order.locationUrl || existingOrder?.locationUrl || '',
+    paymentDoneTo:
+      order.paymentDoneTo || existingOrder?.paymentDoneTo || '',
+    remarks: order.remarks || existingOrder?.remarks || '',
     totalPlates: order.totalPlates || existingOrder?.totalPlates || 1,
     priceReducedPerPlate:
       order.priceReducedPerPlate ?? existingOrder?.priceReducedPerPlate ?? 0,

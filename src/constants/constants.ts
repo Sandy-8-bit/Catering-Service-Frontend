@@ -46,6 +46,7 @@ export const defaultOrderData: Order = {
   eventDate: '',
   eventTime: '',
   totalPlates: 0,
+  paymentDoneTo: '',
   deliveredByUs: false,
   offerPercentage: 0,
   advanceAmount: 0,

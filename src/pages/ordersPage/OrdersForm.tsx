@@ -323,7 +323,7 @@ export const OrdersForm = () => {
       onSuccess: () => {
         clearFormData() // Clear saved data on successful submission
         navigate(appRoutes.orders.path)
-        window.location.reload() // Refresh orders list after creating new order
+        window.location.reload() 
       },
     })
   }
@@ -333,7 +333,7 @@ export const OrdersForm = () => {
       onSuccess: () => {
         clearFormData() // Clear saved data on successful submission
         navigate(appRoutes.orders.path)
-        window.location.reload() // Refresh orders list after creating new order
+        window.location.reload() 
       },
     })
   }
@@ -1096,6 +1096,18 @@ export const OrdersForm = () => {
                     }))
                   }
                 />
+                <Input
+  title="Payment Done To"
+  name="paymentDoneTo"
+  placeholder="Enter Name / Mobile Number"
+  inputValue={editData.paymentDoneTo ?? ''}
+  onChange={(value) =>
+    setEditData((prev) => ({
+      ...prev,
+      paymentDoneTo: value,
+    }))
+  }
+/>
                 <DropdownSelect
                   title={t('payment_type')}
                   autoScroll={false}

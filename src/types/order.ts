@@ -64,6 +64,7 @@ export interface Order {
   customerAddress: string | null
   eventType: string | null
   eventDate: string
+  paymentDoneTo:string | null
   eventTime: string | null
   totalPlates: number | null
   deliveredByUs: boolean
@@ -132,6 +133,7 @@ export interface OrderPayload {
   discountPercentage?: number
   totalAmount?: number
   status?: string
+  paymentDoneTo?: string
   returnableItemsChecked?: boolean
   deliveredByUs: boolean
   driverId?: number
