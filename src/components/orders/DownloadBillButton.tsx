@@ -688,6 +688,8 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
     }
   }
 
+
+
   const resolvedDate = getDateWithDay(
     meta.date ?? customer.eventDate ?? undefined
   )
@@ -761,6 +763,7 @@ const emptyCount = Math.max(
     gap: 3 as const,
   }
 
+  
   return (
     <Document>
       <Page size="A5" style={s.page}>
@@ -947,7 +950,7 @@ const emptyCount = Math.max(
           )}
 
           {/* ── Footer: CHANGE 3 — 3 equal columns, same style ───────────── */}
-          {type === 'CUSTOMER' && (
+      {(type === 'CUSTOMER' || type === 'OWNER') && (
             <View style={s.footerBar}>
               {/* Left spacer */}
               <View
@@ -1020,7 +1023,7 @@ const emptyCount = Math.max(
           )}
 
           {/* Non-CUSTOMER footer — unchanged */}
-          {type !== 'CUSTOMER' && (
+         {type === 'STAFF' && (
             <View style={s.footerBar}>
               <View style={s.footerNoteCol} />
               <View style={s.footerTotalCol}>
@@ -1126,6 +1129,11 @@ const RawMaterialsTable: React.FC<{
 const SubProductsTable: React.FC<{ subProducts: BillSubProduct[] }> = ({
   subProducts,
 }) => {
+
+    const fmtQty = (v?: number | null): string => {
+  if (v == null) return '—'
+  return String(Math.round(v * 100) / 100)
+}
   return (
     <View style={s.rmSection}>
       {/* Section title bar — same style as Raw Materials but distinct color */}
@@ -1151,11 +1159,11 @@ const SubProductsTable: React.FC<{ subProducts: BillSubProduct[] }> = ({
           >
             {sp.subProductName ?? '—'}
           </Text>
-          <Text style={[s.tdQty, { width: 80 }]}>
-            {sp.requiredQuantity != null
-              ? `${sp.requiredQuantity} ${sp.unit ?? ''}`.trim()
-              : '—'}
-          </Text>
+<Text style={[s.tdQty, { width: 80 }]}>
+  {sp.requiredQuantity != null
+    ? `${fmtQty(sp.requiredQuantity)} ${sp.unit ?? ''}`.trim()
+    : '—'}
+</Text>
         </View>
       ))}
     </View>
@@ -1276,6 +1284,8 @@ Venkateshwara Mess & Catering`
       setLoadingType(null)
     }
   }
+
+  
 
   return (
     <>
