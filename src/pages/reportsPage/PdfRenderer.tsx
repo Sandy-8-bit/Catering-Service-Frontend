@@ -260,7 +260,6 @@ const pdf = StyleSheet.create({
   colQty: { flex: 1, textAlign: 'right' },
   colUnit: { flex: 1.5, textAlign: 'right' },
   colTotal: { flex: 1.5, textAlign: 'right' },
-  colPerPlate: { flex: 1.5, textAlign: 'right' },
   orderBanner: {
     backgroundColor: INDIGO_LIGHT,
     borderRadius: 5,
@@ -358,16 +357,6 @@ const SummaryPage: FC<{
         <Text style={pdf.cardLabel}>Total Income</Text>
         <Text style={pdf.cardValue}>{fmt(data.totalGlobalIncome)}</Text>
       </View>
-      {/* <View style={pdf.card}>
-        <Text style={pdf.cardLabel}>Misc Expenses</Text>
-        <Text
-          style={
-            data.totalGlobalMiscExpense > 0 ? pdf.cardValueRed : pdf.cardValue
-          }
-        >
-          {fmt(data.totalGlobalMiscExpense)}
-        </Text>
-      </View> */}
       <View style={pdf.card}>
         <Text style={pdf.cardLabel}>Head Count</Text>
         <Text style={pdf.cardValue}>{data.totalGlobalPeopleServed}</Text>
@@ -420,6 +409,7 @@ const SummaryPage: FC<{
 )
 
 // ─── PDF: Menu Items Table ────────────────────────────────────────────────────
+// NOTE: "Plate" (per-plate price) column removed — only Product, Qty, Unit, Total remain
 
 const MenuItemsTable: FC<{ items: MenuItem[]; title: string }> = ({
   items,
@@ -440,7 +430,6 @@ const MenuItemsTable: FC<{ items: MenuItem[]; title: string }> = ({
       <Text style={[pdf.thText, pdf.colProduct]}>Product</Text>
       <Text style={[pdf.thText, pdf.colQty]}>Qty</Text>
       <Text style={[pdf.thText, pdf.colUnit]}>Unit</Text>
-      <Text style={[pdf.thText, pdf.colPerPlate]}>Plate</Text>
       <Text style={[pdf.thText, pdf.colTotal]}>Total</Text>
     </View>
     {items.length === 0 ? (
@@ -459,9 +448,6 @@ const MenuItemsTable: FC<{ items: MenuItem[]; title: string }> = ({
           <Text style={[pdf.tdText, pdf.colQty]}>{item.quantity}</Text>
           <Text style={[pdf.tdText, pdf.colUnit]}>
             {fmt(item.productUnitPrice)}
-          </Text>
-          <Text style={[pdf.tdText, pdf.colPerPlate]}>
-            {fmt(item.perPlate)}
           </Text>
           <Text style={[pdf.tdBold, pdf.colTotal]}>
             {fmt(item.productLineTotal)}
@@ -745,6 +731,7 @@ const Td: FC<{
 )
 
 // ─── Preview: Menu Table ──────────────────────────────────────────────────────
+// NOTE: "Per Plate" column removed — only Product, Qty, Unit Price, Line Total remain
 
 const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
   items,
@@ -761,13 +748,12 @@ const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
     >
       {title}
     </p>
-    <ScrollTable minW={480}>
+    <ScrollTable minW={420}>
       <thead>
         <tr>
           <Th>Product</Th>
           <Th align="right">Qty</Th>
           <Th align="right">Unit Price</Th>
-          <Th align="right">Per Plate</Th>
           <Th align="right">Line Total</Th>
         </tr>
       </thead>
@@ -775,7 +761,7 @@ const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
         {items.length === 0 ? (
           <tr>
             <td
-              colSpan={5}
+              colSpan={4}
               style={{
                 padding: 14,
                 textAlign: 'center',
@@ -819,7 +805,6 @@ const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
               </td>
               <Td align="right">{item.quantity}</Td>
               <Td align="right">{fmt(item.productUnitPrice)}</Td>
-              <Td align="right">{fmt(item.perPlate)}</Td>
               <Td align="right" bold>
                 {fmt(item.productLineTotal)}
               </Td>
@@ -878,11 +863,6 @@ const PreviewSummaryPage: FC<{
       style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}
     >
       <StatCard label="Total Income" value={fmt(data.totalGlobalIncome)} />
-      {/* <StatCard
-        label="Misc Expenses"
-        value={fmt(data.totalGlobalMiscExpense)}
-        red={data.totalGlobalMiscExpense > 0}
-      /> */}
       <StatCard label="Head Count" value={data.totalGlobalPeopleServed} />
     </div>
 

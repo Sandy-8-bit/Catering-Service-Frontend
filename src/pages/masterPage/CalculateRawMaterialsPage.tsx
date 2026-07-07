@@ -9,6 +9,7 @@ import {
   Loader2,
   FlaskConical,
   Layers,
+  Search,
 } from 'lucide-react'
 import {
   Document,
@@ -247,8 +248,6 @@ interface RawMaterialsPdfDocProps {
 const RawMaterialsPdfDoc = ({
   materials,
   selectedProducts,
-  totalProducts,
-  totalQty,
 }: RawMaterialsPdfDocProps) => {
   const dateLabel = new Date().toLocaleDateString(undefined, {
     day: 'numeric',
@@ -256,11 +255,7 @@ const RawMaterialsPdfDoc = ({
     year: 'numeric',
   })
 
-  // Calculate total materials count
-  const totalMaterialsCount = materials.reduce(
-    (sum, item) => sum + (item.rawMaterials?.length ?? 0) + (item.subProducts?.length ?? 0),
-    0
-  )
+
 
   return (
     <Document>
@@ -525,7 +520,7 @@ export const CalculateRawMaterialsPage = () => {
   >([])
   const [hasCalculated, setHasCalculated] = useState(false)
   const [isDownloadingPDF, setIsDownloadingPDF] = useState(false)
-
+const [searchQuery, setSearchQuery] = useState('')
   const { data: allProducts = [], isLoading: isProductsLoading } =
     useFetchProducts()
   const {
@@ -534,8 +529,17 @@ export const CalculateRawMaterialsPage = () => {
     isError: isCalculationError,
   } = useCalculateRawMaterials()
 
-  const isRecipeProducts = allProducts.filter((p) => p.isRecipe)
+const isRecipeProducts = allProducts.filter((p) => p.isRecipe)
 
+const filteredProducts = useMemo(() => {
+  if (!searchQuery.trim()) return isRecipeProducts
+  const q = searchQuery.trim().toLowerCase()
+  return isRecipeProducts.filter(
+    (p) =>
+      p.primaryName?.toLowerCase().includes(q) ||
+      p.secondaryName?.toLowerCase().includes(q)
+  )
+}, [isRecipeProducts, searchQuery])
   const calculatePayload = useMemo(
     (): CalculateRawMaterialsRequest[] =>
       Object.entries(productQuantities)
@@ -596,6 +600,8 @@ export const CalculateRawMaterialsPage = () => {
     setCalculationResults([])
     setHasCalculated(false)
   }, [])
+
+  
 
   /**
    * Generate the PDF using @react-pdf/renderer and trigger browser download.
@@ -714,14 +720,24 @@ export const CalculateRawMaterialsPage = () => {
           <>
             {/* Left Panel - Products Grid/List */}
             <div className="flex w-full flex-col gap-4 border-b border-zinc-200 bg-white p-4 lg:w-2/3 lg:overflow-y-auto lg:border-r lg:border-b-0">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className={detailSectionTitleClass}>{t('products')}</p>
-                  <h3 className="text-lg font-bold text-zinc-900">
-                    {t('select_products_with_quantity')}
-                  </h3>
-                </div>
-              </div>
+          <div className="flex items-center justify-between gap-3">
+  <div>
+    <p className={detailSectionTitleClass}>{t('products')}</p>
+    <h3 className="text-lg font-bold text-zinc-900">
+      {t('select_products_with_quantity')}
+    </h3>
+  </div>
+  <div className="relative w-full max-w-[220px]">
+    <Search className="absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+    <input
+      type="text"
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      placeholder={t('search_products') || 'Search products...'}
+      className="w-full rounded-lg border border-zinc-300 py-2 pr-3 pl-8 text-sm text-zinc-900 focus:border-orange-500 focus:outline-none"
+    />
+  </div>
+</div>
 
               {isProductsLoading ? (
                 <div className="flex flex-col gap-3">
@@ -732,7 +748,7 @@ export const CalculateRawMaterialsPage = () => {
                     />
                   ))}
                 </div>
-              ) : isRecipeProducts.length > 0 ? (
+              ) : filteredProducts.length > 0 ? (
                 <div className="w-full overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -752,7 +768,7 @@ export const CalculateRawMaterialsPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {isRecipeProducts.map((product) => (
+                      {filteredProducts.map((product) => (
                         <tr
                           key={product.id}
                           className="border-b border-zinc-200 transition-colors hover:bg-orange-50"
