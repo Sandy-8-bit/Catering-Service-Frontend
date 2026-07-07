@@ -10,14 +10,13 @@ import {
   Image,
 } from '@react-pdf/renderer'
 
-import TamilFontLocal from '/fonts/NotoSansTamil.ttf'
 import { DownloadCloudIcon } from 'lucide-react'
 
 Font.register({
   family: 'NotoSansTamil',
   fonts: [
-    { src: TamilFontLocal, fontWeight: 'normal' },
-    { src: TamilFontLocal, fontWeight: 'bold' },
+    { src: '/fonts/NotoSansTamil.ttf', fontWeight: 'normal' },
+    { src: '/fonts/NotoSansTamil.ttf', fontWeight: 'bold' },
   ],
 })
 
@@ -51,7 +50,6 @@ export interface MenuItem {
   productUnitPrice: number
   productLineTotal: number
   productRawMaterialCost: number
-  productProfit: number
   rawMaterials: RawMaterial[]
   perPlate: number
 }
@@ -70,7 +68,6 @@ export interface OrderDetail {
   totalPeople: number
   orderIncome: number
   orderExpense: number
-  orderProfit: number
   menuItems: MenuItem[]
   additionalMenuItems: MenuItem[]
   additionalItems: AdditionalItem[]
@@ -80,7 +77,6 @@ export interface OrderDetail {
 export interface ReportData {
   totalGlobalIncome: number
   totalGlobalMiscExpense: number
-  totalGlobalNetProfit: number
   totalGlobalPeopleServed: number
   orderDetails: OrderDetail[]
 }
@@ -128,14 +124,12 @@ const GRAY_500 = '#6B7280'
 const GRAY_700 = '#374151'
 const GRAY_900 = '#111827'
 const WHITE = '#FFFFFF'
-const GREEN = '#059669'
 const RED = '#DC2626'
 
 const PREVIEW_FONT =
   "'Noto Sans Tamil', 'Latha', 'Vijaya', 'Helvetica Neue', Helvetica, Arial, sans-serif"
 
 // ─── PDF Styles (A5: 148×210mm) ───────────────────────────────────────────────
-// A5 is ~70% the area of A4. Base font 9→7.5, headers scale accordingly.
 
 const pdf = StyleSheet.create({
   page: {
@@ -147,7 +141,6 @@ const pdf = StyleSheet.create({
     fontSize: 8,
     color: GRAY_700,
   },
-  // ── Header ──
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -199,7 +192,6 @@ const pdf = StyleSheet.create({
     color: GRAY_700,
     marginTop: 2,
   },
-  // ── Summary cards ──
   summaryRow: { flexDirection: 'row', gap: 6, marginBottom: 16 },
   card: {
     flex: 1,
@@ -209,7 +201,6 @@ const pdf = StyleSheet.create({
     borderWidth: 1,
     borderColor: GRAY_200,
   },
-  cardAccent: { flex: 1, backgroundColor: INDIGO, borderRadius: 5, padding: 9 },
   cardLabel: {
     fontSize: 6,
     fontFamily: 'Helvetica',
@@ -218,19 +209,8 @@ const pdf = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-  cardLabelLight: {
-    fontSize: 6,
-    fontFamily: 'Helvetica',
-    color: '#A5B4FC',
-    marginBottom: 3,
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-  },
   cardValue: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: GRAY_900 },
-  cardValueLight: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: WHITE },
-  cardValueGreen: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: GREEN },
   cardValueRed: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: RED },
-  // ── Section title ──
   sectionTitle: {
     fontSize: 9,
     fontFamily: 'Helvetica-Bold',
@@ -238,7 +218,6 @@ const pdf = StyleSheet.create({
     marginBottom: 7,
     marginTop: 3,
   },
-  // ── Table ──
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: INDIGO,
@@ -264,7 +243,6 @@ const pdf = StyleSheet.create({
   thText: { color: WHITE, fontSize: 7, fontFamily: 'Helvetica-Bold' },
   tdText: { fontFamily: 'Helvetica', color: GRAY_700, fontSize: 7.5 },
   tdBold: { fontFamily: 'Helvetica-Bold', color: GRAY_900, fontSize: 7.5 },
-  tdGreen: { fontFamily: 'Helvetica-Bold', color: GREEN, fontSize: 7.5 },
   tdTamil: {
     fontFamily: 'NotoSansTamil',
     fontWeight: 'bold',
@@ -278,14 +256,11 @@ const pdf = StyleSheet.create({
     fontSize: 6.5,
     marginTop: 1,
   },
-  // ── Column widths ──
   colProduct: { flex: 3 },
   colQty: { flex: 1, textAlign: 'right' },
   colUnit: { flex: 1.5, textAlign: 'right' },
   colTotal: { flex: 1.5, textAlign: 'right' },
-  colProfit: { flex: 1.5, textAlign: 'right' },
   colPerPlate: { flex: 1.5, textAlign: 'right' },
-  // ── Order banner ──
   orderBanner: {
     backgroundColor: INDIGO_LIGHT,
     borderRadius: 5,
@@ -299,7 +274,7 @@ const pdf = StyleSheet.create({
   },
   orderBannerTitle: {
     fontSize: 9.5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: 'NotoSansTamil',
     color: INDIGO_DARK,
   },
   orderBannerSub: {
@@ -316,7 +291,6 @@ const pdf = StyleSheet.create({
     marginBottom: 3,
   },
   badgeText: { color: WHITE, fontSize: 6.5, fontFamily: 'Helvetica-Bold' },
-  // ── Empty / thank-you / footer ──
   emptyRow: { padding: 10, alignItems: 'center' },
   emptyText: {
     fontSize: 7,
@@ -384,7 +358,7 @@ const SummaryPage: FC<{
         <Text style={pdf.cardLabel}>Total Income</Text>
         <Text style={pdf.cardValue}>{fmt(data.totalGlobalIncome)}</Text>
       </View>
-      <View style={pdf.card}>
+      {/* <View style={pdf.card}>
         <Text style={pdf.cardLabel}>Misc Expenses</Text>
         <Text
           style={
@@ -393,13 +367,9 @@ const SummaryPage: FC<{
         >
           {fmt(data.totalGlobalMiscExpense)}
         </Text>
-      </View>
-      <View style={pdf.cardAccent}>
-        <Text style={pdf.cardLabelLight}>Net Profit</Text>
-        <Text style={pdf.cardValueLight}>{fmt(data.totalGlobalNetProfit)}</Text>
-      </View>
+      </View> */}
       <View style={pdf.card}>
-        <Text style={pdf.cardLabel}>People Served</Text>
+        <Text style={pdf.cardLabel}>Head Count</Text>
         <Text style={pdf.cardValue}>{data.totalGlobalPeopleServed}</Text>
       </View>
     </View>
@@ -409,12 +379,11 @@ const SummaryPage: FC<{
       <Text style={[pdf.thText, { flex: 0.5 }]}>#</Text>
       <Text style={[pdf.thText, { flex: 2 }]}>Customer</Text>
       <Text style={[pdf.thText, { flex: 1.5 }]}>Event Date</Text>
-      <Text style={[pdf.thText, { flex: 0.8, textAlign: 'right' }]}>Pax</Text>
-      <Text style={[pdf.thText, { flex: 1.5, textAlign: 'right' }]}>
-        Income
+      <Text style={[pdf.thText, { flex: 0.8, textAlign: 'right' }]}>
+        Head Count
       </Text>
       <Text style={[pdf.thText, { flex: 1.5, textAlign: 'right' }]}>
-        Profit
+        Income
       </Text>
     </View>
     {data.orderDetails.map((o, i) => (
@@ -423,16 +392,13 @@ const SummaryPage: FC<{
         style={i % 2 === 0 ? pdf.tableRow : pdf.tableRowAlt}
       >
         <Text style={[pdf.tdText, { flex: 0.5 }]}>{o.orderId}</Text>
-        <Text style={[pdf.tdBold, { flex: 2 }]}>{o.customerName}</Text>
+        <Text style={[pdf.tdTamil, { flex: 2 }]}>{o.customerName}</Text>
         <Text style={[pdf.tdText, { flex: 1.5 }]}>{fmtDate(o.eventDate)}</Text>
         <Text style={[pdf.tdText, { flex: 0.8, textAlign: 'right' }]}>
           {o.totalPeople}
         </Text>
         <Text style={[pdf.tdText, { flex: 1.5, textAlign: 'right' }]}>
           {fmt(o.orderIncome)}
-        </Text>
-        <Text style={[pdf.tdGreen, { flex: 1.5, textAlign: 'right' }]}>
-          {fmt(o.orderProfit)}
         </Text>
       </View>
     ))}
@@ -476,7 +442,6 @@ const MenuItemsTable: FC<{ items: MenuItem[]; title: string }> = ({
       <Text style={[pdf.thText, pdf.colUnit]}>Unit</Text>
       <Text style={[pdf.thText, pdf.colPerPlate]}>Plate</Text>
       <Text style={[pdf.thText, pdf.colTotal]}>Total</Text>
-      <Text style={[pdf.thText, pdf.colProfit]}>Profit</Text>
     </View>
     {items.length === 0 ? (
       <View style={pdf.emptyRow}>
@@ -500,9 +465,6 @@ const MenuItemsTable: FC<{ items: MenuItem[]; title: string }> = ({
           </Text>
           <Text style={[pdf.tdBold, pdf.colTotal]}>
             {fmt(item.productLineTotal)}
-          </Text>
-          <Text style={[pdf.tdGreen, pdf.colProfit]}>
-            {fmt(item.productProfit)}
           </Text>
         </View>
       ))
@@ -543,7 +505,7 @@ const OrderPage: FC<{
           Event Date: {fmtDate(order.eventDate)}
         </Text>
         <Text style={pdf.orderBannerSub}>
-          People Served: {order.totalPeople}
+          Head Count: {order.totalPeople}
         </Text>
         {order.rawMaterialUsage && (
           <Text style={pdf.orderBannerSub}>
@@ -555,7 +517,7 @@ const OrderPage: FC<{
         <View style={pdf.badge}>
           <Text style={pdf.badgeText}>ORDER #{order.orderId}</Text>
         </View>
-        <Text style={[pdf.orderBannerSub, { color: GREEN, fontWeight: '700' }]}>
+        <Text style={pdf.orderBannerSub}>
           Income: {fmt(order.orderIncome)}
         </Text>
       </View>
@@ -649,18 +611,16 @@ const pageShell = (isMobile: boolean): React.CSSProperties => ({
 const StatCard: FC<{
   label: string
   value: string | number
-  accent?: boolean
-  green?: boolean
   red?: boolean
-}> = ({ label, value, accent = false, green = false, red = false }) => (
+}> = ({ label, value, red = false }) => (
   <div
     style={{
       flex: 1,
       minWidth: 100,
       borderRadius: 8,
       padding: '13px 14px',
-      backgroundColor: accent ? INDIGO : GRAY_50,
-      border: accent ? 'none' : `1px solid ${GRAY_200}`,
+      backgroundColor: GRAY_50,
+      border: `1px solid ${GRAY_200}`,
     }}
   >
     <p
@@ -668,7 +628,7 @@ const StatCard: FC<{
         fontSize: 9,
         textTransform: 'uppercase',
         letterSpacing: '0.06em',
-        color: accent ? '#A5B4FC' : GRAY_500,
+        color: GRAY_500,
         fontWeight: 600,
         margin: '0 0 5px 0',
       }}
@@ -679,7 +639,7 @@ const StatCard: FC<{
       style={{
         fontSize: 12,
         fontWeight: 800,
-        color: accent ? WHITE : green ? GREEN : red ? RED : GRAY_900,
+        color: red ? RED : GRAY_900,
         margin: 0,
         lineHeight: 1.2,
       }}
@@ -768,22 +728,15 @@ const Td: FC<{
   children: React.ReactNode
   align?: 'left' | 'right'
   bold?: boolean
-  green?: boolean
   tamil?: boolean
-}> = ({
-  children,
-  align = 'left',
-  bold = false,
-  green = false,
-  tamil = false,
-}) => (
+}> = ({ children, align = 'left', bold = false, tamil = false }) => (
   <td
     style={{
       padding: '8px 10px',
       textAlign: align,
       fontSize: 11,
       fontWeight: bold ? 700 : 400,
-      color: green ? GREEN : bold ? GRAY_900 : GRAY_700,
+      color: bold ? GRAY_900 : GRAY_700,
       fontFamily: tamil ? PREVIEW_FONT : 'inherit',
     }}
   >
@@ -808,7 +761,7 @@ const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
     >
       {title}
     </p>
-    <ScrollTable minW={520}>
+    <ScrollTable minW={480}>
       <thead>
         <tr>
           <Th>Product</Th>
@@ -816,14 +769,13 @@ const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
           <Th align="right">Unit Price</Th>
           <Th align="right">Per Plate</Th>
           <Th align="right">Line Total</Th>
-          <Th align="right">Profit</Th>
         </tr>
       </thead>
       <tbody>
         {items.length === 0 ? (
           <tr>
             <td
-              colSpan={6}
+              colSpan={5}
               style={{
                 padding: 14,
                 textAlign: 'center',
@@ -870,9 +822,6 @@ const PreviewMenuTable: FC<{ items: MenuItem[]; title: string }> = ({
               <Td align="right">{fmt(item.perPlate)}</Td>
               <Td align="right" bold>
                 {fmt(item.productLineTotal)}
-              </Td>
-              <Td align="right" bold green>
-                {fmt(item.productProfit)}
               </Td>
             </tr>
           ))
@@ -929,17 +878,12 @@ const PreviewSummaryPage: FC<{
       style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}
     >
       <StatCard label="Total Income" value={fmt(data.totalGlobalIncome)} />
-      <StatCard
+      {/* <StatCard
         label="Misc Expenses"
         value={fmt(data.totalGlobalMiscExpense)}
         red={data.totalGlobalMiscExpense > 0}
-      />
-      <StatCard
-        label="Net Profit"
-        value={fmt(data.totalGlobalNetProfit)}
-        accent
-      />
-      <StatCard label="People Served" value={data.totalGlobalPeopleServed} />
+      /> */}
+      <StatCard label="Head Count" value={data.totalGlobalPeopleServed} />
     </div>
 
     <p
@@ -952,15 +896,14 @@ const PreviewSummaryPage: FC<{
     >
       Orders Overview
     </p>
-    <ScrollTable minW={460}>
+    <ScrollTable minW={420}>
       <thead>
         <tr>
           <Th>#</Th>
           <Th>Customer</Th>
           <Th>Event Date</Th>
-          <Th align="right">Pax</Th>
+          <Th align="right">Head Count</Th>
           <Th align="right">Income</Th>
-          <Th align="right">Profit</Th>
         </tr>
       </thead>
       <tbody>
@@ -970,13 +913,12 @@ const PreviewSummaryPage: FC<{
             style={{ backgroundColor: i % 2 === 0 ? WHITE : GRAY_50 }}
           >
             <Td>{o.orderId}</Td>
-            <Td bold>{o.customerName}</Td>
+            <Td bold tamil>
+              {o.customerName}
+            </Td>
             <Td>{fmtDate(o.eventDate)}</Td>
             <Td align="right">{o.totalPeople}</Td>
             <Td align="right">{fmt(o.orderIncome)}</Td>
-            <Td align="right" bold green>
-              {fmt(o.orderProfit)}
-            </Td>
           </tr>
         ))}
       </tbody>
@@ -1077,6 +1019,7 @@ const PreviewOrderPage: FC<{
             fontWeight: 800,
             color: INDIGO_DARK,
             margin: '0 0 3px 0',
+            fontFamily: PREVIEW_FONT,
           }}
         >
           {order.customerName}
@@ -1085,7 +1028,7 @@ const PreviewOrderPage: FC<{
           Event Date: {fmtDate(order.eventDate)}
         </p>
         <p style={{ fontSize: 10, color: GRAY_500, margin: 0 }}>
-          People Served: {order.totalPeople}
+          Head Count: {order.totalPeople}
         </p>
         {order.rawMaterialUsage && (
           <p style={{ fontSize: 10, color: GRAY_500, margin: '2px 0 0 0' }}>
@@ -1108,7 +1051,7 @@ const PreviewOrderPage: FC<{
         >
           ORDER #{order.orderId}
         </span>
-        <p style={{ fontSize: 10, color: GREEN, fontWeight: 700, margin: 0 }}>
+        <p style={{ fontSize: 10, color: GRAY_700, fontWeight: 700, margin: 0 }}>
           Income: {fmt(order.orderIncome)}
         </p>
       </div>
