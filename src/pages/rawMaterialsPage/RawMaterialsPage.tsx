@@ -441,37 +441,11 @@ export const RawMaterialsPage = () => {
       </header>
       <div className="divider min-w-full border border-[#F1F1F1]" />
       <section className="flex w-full flex-row justify-between gap-3 px-3 py-4">
-        <div className="flex w-max flex-row justify-end gap-3">
-          <ButtonSm
-            className="font-medium"
-            state="outline"
-            onClick={() => {}}
-            disabled={isEditRawMaterialsPending}
-          >
-            <Filter className="h-4 w-4 text-black" />
-            {t('filter')}
-          </ButtonSm>
-          <div className="divider min-h-full border border-[#F1F1F1]" />
-          <DropdownSelect
-            className="font-medium"
-            onChange={() => {}}
-            options={[]}
-            selected={{ id: 1, label: 'Table View' }}
-            disabled={isEditRawMaterialsPending}
-          />
-        </div>
+   
 
         <div className="flex w-max flex-row justify-end gap-3">
-          <ButtonSm
-            className="font-medium"
-            state="outline"
-            onClick={() => {}}
-            disabled={isEditRawMaterialsPending}
-          >
-            <UploadCloud className="h-5 w-5 text-black" />
-            {t('export_data')}
-          </ButtonSm>
-          <div className="divider min-h-full border border-[#F1F1F1]" />
+    
+          
           {!isAddMode && selectedRows.length > 0 && (
             <>
               <ButtonSm
@@ -482,7 +456,7 @@ export const RawMaterialsPage = () => {
                 <Trash2 className="h-4 w-4 text-red-500" />
                 {t('delete')}
               </ButtonSm>
-              <div className="divider min-h-full border border-[#F1F1F1]" />
+              
             </>
           )}
           {isAddMode ? (
