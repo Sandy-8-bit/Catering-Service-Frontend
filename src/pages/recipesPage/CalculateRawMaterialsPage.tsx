@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Calculator, Download } from 'lucide-react'
+import { ArrowLeft, Calculator, Download, FlaskConical, Layers } from 'lucide-react'
 import jsPDF from 'jspdf'
 import { toast } from 'react-hot-toast'
 
@@ -326,79 +326,127 @@ const CalculateRawMaterialsPage = () => {
               </div>
             </div>
 
-            {/* Results by product */}
-            <div className="max-h-[400px] space-y-4 overflow-y-auto">
-              {result.map((item) => (
-                <div
-                  key={item.productId}
-                  className="rounded-lg border border-zinc-200 p-4"
-                >
-                  {/* Product header */}
-                  <div className="mb-3 flex items-center justify-between border-b border-zinc-100 pb-2">
-                    <h4 className="font-semibold text-zinc-900">
-                      {item.productPrimaryName}
-                    </h4>
-                    <span className="text-xs font-medium text-zinc-500">
-                      Qty: {item.orderedQuantity}
-                    </span>
-                  </div>
+{/* Results by product */}
+<div className="max-h-[420px] space-y-4 overflow-y-auto pr-1">
+  {result.map((item) => {
+    const rawCount = item.rawMaterials?.length ?? 0
+    const subCount = item.subProducts?.length ?? 0
 
-                  {/* Raw Materials */}
-                  {(item.rawMaterials?.length ?? 0) > 0 && (
-                    <div className="mb-3 space-y-2">
-                      <p className="text-xs font-medium tracking-wider text-orange-600 uppercase">
-                        Raw Materials
-                      </p>
-                      {(item.rawMaterials ?? []).map((material, idx) => (
-                        <div key={`raw-${item.productId}-${idx}`} className="space-y-0.5 text-sm">
-                          <div className="flex items-center justify-between text-zinc-700">
-                            <span>{material.rawMaterialPrimaryName}</span>
-                            <span className="font-semibold text-zinc-900">
-                              {material.totalQuantity.toFixed(2)} {material.unit}
-                            </span>
-                          </div>
-                          {material.rawMaterialSecondaryName && (
-                            <p className="text-xs text-zinc-400">
-                              {material.rawMaterialSecondaryName}
-                            </p>
-                          )}
-                          {material.notes && (
-                            <p className="text-xs italic text-amber-600">
-                              💡 {material.notes}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+    return (
+      <div
+        key={item.productId}
+        className="overflow-hidden rounded-xl border border-zinc-200 shadow-sm"
+      >
+        {/* Product header */}
+        <div className="flex items-center justify-between bg-zinc-900 px-4 py-3">
+          <h4 className="font-semibold text-white">
+            {item.productPrimaryName}
+          </h4>
+          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white">
+            × {item.orderedQuantity}
+          </span>
+        </div>
 
-                  {/* Sub Products */}
-                  {(item.subProducts?.length ?? 0) > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium tracking-wider text-blue-600 uppercase">
-                        Sub Products
-                      </p>
-                      {(item.subProducts ?? []).map((subProduct, idx) => (
-                        <div key={`sub-${item.productId}-${idx}`} className="space-y-0.5 text-sm">
-                          <div className="flex items-center justify-between text-zinc-700">
-                            <span>[{subProduct.rawMaterialPrimaryName}]</span>
-                            <span className="font-semibold text-zinc-900">
-                              {subProduct.totalQuantity.toFixed(2)}{' '}
-                              {subProduct.unit}
-                            </span>
-                          </div>
-                          {subProduct.notes && (
-                            <p className="text-xs italic text-amber-600">
-                              💡 {subProduct.notes}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+        <div className="grid grid-cols-1 gap-px bg-zinc-100 sm:grid-cols-2">
+          {/* Raw Materials panel */}
+          <div className={`bg-orange-50/60 p-4 ${subCount === 0 ? 'sm:col-span-2' : ''}`}>
+            <div className="mb-3 flex items-center gap-2">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-100">
+                <FlaskConical className="h-3.5 w-3.5 text-orange-700" />
+              </div>
+              <p className="text-xs font-bold tracking-wide text-orange-800 uppercase">
+                Raw materials
+              </p>
+              <span className="ml-auto rounded-full bg-orange-200 px-2 py-0.5 text-[11px] font-semibold text-orange-800">
+                {rawCount}
+              </span>
             </div>
+
+            {rawCount === 0 ? (
+              <p className="text-sm text-zinc-400 italic">None required</p>
+            ) : (
+              <div className="space-y-3">
+                {(item.rawMaterials ?? []).map((material, idx) => (
+                  <div
+                    key={`raw-${item.productId}-${idx}`}
+                    className="rounded-lg bg-white/70 p-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-zinc-800">
+                          {material.rawMaterialPrimaryName}
+                        </p>
+                        {material.rawMaterialSecondaryName && (
+                          <p className="truncate text-xs text-zinc-400">
+                            {material.rawMaterialSecondaryName}
+                          </p>
+                        )}
+                      </div>
+                      <p className="shrink-0 text-sm font-bold text-zinc-900">
+                        {material.totalQuantity.toFixed(2)}
+                        <span className="ml-1 text-xs font-normal text-zinc-500">
+                          {material.unit}
+                        </span>
+                      </p>
+                    </div>
+                    {material.notes && (
+                      <p className="mt-2 border-t border-orange-100 pt-1.5 text-xs text-orange-700">
+                        {material.notes}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sub Products panel */}
+          {subCount > 0 && (
+            <div className="bg-indigo-50/60 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100">
+                  <Layers className="h-3.5 w-3.5 text-indigo-700" />
+                </div>
+                <p className="text-xs font-bold tracking-wide text-indigo-800 uppercase">
+                  Sub products
+                </p>
+                <span className="ml-auto rounded-full bg-indigo-200 px-2 py-0.5 text-[11px] font-semibold text-indigo-800">
+                  {subCount}
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {(item.subProducts ?? []).map((subProduct, idx) => (
+                  <div
+                    key={`sub-${item.productId}-${idx}`}
+                    className="rounded-lg bg-white/70 p-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="min-w-0 truncate text-sm font-semibold text-zinc-800">
+                        {subProduct.rawMaterialPrimaryName}
+                      </p>
+                      <p className="shrink-0 text-sm font-bold text-zinc-900">
+                        {subProduct.totalQuantity.toFixed(2)}
+                        <span className="ml-1 text-xs font-normal text-zinc-500">
+                          {subProduct.unit}
+                        </span>
+                      </p>
+                    </div>
+                    {subProduct.notes && (
+                      <p className="mt-2 border-t border-indigo-100 pt-1.5 text-xs text-indigo-700">
+                        {subProduct.notes}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  })}
+</div>
 
             {/* Overall Summary */}
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">

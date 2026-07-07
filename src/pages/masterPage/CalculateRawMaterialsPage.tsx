@@ -7,6 +7,8 @@ import {
   Plus,
   Download,
   Loader2,
+  FlaskConical,
+  Layers,
 } from 'lucide-react'
 import {
   Document,
@@ -279,7 +281,7 @@ const RawMaterialsPdfDoc = ({
         <View style={pdfStyles.solidDivider} />
 
         {/* ── Summary Cards ── */}
-        <View style={pdfStyles.summaryRow}>
+        {/* <View style={pdfStyles.summaryRow}>
           <View style={pdfStyles.summaryCard}>
             <Text style={pdfStyles.summaryCardLabel}>Products Used</Text>
             <Text style={pdfStyles.summaryCardValue}>{totalProducts}</Text>
@@ -294,7 +296,7 @@ const RawMaterialsPdfDoc = ({
             <Text style={pdfStyles.summaryCardLabel}>Raw Materials</Text>
             <Text style={pdfStyles.summaryCardValue}>{totalMaterialsCount}</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* ── Products Used Chips ── */}
         {selectedProducts.length > 0 && (
@@ -483,9 +485,7 @@ const RawMaterialsPdfDoc = ({
         {/* ── Footer ── */}
         <View style={pdfStyles.footer}>
           <Text style={pdfStyles.footerThankYou}>Thank you!</Text>
-          <Text style={pdfStyles.footerNote}>
-            Computer-generated — no signature needed
-          </Text>
+    
         </View>
       </Page>
     </Document>
@@ -964,99 +964,114 @@ export const CalculateRawMaterialsPage = () => {
                 )}
 
                 {calculationResults.length > 0 ? (
-                  <div className="flex flex-col gap-4 overflow-y-auto">
-                    {calculationResults.map((item) => (
-                      <div
-                        key={item.productId}
-                        className="rounded-lg border border-zinc-200 p-4"
-                      >
-                        {/* Product header */}
-                        <div className="mb-3 flex items-center justify-between border-b border-zinc-100 pb-2">
-                          <h4 className="font-semibold text-zinc-900">
-                            {item.productPrimaryName}
-                          </h4>
-                          <span className="text-xs font-medium text-zinc-500">
-                            Qty: {item.orderedQuantity}
-                          </span>
-                        </div>
+<div className="flex flex-col gap-4 overflow-y-auto">
+  {calculationResults.map((item) => {
+    const rawCount = item.rawMaterials?.length ?? 0
+    const subCount = item.subProducts?.length ?? 0
 
-                        {/* Raw Materials */}
-                        {(item.rawMaterials?.length ?? 0) > 0 && (
-                          <div className="mb-3 space-y-2">
-                            <p className="text-xs font-medium tracking-wider text-orange-600 uppercase">
-                              Raw Materials
-                            </p>
-                            {(item.rawMaterials ?? []).map((material, idx) => (
-                              <div
-                                key={`raw-${item.productId}-${idx}`}
-                                className="space-y-0.5 text-sm"
-                              >
-                                <div className="flex items-center justify-between text-zinc-700">
-                                  <span>{material.rawMaterialPrimaryName}</span>
-                         {(() => {
-  const { qty, unit } = formatQuantityForDisplay(
-    material.totalQuantity,
-    material.unit
-  )
-  return (
-    <span className="font-semibold text-zinc-900">
-      {qty} {unit}
-    </span>
-  )
-})()}
-                                </div>
-                                {material.rawMaterialSecondaryName && (
-                                  <p className="text-xs text-zinc-400">
-                                    {material.rawMaterialSecondaryName}
-                                  </p>
-                                )}
-                                {material.notes && (
-                                  <p className="text-xs italic text-amber-600">
-                                    💡 {material.notes}
-                                  </p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
+    return (
+      <div
+        key={item.productId}
+        className="flex flex-col gap-3 rounded-lg border border-zinc-200 p-4"
+      >
+        {/* Product header */}
+        <div className="flex items-center justify-between">
+          <h4 className="font-semibold text-zinc-900">
+            {item.productPrimaryName}
+          </h4>
+          <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600">
+            Qty: {item.orderedQuantity}
+          </span>
+        </div>
 
-                        {/* Sub Products */}
-                        {(item.subProducts?.length ?? 0) > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-xs font-medium tracking-wider text-blue-600 uppercase">
-                              Sub Products
-                            </p>
-                            {(item.subProducts ?? []).map((subProduct, idx) => (
-                              <div
-                                key={`sub-${item.productId}-${idx}`}
-                                className="space-y-0.5 text-sm"
-                              >
-                                <div className="flex items-center justify-between text-zinc-700">
-                                  <span>[{subProduct.rawMaterialPrimaryName}]</span>
-                                  {(() => {
-  const { qty, unit } = formatQuantityForDisplay(
-    subProduct.totalQuantity,
-    subProduct.unit ?? 'KG'
-  )
-  return (
-    <span className="font-semibold text-zinc-900">
-      {qty} {unit}
-    </span>
-  )
-})()}
-                                </div>
-                                {subProduct.notes && (
-                                  <p className="text-xs italic text-amber-600">
-                                    💡 {subProduct.notes}
-                                  </p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+        {/* Raw Materials */}
+        {rawCount > 0 && (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-1.5">
+              <FlaskConical className="h-3.5 w-3.5 text-orange-600" />
+              <p className="text-xs font-semibold tracking-wide text-orange-600 uppercase">
+                Raw materials ({rawCount})
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {(item.rawMaterials ?? []).map((material, idx) => {
+                const { qty, unit } = formatQuantityForDisplay(
+                  material.totalQuantity,
+                  material.unit
+                )
+                return (
+                  <div
+                    key={`raw-${item.productId}-${idx}`}
+                    className="flex flex-col gap-0.5"
+                  >
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-zinc-700">
+                        {material.rawMaterialPrimaryName}
+                      </span>
+                      <span className="shrink-0 font-semibold text-zinc-900">
+                        {qty} {unit}
+                      </span>
+                    </div>
+                    {material.rawMaterialSecondaryName && (
+                      <p className="text-xs text-zinc-400">
+                        {material.rawMaterialSecondaryName}
+                      </p>
+                    )}
+                    {material.notes && (
+                      <p className="text-xs text-amber-600">
+                        {material.notes}
+                      </p>
+                    )}
                   </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Sub Products */}
+        {subCount > 0 && (
+          <div className="flex flex-col gap-2 border-t border-zinc-100 pt-3">
+            <div className="flex items-center gap-1.5">
+              <Layers className="h-3.5 w-3.5 text-blue-600" />
+              <p className="text-xs font-semibold tracking-wide text-blue-600 uppercase">
+                Sub products ({subCount})
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {(item.subProducts ?? []).map((subProduct, idx) => {
+                const { qty, unit } = formatQuantityForDisplay(
+                  subProduct.totalQuantity,
+                  subProduct.unit ?? 'KG'
+                )
+                return (
+                  <div
+                    key={`sub-${item.productId}-${idx}`}
+                    className="flex flex-col gap-0.5"
+                  >
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-zinc-700">
+                        {subProduct.rawMaterialPrimaryName}
+                      </span>
+                      <span className="shrink-0 font-semibold text-zinc-900">
+                        {qty} {unit}
+                      </span>
+                    </div>
+                    {subProduct.notes && (
+                      <p className="text-xs text-amber-600">
+                        {subProduct.notes}
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  })}
+</div>
                 ) : (
                   <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-8 text-center">
                     <p className="text-sm text-zinc-500">

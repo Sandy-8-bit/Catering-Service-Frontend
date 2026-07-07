@@ -69,7 +69,6 @@ function App() {
                 data: {
                   totalGlobalIncome: 16000.0,
                   totalGlobalMiscExpense: 0,
-                  totalGlobalNetProfit: 16000.0,
                   totalGlobalPeopleServed: 120,
                   orderDetails: [
                     {
@@ -79,7 +78,6 @@ function App() {
                       totalPeople: 120,
                       orderIncome: 16000.0,
                       orderExpense: 0,
-                      orderProfit: 16000.0,
                       menuItems: [
                         {
                           productName: 'சுக்கு பால்',
@@ -88,7 +86,6 @@ function App() {
                           productUnitPrice: 40.0,
                           productLineTotal: 40.0,
                           productRawMaterialCost: 0,
-                          productProfit: 40.0,
                           rawMaterials: [],
                           perPlate: 40.0,
                         },
@@ -99,7 +96,6 @@ function App() {
                           productUnitPrice: 60.0,
                           productLineTotal: 60.0,
                           productRawMaterialCost: 0,
-                          productProfit: 60.0,
                           rawMaterials: [],
                           perPlate: 60.0,
                         },
@@ -112,7 +108,6 @@ function App() {
                           productUnitPrice: 40.0,
                           productLineTotal: 4000.0,
                           productRawMaterialCost: 0,
-                          productProfit: 4000.0,
                           rawMaterials: [],
                           perPlate: 40.0,
                         },
