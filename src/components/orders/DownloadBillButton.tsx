@@ -86,6 +86,7 @@ interface BillAdditionalItem {
 type BillDataWithId = BillData & {
   orderId?: number
   advanceAmount?: number | null
+  discountAmount?: number | null   // ← add this
   subProducts?: BillSubProduct[] | null
   additionalItems?: BillAdditionalItem[] | null
 }
@@ -701,8 +702,9 @@ const BillDoc: React.FC<BillDocProps> = ({ data, type, meta }) => {
     (data.advanceAmount != null
       ? `Rs. ${fmtMoney(data.advanceAmount)}`
       : undefined)
-  const resolvedDeliveryCharge =
-    data.deliveryCharge != null ? fmtMoney(data.deliveryCharge) : '0.00'
+const resolvedDeliveryCharge =
+  data.deliveryCharge != null ? fmtMoney(data.deliveryCharge) : '0.00'
+const resolvedDiscount = data.discountAmount ?? 0   // ← add this
   const summary = data as BillSummary
   const billTitle = resolveBillTitle(type)
 
@@ -1004,6 +1006,28 @@ const emptyCount = Math.max(
                   Rs. {fmtMoney(data.advanceAmount ?? 0)}
                 </Text>
               </View>
+              {/* DISCOUNT col */}
+<View
+  style={[
+    s.footerNoteCol,
+    {
+      borderRight: `0.5pt solid ${C.border}`,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  ]}
+>
+  {resolvedDiscount > 0 && (
+    <>
+      <View style={s.footerTotalChip}>
+        <Text style={s.footerTotalChipText}>DISCOUNT</Text>
+      </View>
+      <Text style={[s.footerTotalValue, { fontSize: 10 }]}>
+        - Rs. {fmtMoney(resolvedDiscount)}
+      </Text>
+    </>
+  )}
+</View>
 
               {/* CASH TO COLLECT col */}
               <View style={totalColShared}>
@@ -1012,12 +1036,15 @@ const emptyCount = Math.max(
                     CASH TO COLLECT
                   </Text>
                 </View>
-                <Text style={[s.footerTotalValue, { color: C.navy }]}>
-                  Rs.{' '}
-                  {fmtMoney(
-                    Math.max(0, (totalValue ?? 0) - (data.advanceAmount ?? 0))
-                  )}
-                </Text>
+              <Text style={[s.footerTotalValue, { color: C.navy }]}>
+  Rs.{' '}
+  {fmtMoney(
+    Math.max(
+      0,
+      (totalValue ?? 0) - (data.advanceAmount ?? 0) - resolvedDiscount
+    )
+  )}
+</Text>
               </View>
             </View>
           )}
