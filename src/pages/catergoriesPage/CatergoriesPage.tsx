@@ -6,7 +6,6 @@ import { AnimatePresence } from 'framer-motion'
 import ButtonSm from '@/components/common/Buttons'
 import DialogBox from '@/components/common/DialogBox'
 import GenericTable, { type DataCell } from '@/components/common/GenericTable'
-import DropdownSelect from '@/components/common/DropDown'
 import TableMultiSelectDropDown from '@/components/common/TableMultiSelectDropDown'
 import { TableInput } from '@/components/common/TableInput'
 import {
@@ -19,10 +18,8 @@ import type { Category, CategoryPayload } from '@/types/category'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import {
   Edit3,
-  Filter,
   Plus,
   SaveIcon,
-  UploadCloud,
   X,
   Trash2,
   ArrowLeft,

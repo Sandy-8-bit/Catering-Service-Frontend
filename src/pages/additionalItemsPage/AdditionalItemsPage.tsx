@@ -8,7 +8,6 @@ import DialogBox from '@/components/common/DialogBox'
 import GenericTable, { type DataCell } from '@/components/common/GenericTable'
 import TableDropDown from '@/components/common/TableDropDown'
 import { TableInput } from '@/components/common/TableInput'
-import DropdownSelect from '@/components/common/DropDown'
 import {
   useFetchAdditionalItems,
   useEditAdditionalItem,
@@ -20,7 +19,7 @@ import type {
 } from '@/types/additionalItem'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import { useHandleSaveHook } from '@/hooks/useHandleSaveHook'
-import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X, Trash2, ArrowLeft } from 'lucide-react'
+import { Edit3, Plus, SaveIcon, X, Trash2, ArrowLeft } from 'lucide-react'
 
 import { DeleteAdditionalItemsDialog } from './DeleteAdditionalItemsDialog'
 

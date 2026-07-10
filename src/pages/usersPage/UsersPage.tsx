@@ -5,7 +5,6 @@ import { AnimatePresence } from 'framer-motion'
 
 import ButtonSm from '@/components/common/Buttons'
 import DialogBox from '@/components/common/DialogBox'
-import DropdownSelect from '@/components/common/DropDown'
 import GenericTable, { type DataCell } from '@/components/common/GenericTable'
 import TableMultiSelectDropDown from '@/components/common/TableMultiSelectDropDown'
 import { TableInput } from '@/components/common/TableInput'
@@ -18,7 +17,7 @@ import {
   useFetchUsers,
 } from '@/queries/usersQueries'
 import type { User, UserPayload } from '@/types/user'
-import { Edit3, Filter, Plus, SaveIcon, UploadCloud, X, ArrowLeft } from 'lucide-react'
+import { Edit3, Plus, SaveIcon, X, ArrowLeft } from 'lucide-react'
 import { DeleteUsersDialog } from './DeleteUsersDialog'
 
 type EditableUser = User & { password?: string }

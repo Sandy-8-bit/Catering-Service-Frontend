@@ -5,7 +5,6 @@ import { AnimatePresence } from 'framer-motion'
 
 import ButtonSm from '@/components/common/Buttons'
 import GenericTable, { type DataCell } from '@/components/common/GenericTable'
-import DropdownSelect from '@/components/common/DropDown'
 import { TableInput } from '@/components/common/TableInput'
 import {
   useCreateMasterCategory,
@@ -16,10 +15,8 @@ import type { MasterCategory } from '@/types/masterCategory'
 import { useHandleCancelHook } from '@/hooks/useHandleCancelHook'
 import {
   Edit3,
-  Filter,
   Plus,
   SaveIcon,
-  UploadCloud,
   X,
   Trash2,
   ArrowLeft,
