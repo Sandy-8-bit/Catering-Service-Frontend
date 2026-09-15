@@ -239,6 +239,24 @@ const isSameDay = (first: Date, second: Date) => {
   )
 }
 
+/* ---------------------------------------------------------------------- */
+/* Meal period (Tiffin / Lunch / Dinner) helpers                           */
+/* ---------------------------------------------------------------------- */
+
+type MealPeriodId = 'all' | 'tiffin' | 'lunch' | 'dinner'
+type ResolvedMealPeriod = 'tiffin' | 'lunch' | 'dinner' | 'unspecified'
+
+// hour < 11 -> tiffin, 11-15 -> lunch, 16+ -> dinner, no time -> unspecified
+const getMealPeriod = (time: string | null | undefined): ResolvedMealPeriod => {
+  if (!time) return 'unspecified'
+  const hourPart = time.split(':')[0]
+  const hour = parseInt(hourPart, 10)
+  if (Number.isNaN(hour)) return 'unspecified'
+  if (hour < 11) return 'tiffin'
+  if (hour < 16) return 'lunch'
+  return 'dinner'
+}
+
 const getProductDisplayName = (item: Order['items'][number]): string => {
   return (
     item?.productPrimaryName ||
@@ -430,6 +448,50 @@ const ActionDropdown = ({ actions, disabled = false }: ActionDropdownProps) => {
   )
 }
 
+/* ---------------------------------------------------------------------- */
+/* Meal period tab bar                                                     */
+/* ---------------------------------------------------------------------- */
+
+interface MealPeriodTabsProps {
+  selected: MealPeriodId
+  counts: Record<MealPeriodId, number>
+  onSelect: (id: MealPeriodId) => void
+}
+
+const MealPeriodTabs = ({ selected, counts, onSelect }: MealPeriodTabsProps) => {
+  const { t } = useTranslation()
+
+  const tabs: Array<{ id: MealPeriodId; label: string }> = [
+    { id: 'all', label: t('all') || 'All' },
+    { id: 'tiffin', label: t('tiffin') || 'Tiffin' },
+    { id: 'lunch', label: t('lunch') || 'Lunch' },
+    { id: 'dinner', label: t('dinner') || 'Dinner' },
+  ]
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {tabs.map((tab) => {
+        const isActive = selected === tab.id
+        const count = counts[tab.id] ?? 0
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onSelect(tab.id)}
+            className={`cursor-pointer rounded-full px-3 py-1 text-[11px] font-bold whitespace-nowrap transition-colors sm:text-xs ${
+              isActive
+                ? 'bg-amber-700 text-white shadow-sm'
+                : 'bg-white text-amber-700 ring-1 ring-amber-300 hover:bg-amber-100'
+            }`}
+          >
+            {tab.label} ({count})
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 export const OrdersPage = () => {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -438,6 +500,7 @@ export const OrdersPage = () => {
 
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null)
+  const [selectedMealPeriod, setSelectedMealPeriod] = useState<MealPeriodId>('all')
   const [showVoiceDialog, setShowVoiceDialog] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
@@ -472,6 +535,32 @@ export const OrdersPage = () => {
       )
   }, [orders, selectedDate])
 
+  // Counts per meal period for the currently selected date
+  const mealPeriodCounts = useMemo(() => {
+    const counts: Record<MealPeriodId, number> = {
+      all: ordersForDate.length,
+      tiffin: 0,
+      lunch: 0,
+      dinner: 0,
+    }
+    ordersForDate.forEach((order) => {
+      const period = getMealPeriod(order.eventTime)
+      if (period === 'tiffin' || period === 'lunch' || period === 'dinner') {
+        counts[period] += 1
+      }
+      // orders with unspecified time are only reflected in "all"
+    })
+    return counts
+  }, [ordersForDate])
+
+  // Orders for the date, filtered further by the selected meal period tab
+  const ordersForMealPeriod = useMemo(() => {
+    if (selectedMealPeriod === 'all') return ordersForDate
+    return ordersForDate.filter(
+      (order) => getMealPeriod(order.eventTime) === selectedMealPeriod
+    )
+  }, [ordersForDate, selectedMealPeriod])
+
   useEffect(() => {
     if (!selectedOrderId) return
     const stillExists = ordersForDate.some(
@@ -488,7 +577,7 @@ export const OrdersPage = () => {
     return ordersForDate.find((order) => order.id === selectedOrderId) ?? null
   }, [ordersForDate, selectedOrderId])
 
-  const sourceOrders = selectedOrder ? [selectedOrder] : ordersForDate
+  const sourceOrders = selectedOrder ? [selectedOrder] : ordersForMealPeriod
 
   const itemsSummary = useMemo(
     () =>
@@ -532,26 +621,37 @@ export const OrdersPage = () => {
 
 const requiredSubProductsSummary = useMemo(() => {
   const map = new Map<string, { quantity: number; unit: string }>()
+
   sourceOrders.forEach((order) => {
     ;(order.requiredSubProducts ?? []).forEach((item) => {
       const label = item.subProductName
       if (!label) return
+
       const existing = map.get(label)
+
       map.set(label, {
-        quantity: (existing?.quantity ?? 0) + (item.requiredQuantity || 0),
+        quantity:
+          (existing?.quantity ?? 0) +
+          (item.requiredQuantity || 0),
         unit: item.unit ?? existing?.unit ?? 'kg',
       })
     })
   })
-  return Array.from(map.entries()).map(([label, { quantity, unit }]) => ({
-    label,
-    quantity,
-    unit,
-  }))
-}, [sourceOrders])
 
+  return Array.from(map.entries()).map(
+    ([label, { quantity, unit }]) => ({
+      label,
+      quantity,
+      unit,
+    })
+  )
+}, [sourceOrders])
   const infoMessage =
-    !isLoading && ordersForDate.length === 0 ? t('no_orders_scheduled') : null
+    !isLoading && ordersForMealPeriod.length === 0
+      ? selectedMealPeriod === 'all'
+        ? t('no_orders_scheduled')
+        : t('no_orders_scheduled_for_period') || t('no_orders_scheduled')
+      : null
 
   const formattedDateLabel = selectedDate.toLocaleDateString(undefined, {
     month: 'long',
@@ -687,6 +787,7 @@ const requiredSubProductsSummary = useMemo(() => {
             onSelectDate={(date) => {
               setSelectedDate(date)
               setSelectedOrderId(null)
+              setSelectedMealPeriod('all')
             }}
           />
 
@@ -706,6 +807,21 @@ const requiredSubProductsSummary = useMemo(() => {
                 </span>
               )}
             </header>
+
+            {/* Tiffin / Lunch / Dinner filter tabs */}
+            {!isLoading && ordersForDate.length > 0 && (
+              <div className="mb-3">
+                <MealPeriodTabs
+                  selected={selectedMealPeriod}
+                  counts={mealPeriodCounts}
+                  onSelect={(id) => {
+                    setSelectedMealPeriod(id)
+                    setSelectedOrderId(null)
+                  }}
+                />
+              </div>
+            )}
+
             <div className="relative z-10 flex max-h-52 flex-col gap-2 overflow-visible">
               {isLoading ? (
                 <div className="flex animate-pulse flex-col gap-2">
@@ -724,7 +840,7 @@ const requiredSubProductsSummary = useMemo(() => {
                   {infoMessage}
                 </p>
               ) : (
-                ordersForDate.map((order, index) => {
+                ordersForMealPeriod.map((order, index) => {
                   const isActive = order.id === selectedOrderId
 
                   return (
@@ -916,14 +1032,6 @@ const requiredSubProductsSummary = useMemo(() => {
                         ]}
                         messageWhenNoData={t('no_menu_items_order')}
                       />
-                      {/* <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50 p-3">
-                        <p className="text-xs font-semibold text-amber-700 sm:text-sm">
-                          {t('menu_items_subtotal')}
-                        </p>
-                        <p className="text-xs font-bold text-amber-900 sm:text-sm md:text-lg">
-                          ₹{menuItemsSubtotal.toLocaleString()}
-                        </p>
-                      </div> */}
                     </>
                   ) : (
                     <p className="flex flex-row items-center gap-2 rounded-xl border border-zinc-100 bg-zinc-50 p-4 text-xs text-zinc-400 sm:text-sm">
