@@ -45,6 +45,7 @@ const UsersPage = lazy(() => import('@/pages/usersPage/UsersPage'))
 const DownloadReportsPage = lazy(
   () => import('@/pages/reportsPage/DownloadReportsPage')
 )
+import '@/App.css'
 
 function App() {
   return (
