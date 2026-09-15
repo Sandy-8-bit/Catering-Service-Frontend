@@ -355,22 +355,23 @@ remarksText: {
     color: C.light,
     marginRight: 4,
   },
-  infoValue: {
-    fontFamily: LATIN,
-    fontSize: 7.5,
-    color: C.text,
-    flex: 1,
-    borderBottom: `0.4pt dotted ${C.border}`,
-    paddingBottom: 1,
-  },
-  infoValueTamil: {
-    fontFamily: TAMIL,
-    fontSize: 7.5,
-    color: C.text,
-    flex: 1,
-    borderBottom: `0.4pt dotted ${C.border}`,
-    paddingBottom: 1,
-  },
+infoValue: {
+  fontFamily: LATIN,
+  fontSize: 10,
+  color: C.text,
+  flex: 1,
+  borderBottom: `0.4pt dotted ${C.border}`,
+  paddingBottom: 1,
+},
+infoValueTamil: {
+  fontFamily: TAMIL,
+  fontSize: 10,
+  color: C.text,
+  flex: 1,
+  borderBottom: `0.4pt dotted ${C.border}`,
+  paddingBottom: 1,
+},
+
   // Raw materials section
   rmSection: {
     flexDirection: 'column',
@@ -436,14 +437,14 @@ remarksText: {
     fontSize: 6.5,
     color: C.light,
   },
-  dateValue: {
-    fontFamily: LATIN_B,
-    fontSize: 7.5,
-    color: C.navy,
-    borderBottom: `0.4pt dotted ${C.border}`,
-    paddingBottom: 1,
-    fontWeight: 'bold',
-  },
+dateValue: {
+  fontFamily: LATIN_B,
+  fontSize: 10,
+  color: C.navy,
+  borderBottom: `0.4pt dotted ${C.border}`,
+  paddingBottom: 1,
+  fontWeight: 'bold',
+},
 
   // ── Table ─────────────────────────────────────────────────────────────────
   tableWrapper: {
