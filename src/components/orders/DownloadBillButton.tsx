@@ -508,44 +508,46 @@ remarksText: {
     color: C.light,
     paddingVertical: 2,
   },
-  tdParticulars: {
-    flex: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    fontFamily: TAMIL,
-    fontWeight: 'bold',
-    fontSize: 7.5,
-    color: C.text,
-    borderLeft: `0.25pt solid ${C.divider}`,
-  },
-  tdQty: {
-    width: 44,
-    textAlign: 'center',
-    fontFamily: LATIN,
-    fontSize: 7,
-    color: C.muted,
-    borderLeft: `0.25pt solid ${C.divider}`,
-    paddingVertical: 2,
-  },
-  tdRate: {
-    width: 44,
-    textAlign: 'center',
-    fontFamily: LATIN,
-    fontSize: 7,
-    color: C.muted,
-    borderLeft: `0.25pt solid ${C.divider}`,
-    paddingVertical: 2,
-  },
-  tdRs: {
-    width: 44,
-    textAlign: 'right',
-    paddingRight: 6,
-    fontFamily: LATIN_B,
-    fontSize: 7,
-    color: C.text,
-    borderLeft: `0.25pt solid ${C.divider}`,
-    paddingVertical: 2,
-  },
+tdParticulars: {
+  flex: 1,
+  paddingHorizontal: 6,
+  paddingVertical: 2,
+  fontFamily: TAMIL,
+  fontWeight: 'bold',
+  fontSize: 10, // increased from 7.5
+  color: C.text,
+  borderLeft: `0.25pt solid ${C.divider}`,
+},
+
+tdRate: {
+  width: 44,
+  textAlign: 'center',
+  fontFamily: LATIN_B,
+  fontSize: 9.5, // increased from 7
+  color: C.muted,
+  borderLeft: `0.25pt solid ${C.divider}`,
+  paddingVertical: 2,
+},
+
+tdRs: {
+  width: 44,
+  textAlign: 'right',
+  paddingRight: 6,
+  fontFamily: LATIN_B,
+  fontSize: 9.5, // increased from 7
+  color: C.text,
+  borderLeft: `0.25pt solid ${C.divider}`,
+  paddingVertical: 2,
+},
+tdQty: {
+  width: 44,
+  textAlign: "center",
+  fontFamily: LATIN_B,
+  fontSize: 9.5,    // Quantity (7 → 8.5)
+  color: C.text,
+  borderLeft: `0.25pt solid ${C.divider}`,
+  paddingVertical: 2,
+},
 
   // ── Footer ────────────────────────────────────────────────────────────────
   footerBar: {
