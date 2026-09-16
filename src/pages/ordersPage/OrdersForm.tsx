@@ -473,7 +473,9 @@ export const OrdersForm = () => {
     const hasPhone = !!(
       editData.customerPhone && editData.customerPhone.trim() !== ''
     )
-    return hasName && hasPhone
+    const hasTime = !!(editData.eventTime && editData.eventTime.trim() !== '')
+
+    return hasName && hasPhone && hasTime
   }
 
   if (isOrderLoading || isUserOptionLoading || isAdditionalLoading)
@@ -647,6 +649,7 @@ export const OrdersForm = () => {
                 </div>
                 <TimeInput
                   title=""
+                  required
                   name="time"
                   value={editData.eventTime ?? ''}
                   onChange={(value) =>
