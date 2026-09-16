@@ -215,6 +215,10 @@
   "calculation_help": "Run a calculation to see raw material requirements for a given quantity.",
   "available": "Available",
   "unavailable": "Unavailable",
+  "COPY_DETAILS": "Copy Details",
+  "Copy_Details": "Copy Details",
+  "Paste_Details": "Paste Details",
+  "PASTE_DETAILS": "Paste Details",
 
   "track_stock": "Track Stock",
   "available_qty": "Available Qty",

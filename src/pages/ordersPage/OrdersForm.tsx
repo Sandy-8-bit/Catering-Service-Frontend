@@ -41,7 +41,7 @@ import { useOrderFormContext } from '@/context/OrderFormContext'
 import DialogBox from '@/components/common/DialogBox'
 import VoiceOrderDialog from '@/components/orders/VoiceOrderDialog'
 import AudioPlayer from '@/components/orders/AudioPlayer'
-import { Mic, ChevronDown } from 'lucide-react'
+import { Mic, ChevronDown, Copy, ClipboardPaste } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 // Audio Player Wrapper Component
@@ -144,6 +144,21 @@ export const OrdersForm = () => {
 
   const { mutate: createOrder, isPending: isCreatePending } = useCreateOrder()
   const { mutate: updateOrder, isPending: isUpdatePending } = useUpdateOrder()
+
+
+  const CUSTOMER_DETAILS_KEY = 'lastCustomerDetails'
+
+const [hasSavedCustomerDetails, setHasSavedCustomerDetails] = useState(false)
+
+const hasCustomerDetails =
+  !!editData.customerName?.trim() &&
+  !!editData.customerPhone?.trim() &&
+  !!editData.customerAddress?.trim()
+
+useEffect(() => {
+  const savedCustomer = localStorage.getItem(CUSTOMER_DETAILS_KEY)
+  setHasSavedCustomerDetails(!!savedCustomer)
+}, [])
 
   // Handle accordion behavior for menu items - close others when one is opened
   const toggleMenuItemSection = (section: keyof typeof expandedMenuItems) => {
@@ -328,6 +343,52 @@ export const OrdersForm = () => {
     })
   }
 
+  const handleCopyCustomerDetails = () => {
+  if (!hasCustomerDetails) {
+    toast.error('Enter name, phone number and address first')
+    return
+  }
+
+  const customerDetails = {
+    customerName: editData.customerName,
+    customerPhone: editData.customerPhone,
+    customerAddress: editData.customerAddress,
+  }
+
+  localStorage.setItem(
+    CUSTOMER_DETAILS_KEY,
+    JSON.stringify(customerDetails)
+  )
+
+  setHasSavedCustomerDetails(true)
+  toast.success('Customer details copied')
+}
+
+const handlePasteCustomerDetails = () => {
+  try {
+    const stored = localStorage.getItem(CUSTOMER_DETAILS_KEY)
+
+    if (!stored) {
+      toast.error('No saved customer details found')
+      return
+    }
+
+    const customerDetails = JSON.parse(stored)
+
+    setEditData((prev) => ({
+      ...prev,
+      customerName: customerDetails.customerName || '',
+      customerPhone: customerDetails.customerPhone || '',
+      customerAddress: customerDetails.customerAddress || '',
+    }))
+
+    toast.success('Customer details pasted')
+  } catch (error) {
+    console.error('Failed to paste customer details:', error)
+    toast.error('Failed to paste customer details')
+  }
+}
+
   const handleUpdateOrder = () => {
     updateOrder(mapOrderToUpdatePayload(editData, existingOrder), {
       onSuccess: () => {
@@ -506,6 +567,30 @@ export const OrdersForm = () => {
             <span className="hidden sm:inline">{t('voice_order')}</span>
             <span className="inline sm:hidden">Voice</span>
           </ButtonSm>
+
+            {hasCustomerDetails && (
+    <ButtonSm
+      state="outline"
+      type="button"
+      onClick={handleCopyCustomerDetails}
+      className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium sm:px-3 sm:py-2 sm:text-sm"
+    >
+      <Copy className="h-3.5 w-3.5" />
+        <span> {t('Copy_Details')}</span>
+    </ButtonSm>
+  )}
+
+  {!hasCustomerDetails && hasSavedCustomerDetails && (
+    <ButtonSm
+      state="outline"
+      type="button"
+      onClick={handlePasteCustomerDetails}
+      className="flex items-center gap-1.5 border-green-300 px-2 py-1.5 text-xs font-medium text-green-700 hover:bg-green-50 sm:px-3 sm:py-2 sm:text-sm"
+    >
+      <ClipboardPaste className="h-3.5 w-3.5" />
+      <span> {t('Paste_Details')}</span>
+    </ButtonSm>
+  )}
           <ActionButtons
             isEditMode={isEditMode}
             editData={editData}
